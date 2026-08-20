@@ -121,6 +121,11 @@ export default withApiHandler(
       if (msg.includes('PRODUCT_NOT_FOUND') || msg.includes('NOT_AVAILABLE')) {
         return sendError(res, 409, 'PRODUCT_UNAVAILABLE', msg);
       }
+      if (msg.includes('ITEM_RESERVED')) {
+        // Someone else is mid-checkout on this exact stone (30-min hold).
+        const sku = msg.split('ITEM_RESERVED:')[1] ?? '';
+        return sendError(res, 409, 'ITEM_RESERVED', sku);
+      }
       if (msg.includes('EMPTY_ITEMS')) {
         return sendError(res, 400, 'items must be a non-empty array');
       }

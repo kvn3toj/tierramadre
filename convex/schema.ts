@@ -1190,11 +1190,6 @@ export default defineSchema({
     .index('by_saleId', ['saleId'])
     .index('by_client', ['clientId'])
     .index('by_estado', ['estado'])
-    // Rango por (estado, fechaVenta) para que el chequeo de reserva lea SOLO
-    // los últimos 30 min de ventas `reservada`, sin importar cuántos carritos
-    // abandonados se hayan acumulado. `fechaVenta` es ISO, y en ISO el orden
-    // lexicográfico es el cronológico, así que el rango funciona sobre el string.
-    .index('by_estado_fecha', ['estado', 'fechaVenta'])
     .index('by_rowIndex', ['rowIndex'])
     .index('by_syncStatus', ['syncStatus']),
 

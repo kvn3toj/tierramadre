@@ -8,6 +8,17 @@
  * escrito ahí lo soltaría el siguiente pull —en mitad de un pago— y ensuciaría
  * el SOT con un estado transitorio.
  *
+ * La ventana de la reserva se ancla en `_creationTime`, NO en `fechaVenta`,
+ * por el mismo motivo un campo más abajo: `sales.fechaVenta` TAMBIÉN está en
+ * el allowlist de pull (`convex/_lib/sheetPullMaps.ts:265`, `coerce: 'str'`).
+ * Un pull de Sheets a mitad de un pago puede reescribir esa celda en un
+ * formato no-ISO (p. ej. `19/08/2026`), que ordena por debajo del cutoff y
+ * saca la fila del rango del índice antes de que llegue a memoria — ningún
+ * chequeo posterior puede recuperar una fila que el índice ya descartó.
+ * `_creationTime` es propiedad de Convex, nunca se pull-ea, y es un número:
+ * no hay string que parsear mal ni sistema externo que pueda soltar una
+ * reserva reescribiéndolo.
+ *
  * Derivarlo compra tres cosas: no hay nada que el pull pueda pisar, no hace
  * falta un reaper que pueda fallar y dejar una piedra bloqueada para siempre
  * (el vencimiento es el paso del tiempo), y la carrera se cierra sola porque
@@ -15,8 +26,6 @@
  * insertar la nueva dentro de la misma mutation es atómico.
  *
  * Todo aquí es puro (ver tests/reservas.test.ts); la mutation solo aporta el IO.
- * Una excepción: `reservedItemIds` emite un `console.warn` si una `fechaVenta`
- * no se parsea, así que una fila corrupta es audible en vez de silenciosa.
  */
 
 /** Cuánto se aparta una piedra entre que empieza el checkout y llega el pago. */
@@ -32,8 +41,11 @@ export interface PendingSaleLike {
   /** `sales.clientId`, como string — comparado, nunca deferenciado. */
   clientId: string;
   itemIds: string[];
-  /** ISO 8601. En ISO el orden lexicográfico es el cronológico. */
-  fechaVenta: string;
+  /**
+   * `sales._creationTime` — epoch ms, propiedad de Convex. No usar
+   * `fechaVenta`: ver el comentario de cabecera de este módulo.
+   */
+  creationTime: number;
   /**
    * Solo `reservada` aparta. Se filtra también aquí, no solo en el rango del
    * índice, para que la función sea autocontenida: cualquiera puede leerla y
@@ -43,26 +55,7 @@ export interface PendingSaleLike {
 }
 
 /**
- * El límite inferior del rango de índice que la mutation consulta. Se devuelve
- * como ISO porque `fechaVenta` es un string y el índice se recorre por rango
- * sobre ese string.
- */
-export function reservaCutoffISO(
-  now: number,
-  ttlMs: number = RESERVA_TTL_MS,
-): string {
-  return new Date(now - ttlMs).toISOString();
-}
-
-/**
- * Los itemIds apartados por las ventas pendientes vigentes. Falla CERRADA:
- * una `fechaVenta` ilegible hace que esa venta reserve (conservador). Una
- * piedra estancada es visible y recuperable — alguien no puede venderla y
- * alguien la arregla. Una piedra vendida dos veces se descubre solo después
- * de dos pagos, y un cliente tiene que llevarse el no. Entre "temporalmente
- * invendible" y "vendida dos veces", esta lógica elige lo primero.
- * Excepto: una venta con `estado !== 'reservada'` y una fecha rota sigue sin
- * apartar (e.g. una `cancelada` corrupta no bloquea nada).
+ * Los itemIds apartados por las ventas pendientes vigentes.
  */
 export function reservedItemIds(
   sales: PendingSaleLike[],
@@ -73,15 +66,7 @@ export function reservedItemIds(
   const held = new Set<string>();
   for (const sale of sales) {
     if (sale.estado !== 'reservada') continue;
-    const t = Date.parse(sale.fechaVenta);
-    if (Number.isFinite(t)) {
-      if (t < cutoff) continue;
-    } else {
-      // Fecha ilegible en una venta reservada: aparta conservadoramente.
-      console.warn(
-        `[reservas] unparseable fechaVenta in reservada sale: ${sale.fechaVenta}`,
-      );
-    }
+    if (sale.creationTime < cutoff) continue;
     for (const itemId of sale.itemIds) held.add(itemId);
   }
   return held;
@@ -97,11 +82,6 @@ export function orderFingerprint(itemIds: string[]): string {
  * existe. Es lo que hace idempotente un doble clic en «Pagar»: sin esto, el
  * segundo clic chocaría contra la reserva que dejó el primero y el cliente
  * vería que su propia piedra «ya no está disponible».
- * Una fecha ilegible hace que esa venta NO sea reusable (por contraste con
- * `reservedItemIds`, que sí aparta). Reusar una venta que no se puede fechar
- * le daría al cliente una reserva de edad desconocida, y si esa edad se agota
- * entre que empieza el checkout y que llega el pago, la piedra se suelta sin
- * aviso.
  */
 export function findReusableSale<T extends PendingSaleLike>(
   sales: T[],
@@ -114,8 +94,7 @@ export function findReusableSale<T extends PendingSaleLike>(
   const fingerprint = orderFingerprint(itemIds);
   for (const sale of sales) {
     if (sale.estado !== 'reservada') continue;
-    const t = Date.parse(sale.fechaVenta);
-    if (!Number.isFinite(t) || t < cutoff) continue;
+    if (sale.creationTime < cutoff) continue;
     if (sale.clientId !== clientId) continue;
     if (orderFingerprint(sale.itemIds) === fingerprint) return sale;
   }

@@ -2,14 +2,12 @@ import { describe, it, expect } from 'vitest';
 import {
   RESERVA_TTL_MS,
   MAX_ITEMS_POR_PEDIDO,
-  reservaCutoffISO,
   reservedItemIds,
   orderFingerprint,
   findReusableSale,
 } from '../convex/_lib/reservas';
 
 const NOW = Date.parse('2026-08-19T12:00:00.000Z');
-const iso = (msAgo: number) => new Date(NOW - msAgo).toISOString();
 
 const sale = (
   clientId: string,
@@ -19,12 +17,12 @@ const sale = (
 ): {
   clientId: string;
   itemIds: string[];
-  fechaVenta: string;
+  creationTime: number;
   estado: string;
 } => ({
   clientId,
   itemIds,
-  fechaVenta: iso(msAgo),
+  creationTime: NOW - msAgo,
   estado,
 });
 
@@ -35,12 +33,6 @@ describe('constants', () => {
 
   it('caps an order at 10 items', () => {
     expect(MAX_ITEMS_POR_PEDIDO).toBe(10);
-  });
-});
-
-describe('reservaCutoffISO', () => {
-  it('returns the ISO timestamp one TTL before now', () => {
-    expect(reservaCutoffISO(NOW)).toBe('2026-08-19T11:30:00.000Z');
   });
 });
 
@@ -90,36 +82,6 @@ describe('reservedItemIds', () => {
     );
     expect(held.size).toBe(0);
   });
-
-  it('reserves items from a sale with an unparseable date rather than risking a double sell', () => {
-    const held = reservedItemIds(
-      [
-        {
-          clientId: 'c1',
-          itemIds: ['C-090'],
-          fechaVenta: 'no es fecha',
-          estado: 'reservada',
-        },
-      ],
-      NOW,
-    );
-    expect(held).toEqual(new Set(['C-090']));
-  });
-
-  it('does NOT hold items from a cancelada sale with an unparseable date', () => {
-    const held = reservedItemIds(
-      [
-        {
-          clientId: 'c1',
-          itemIds: ['C-090'],
-          fechaVenta: 'no es fecha',
-          estado: 'cancelada',
-        },
-      ],
-      NOW,
-    );
-    expect(held.size).toBe(0);
-  });
 });
 
 describe('orderFingerprint', () => {
@@ -158,28 +120,15 @@ describe('findReusableSale', () => {
     ).toBeNull();
   });
 
+  it('reuses a sale exactly at the TTL boundary', () => {
+    const existing = sale('c1', ['C-090'], RESERVA_TTL_MS);
+    expect(findReusableSale([existing], 'c1', ['C-090'], NOW)).toBe(existing);
+  });
+
   it('does NOT reuse a sale older than the TTL', () => {
     expect(
       findReusableSale(
         [sale('c1', ['C-090'], RESERVA_TTL_MS + 1)],
-        'c1',
-        ['C-090'],
-        NOW,
-      ),
-    ).toBeNull();
-  });
-
-  it('does NOT reuse a sale with an unparseable date', () => {
-    expect(
-      findReusableSale(
-        [
-          {
-            clientId: 'c1',
-            itemIds: ['C-090'],
-            fechaVenta: 'no es fecha',
-            estado: 'reservada',
-          },
-        ],
         'c1',
         ['C-090'],
         NOW,

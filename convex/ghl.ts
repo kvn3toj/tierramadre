@@ -41,7 +41,6 @@ import {
 } from './_lib/applyPayment';
 import {
   RESERVA_TTL_MS,
-  reservaCutoffISO,
   reservedItemIds,
   findReusableSale,
 } from './_lib/reservas';
@@ -348,14 +347,18 @@ export const createOrder = mutation({
 
     // 4.5 Reserva derivada. Una sola lectura por rango de índice trae solo las
     // ventas `reservada` de los últimos 30 min — el histórico de carritos
-    // abandonados no encarece esto. Leer aquí e insertar abajo es atómico:
-    // las mutations de Convex son serializables, así que dos createOrder
+    // abandonados no encarece esto. La ventana se ancla en `_creationTime`
+    // (propiedad de Convex, nunca pull-eada), NO en `fechaVenta`: ese campo
+    // está en el allowlist de pull de Sheets y un pull a mitad de un pago
+    // podría reescribirlo en un formato que saque la fila del rango antes de
+    // que llegue a memoria. Leer aquí e insertar abajo es atómico: las
+    // mutations de Convex son serializables, así que dos createOrder
     // concurrentes chocan y la que reintenta ya ve la venta de la otra.
     const now = Date.now();
     const pendientes = await ctx.db
       .query('sales')
-      .withIndex('by_estado_fecha', (q) =>
-        q.eq('estado', 'reservada').gte('fechaVenta', reservaCutoffISO(now)),
+      .withIndex('by_estado', (q) =>
+        q.eq('estado', 'reservada').gte('_creationTime', now - RESERVA_TTL_MS),
       )
       .collect();
 
@@ -365,7 +368,7 @@ export const createOrder = mutation({
       pendientes.map((s) => ({
         clientId: s.clientId as string,
         itemIds: s.itemIds,
-        fechaVenta: s.fechaVenta,
+        creationTime: s._creationTime,
         estado: s.estado,
         saleId: s.saleId,
         totalCOP: s.totalCOP,
@@ -388,7 +391,7 @@ export const createOrder = mutation({
       pendientes.map((s) => ({
         clientId: s.clientId as string,
         itemIds: s.itemIds,
-        fechaVenta: s.fechaVenta,
+        creationTime: s._creationTime,
         estado: s.estado,
       })),
       now,
