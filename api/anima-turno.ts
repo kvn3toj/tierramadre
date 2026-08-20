@@ -85,6 +85,7 @@ export default withApiHandler(
     // El envío al cliente. `sin_cotizacion` produce texto vacío → no se envía nada (el lead
     // queda para el humano). Un fallo de envío no tumba el turno: queda visible en `enviado`.
     let enviado = false;
+    let envioStatus = 0;
     const tipo = tipoDeCanal(turno.canal);
     if (payload.texto !== '' && tipo && token) {
       const r = await sendConversationMessage(
@@ -92,10 +93,18 @@ export default withApiHandler(
         { type: tipo, contactId: turno.externalId, message: payload.texto },
       );
       enviado = r.ok;
+      envioStatus = r.status;
+      if (!r.ok) {
+        // Visible en los runtime logs de Vercel Y en el registro de ejecución del workflow
+        // (via envioStatus). El texto NO se loguea: puede llevar datos del cliente.
+        console.error(
+          `[AnimaTurno] envio fallido: status=${r.status} contact=${turno.externalId} ${r.error ?? ''}`,
+        );
+      }
     }
 
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    return res.status(200).json({ ...payload, enviado });
+    return res.status(200).json({ ...payload, enviado, envioStatus });
   },
   {
     methods: ['POST', 'OPTIONS'],
