@@ -44,7 +44,11 @@ import {
   reservedItemIds,
   findReusableSale,
 } from './_lib/reservas';
-import { resolverMultiplicador, precioConMarkup } from './_lib/precioVitrina';
+import {
+  resolverMultiplicador,
+  precioConMarkup,
+  precioBaseEsValido,
+} from './_lib/precioVitrina';
 import {
   isContactInactive,
   addContactTags,
@@ -363,21 +367,27 @@ export const createOrder = mutation({
       if (!product) throw new ConvexError(`PRODUCT_NOT_FOUND:${line.sku}`);
       if (product.estado !== 'DISPONIBLE')
         throw new ConvexError(`NOT_AVAILABLE:${line.sku}`);
-      const qty = Math.max(1, Math.floor(line.qty));
       const base = product.precioCOP ?? 0;
+      // Per-LINE guard, not just the sum below: a cart mixing a priced stone
+      // with an unpriced ("Consultar precio") one sums to > 0, so the
+      // `totalCOP <= 0` check alone lets the unpriced piece ride along for
+      // free. Reject the offending line right here, where the sku is still
+      // in scope, so the endpoint can tell the customer WHICH piece failed
+      // instead of failing the whole order anonymously.
+      if (!precioBaseEsValido(base))
+        throw new ConvexError(`PRECIO_NO_DISPONIBLE:${line.sku}`);
+      const qty = Math.max(1, Math.floor(line.qty));
       precioBaseCOP += base * qty;
       totalCOP += precioConMarkup(base, multiplicador) * qty;
       for (let i = 0; i < qty; i++) itemIds.push(line.sku);
     }
 
-    // 1.5 A total of zero (or less) is never a legitimate emerald sale — it
-    // means at least one line's `precioCOP` was 0/missing ("Consultar
-    // precio"). Client-side (`CheckoutSheet`) already refuses to offer
-    // payment in that case, but this is the rail that actually decides what
-    // gets charged, so it cannot trust the client got there first: without
-    // this, `precioConMarkup(0, m)` on both sides would agree on 0 and the
-    // piece would ship for free. Checked BEFORE the 2M gate and regardless
-    // of `skip_limit` — this isn't a limit, it's a floor.
+    // 1.5 Belt-and-braces: the per-line `precioBaseEsValido` guard above is
+    // what actually protects a MIXED cart (one priced piece + one unpriced
+    // one still sums to > 0, so this check alone would miss it — see its
+    // comment). This one is cheap insurance for any future path that
+    // reaches a zero-or-less total another way. Checked BEFORE the 2M gate
+    // and regardless of `skip_limit` — this isn't a limit, it's a floor.
     if (totalCOP <= 0) throw new ConvexError('ZERO_TOTAL');
 
     // 2. ≤2M COP server-side gate (golden rule #3). The handler maps this to 409.

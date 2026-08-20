@@ -128,6 +128,16 @@ export default withApiHandler(
           .status(409)
           .json({ success: false, error: 'OVER_LIMIT_2M', handoff: true });
       }
+      if (msg.includes('PRECIO_NO_DISPONIBLE')) {
+        // Per-line price guard (convex/_lib/precioVitrina.ts's
+        // `precioBaseEsValido`) — this sku has no valid `precioCOP`. Bot
+        // orders only ever contain skus from `searchProducts`, which
+        // already excludes unpriced items, so this should be unreachable
+        // in the normal flow; mapped anyway so a malformed/manual call
+        // gets a clear 409 instead of an opaque 500.
+        const sku = msg.split('PRECIO_NO_DISPONIBLE:')[1] ?? '';
+        return sendError(res, 409, 'PRECIO_NO_DISPONIBLE', sku);
+      }
       if (msg.includes('PRODUCT_NOT_FOUND') || msg.includes('NOT_AVAILABLE')) {
         return sendError(res, 409, 'PRODUCT_UNAVAILABLE', msg);
       }
@@ -138,6 +148,14 @@ export default withApiHandler(
       }
       if (msg.includes('EMPTY_ITEMS')) {
         return sendError(res, 400, 'items must be a non-empty array');
+      }
+      if (msg.includes('ZERO_TOTAL')) {
+        // Belt-and-braces floor in createOrder — only reachable here via an
+        // all-unpriced order, which was previously a FREE order on this
+        // rail (no legitimate charge changes by mapping this). An opaque
+        // 500 on exactly this condition is the shape of failure that cost
+        // hours earlier in this project.
+        return sendError(res, 409, 'ZERO_TOTAL', msg);
       }
       throw err;
     }

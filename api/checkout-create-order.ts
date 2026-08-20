@@ -104,6 +104,26 @@ export default withApiHandler(
           message: 'Alguien más está pagando esta pieza en este momento.',
         });
       }
+      if (msg.includes('PRECIO_NO_DISPONIBLE')) {
+        // One SPECIFIC piece resolved to a price of 0/negative ("Consultar
+        // precio") — never a legitimate charge. Per-line, so a mixed cart
+        // (one priced stone + one unpriced one) is caught even though the
+        // ORDER TOTAL is > 0 and would otherwise sail past `ZERO_TOTAL`
+        // below. `CheckoutSheet` already refuses to offer payment in this
+        // case; this is only reachable by bypassing the UI (e.g. posting to
+        // this endpoint directly). Names the sku so the customer knows WHICH
+        // piece is the problem, not just that the order failed.
+        const sku = msg.split('PRECIO_NO_DISPONIBLE:')[1]?.trim() ?? '';
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        return res.status(409).json({
+          success: false,
+          error: 'PRECIO_NO_DISPONIBLE',
+          sku,
+          message: sku
+            ? `No pudimos calcular el precio de ${sku}. Escríbenos y te ayudamos a completar la compra.`
+            : 'Una o más piezas no tienen precio asignado. Escríbenos y te ayudamos a completar la compra.',
+        });
+      }
       if (msg.includes('PRODUCT_NOT_FOUND') || msg.includes('NOT_AVAILABLE')) {
         return sendError(res, 409, 'PRODUCT_UNAVAILABLE', msg);
       }
@@ -111,9 +131,11 @@ export default withApiHandler(
         return sendError(res, 400, 'items must be a non-empty array');
       }
       if (msg.includes('ZERO_TOTAL')) {
-        // One or more pieces resolved to a price of 0 ("Consultar precio") —
-        // never a legitimate charge. `CheckoutSheet` already refuses to offer
-        // payment in this case; this is only reachable by bypassing the UI.
+        // Belt-and-braces — see `precioBaseEsValido` in
+        // `convex/_lib/precioVitrina.ts` for why this alone doesn't catch a
+        // mixed cart (the per-line `PRECIO_NO_DISPONIBLE` above does). Kept
+        // as a floor for any future path that reaches a zero total another
+        // way.
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
         return res.status(409).json({
           success: false,

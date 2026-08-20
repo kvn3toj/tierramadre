@@ -4,6 +4,7 @@ import {
   esMultiplicadorValido,
   resolverMultiplicador,
   precioConMarkup,
+  precioBaseEsValido,
 } from '../convex/_lib/precioVitrina';
 
 describe('MULTIPLICADOR_POR_DEFECTO', () => {
@@ -88,5 +89,32 @@ describe('precioConMarkup', () => {
 
   it('un precio de 0 sigue en 0', () => {
     expect(precioConMarkup(0, 2.6)).toBe(0);
+  });
+});
+
+/**
+ * SEGURIDAD: este es el guard que protege un carrito MIXTO en `createOrder`
+ * (`convex/ghl.ts`) — una pieza con precio más una "Consultar precio" en el
+ * mismo pedido. El chequeo de `totalCOP <= 0` mira la SUMA y la deja pasar
+ * (suma > 0); este mira cada línea.
+ */
+describe('precioBaseEsValido', () => {
+  it('acepta cualquier precio positivo', () => {
+    expect(precioBaseEsValido(1)).toBe(true);
+    expect(precioBaseEsValido(8_000_000)).toBe(true);
+  });
+
+  it('SEGURIDAD: rechaza 0 — "Consultar precio"', () => {
+    expect(precioBaseEsValido(0)).toBe(false);
+  });
+
+  it('SEGURIDAD: rechaza negativos — nunca un dato de cobro real', () => {
+    expect(precioBaseEsValido(-1)).toBe(false);
+  });
+
+  it('rechaza NaN/Infinity — un precio no-finito no es un cobro', () => {
+    expect(precioBaseEsValido(NaN)).toBe(false);
+    expect(precioBaseEsValido(Infinity)).toBe(false);
+    expect(precioBaseEsValido(-Infinity)).toBe(false);
   });
 });

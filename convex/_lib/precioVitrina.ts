@@ -81,6 +81,25 @@ export function resolverMultiplicador(
   return { ok: true, multiplicador: registro.multiplicador };
 }
 
+/**
+ * `false` si este precio base NUNCA puede ser un cobro real: 0, negativo, o
+ * NaN/Infinity. Un ítem "Consultar precio" en el catálogo tiene `precioCOP`
+ * ausente — el llamante ya lo coacciona a 0 (`product.precioCOP ?? 0`) antes
+ * de preguntar esto.
+ *
+ * Por qué existe SEPARADO del chequeo de `totalCOP <= 0` en `createOrder`:
+ * ese mira la SUMA, y un carrito mixto (una pieza con precio + una sin) da
+ * una suma > 0 — se cuela. Este chequeo mira cada LÍNEA, así que ninguna
+ * pieza sin precio puede viajar gratis escondida detrás de una que sí tiene
+ * precio. Los dos chequeos son belt-and-braces, no uno reemplaza al otro:
+ * éste es el que de verdad protege un carrito mixto; el de la suma queda
+ * como red para cualquier ruta futura que llegue a un total en cero por otro
+ * camino.
+ */
+export function precioBaseEsValido(base: number): boolean {
+  return Number.isFinite(base) && base > 0;
+}
+
 /** Lo que se cobra por una pieza, en pesos enteros. */
 export function precioConMarkup(
   precioCOP: number,

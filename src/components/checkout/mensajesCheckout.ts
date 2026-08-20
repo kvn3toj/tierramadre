@@ -59,6 +59,19 @@ export function mensajeDeRespuesta(
   if (error === 'PRODUCT_UNAVAILABLE') {
     return { tono: 'error', texto: 'Esta pieza ya se vendió.' };
   }
+  if (error === 'PRECIO_NO_DISPONIBLE') {
+    // Nombra la pieza cuando el servidor la mandó (siempre debería, ver
+    // `api/checkout-create-order.ts`) — "no pudimos calcular el precio de
+    // C-090" es mucho mejor que un fallo genérico para alguien que está
+    // intentando pagarnos.
+    const sku = typeof raiz.sku === 'string' && raiz.sku ? raiz.sku : '';
+    return {
+      tono: 'error',
+      texto: sku
+        ? `No pudimos calcular el precio de ${sku}. Escríbenos y te ayudamos a completar la compra.`
+        : 'Una o más piezas no tienen precio asignado. Escríbenos y te ayudamos a completar la compra.',
+    };
+  }
   if (error === 'ZERO_TOTAL') {
     return {
       tono: 'error',

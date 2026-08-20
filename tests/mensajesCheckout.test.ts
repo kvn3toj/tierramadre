@@ -49,6 +49,25 @@ describe('mensajeDeRespuesta', () => {
     expect(r.texto).toMatch(/vendi/i);
   });
 
+  it('PRECIO_NO_DISPONIBLE nombra la pieza — carrito mixto, no sólo un total en cero', () => {
+    const r = mensajeDeRespuesta(409, {
+      success: false,
+      error: 'PRECIO_NO_DISPONIBLE',
+      sku: 'C-090',
+    });
+    expect(r.tono).toBe('error');
+    expect(r.texto).toMatch(/C-090/);
+  });
+
+  it('PRECIO_NO_DISPONIBLE sin sku cae al mensaje genérico, no revienta', () => {
+    const r = mensajeDeRespuesta(409, {
+      success: false,
+      error: 'PRECIO_NO_DISPONIBLE',
+    });
+    expect(r.tono).toBe('error');
+    expect(r.texto).toMatch(/precio/i);
+  });
+
   it('ZERO_TOTAL — pieza sin precio, nunca un cobro legítimo', () => {
     const r = mensajeDeRespuesta(409, {
       success: false,
