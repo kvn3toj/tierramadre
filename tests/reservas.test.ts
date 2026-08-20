@@ -14,16 +14,19 @@ const sale = (
   itemIds: string[],
   msAgo: number,
   estado = 'reservada',
+  multiplicador?: number,
 ): {
   clientId: string;
   itemIds: string[];
   creationTime: number;
   estado: string;
+  multiplicador?: number;
 } => ({
   clientId,
   itemIds,
   creationTime: NOW - msAgo,
   estado,
+  multiplicador,
 });
 
 describe('constants', () => {
@@ -133,6 +136,52 @@ describe('findReusableSale', () => {
         ['C-090'],
         NOW,
       ),
+    ).toBeNull();
+  });
+
+  // Round 1 fix: the multiplier is part of the dedup key. A bot quote (x1)
+  // followed by a vitrina checkout (x2,6) — or the reverse — must NOT reuse
+  // each other's reservation, or the markup silently vanishes (or gets
+  // charged to the wrong customer).
+  it('reuses when the same client, same items, and same multiplier match (double-click)', () => {
+    const existing = sale('c1', ['C-090', 'C-091'], 5000, 'reservada', 2.6);
+    expect(
+      findReusableSale(
+        [existing],
+        'c1',
+        ['C-091', 'C-090'],
+        NOW,
+        RESERVA_TTL_MS,
+        2.6,
+      ),
+    ).toBe(existing);
+  });
+
+  it('does NOT reuse the same client/items at a different multiplier', () => {
+    const existing = sale('c1', ['C-090'], 5000, 'reservada', 1);
+    expect(
+      findReusableSale([existing], 'c1', ['C-090'], NOW, RESERVA_TTL_MS, 2.6),
+    ).toBeNull();
+  });
+
+  it('does NOT reuse an x2,6 reservation for a bot (x1) order', () => {
+    const existing = sale('c1', ['C-090'], 5000, 'reservada', 2.6);
+    expect(
+      findReusableSale([existing], 'c1', ['C-090'], NOW, RESERVA_TTL_MS, 1),
+    ).toBeNull();
+  });
+
+  it('treats a stored sale with no multiplier as x1 — reusable from an x1 order', () => {
+    const existing = sale('c1', ['C-090'], 5000); // no multiplicador set
+    expect(
+      findReusableSale([existing], 'c1', ['C-090'], NOW, RESERVA_TTL_MS, 1),
+    ).toBe(existing);
+  });
+
+  it('treats a stored sale with no multiplier as x1 — NOT reusable from an x2,6 order', () => {
+    const existing = sale('c1', ['C-090'], 5000); // no multiplicador set
+    expect(
+      findReusableSale([existing], 'c1', ['C-090'], NOW, RESERVA_TTL_MS, 2.6),
     ).toBeNull();
   });
 });

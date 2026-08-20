@@ -52,6 +52,12 @@ export interface PendingSaleLike {
    * saber qué aparta sin ir a mirar cómo la consulta la mutation.
    */
   estado: string;
+  /**
+   * `sales.multiplicador` — el markup con el que se cobró esta reserva.
+   * `undefined` en toda fila anterior a este campo; se trata como x1 al
+   * comparar (ver `findReusableSale`), no como "no comparable".
+   */
+  multiplicador?: number;
 }
 
 /**
@@ -82,6 +88,15 @@ export function orderFingerprint(itemIds: string[]): string {
  * existe. Es lo que hace idempotente un doble clic en «Pagar»: sin esto, el
  * segundo clic chocaría contra la reserva que dejó el primero y el cliente
  * vería que su propia piedra «ya no está disponible».
+ *
+ * El multiplicador entra en la clave de deduplicación a propósito: dos
+ * pedidos por los mismos ítems del mismo cliente NO son el mismo pedido si se
+ * cobran a markups distintos (bot a x1 a las 08:00, vitrina a x2,6 a las
+ * 08:10 — o al revés). Reusar la reserva más vieja filtraría el markup en
+ * cualquiera de las dos direcciones. Una reserva sin `multiplicador`
+ * (anterior a este campo) se trata como x1, así compara sensatamente contra
+ * pedidos nuevos en vez de quedar para siempre irreusable o, peor, coincidir
+ * con cualquier markup.
  */
 export function findReusableSale<T extends PendingSaleLike>(
   sales: T[],
@@ -89,6 +104,7 @@ export function findReusableSale<T extends PendingSaleLike>(
   itemIds: string[],
   now: number,
   ttlMs: number = RESERVA_TTL_MS,
+  multiplicador: number = 1,
 ): T | null {
   const cutoff = now - ttlMs;
   const fingerprint = orderFingerprint(itemIds);
@@ -96,6 +112,7 @@ export function findReusableSale<T extends PendingSaleLike>(
     if (sale.estado !== 'reservada') continue;
     if (sale.creationTime < cutoff) continue;
     if (sale.clientId !== clientId) continue;
+    if ((sale.multiplicador ?? 1) !== multiplicador) continue;
     if (orderFingerprint(sale.itemIds) === fingerprint) return sale;
   }
   return null;

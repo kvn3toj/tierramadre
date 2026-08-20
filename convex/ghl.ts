@@ -410,11 +410,13 @@ export const createOrder = mutation({
         estado: s.estado,
         saleId: s.saleId,
         totalCOP: s.totalCOP,
+        multiplicador: s.multiplicador,
       })),
       clientId as string,
       itemIds,
       now,
       RESERVA_TTL_MS,
+      multiplicador,
     );
     if (reusable) {
       // El link de pago vence CON LA RESERVA (`RESERVA_TTL_MS` desde este
