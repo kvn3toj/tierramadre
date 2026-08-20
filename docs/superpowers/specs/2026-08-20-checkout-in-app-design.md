@@ -90,11 +90,22 @@ POST /api/checkout-create-order
   { contact, items, origen: { tipo: 'invitacion', token } }
 ```
 
-En los dos casos `token` es un identificador que el cliente **ya tiene**: el de
-la vitrina viene en la URL `/v/:code`; el del invitado vive en su sesión
-(`INVITATION_STORAGE_KEYS.TOKEN`, `src/types/invitation.ts:123`) y el servidor
-lo verifica contra `invitations.boundToken`. Nunca viaja un multiplicador ni un
-precio.
+En los dos casos `token` es un identificador que el cliente **ya tiene**, y
+nunca viaja un multiplicador ni un precio.
+
+- **Vitrina**: el `:code` de la URL `/v/:code`, resuelto con la query pública
+  que ya existe, `vitrinas.getByToken` (`convex/vitrinas.ts:99`).
+- **Invitación**: el valor de `INVITATION_STORAGE_KEYS.TOKEN`. **Ojo con el
+  nombre**: esa clave se llama `TOKEN` pero lo que guarda es el **shortCode**
+  (`src/pages/InvitationPage.tsx:348` hace
+  `[INVITATION_STORAGE_KEYS.TOKEN]: resolvedShortCode`). Se resuelve con el
+  índice `by_shortCode` que ya existe (`convex/schema.ts:28`).
+
+Esa discrepancia de nombre es una trampa: `invitations` **no tiene índice por
+`boundToken`**, así que resolver «por token» literalmente sería un full-scan de
+la tabla, y además `boundToken` se elimina a propósito de toda lectura de
+invitación (`convex/invitations.ts:61,83`) para que nunca salga del servidor.
+El camino correcto es el shortCode y su índice.
 
 `ghl.createOrder` resuelve el multiplicador contra `vitrinas.multiplier` o
 `invitations.guestMultiplier` y calcula `Math.round(precioCOP × multiplicador)`
