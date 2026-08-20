@@ -106,6 +106,74 @@ describe('textoParaCliente — el único merge tag que el workflow envía', () =
   });
 });
 
+describe('autorizacionValida — con o sin el esquema Bearer', () => {
+  it('acepta "Bearer <secreto>" y el secreto crudo; rechaza lo demás', async () => {
+    const { autorizacionValida } = await import('../api/_lib/anima-turno.js');
+    expect(autorizacionValida('Bearer s3cr3t', 's3cr3t')).toBe(true);
+    // El editor de pills de GHL no garantiza el prefijo — el crudo también vale.
+    expect(autorizacionValida('s3cr3t', 's3cr3t')).toBe(true);
+    expect(autorizacionValida('  s3cr3t  ', 's3cr3t')).toBe(true);
+    expect(autorizacionValida('Bearer otro', 's3cr3t')).toBe(false);
+    expect(autorizacionValida('otro', 's3cr3t')).toBe(false);
+    expect(autorizacionValida(undefined, 's3cr3t')).toBe(false);
+    expect(autorizacionValida('s3cr3t', undefined)).toBe(false);
+    expect(autorizacionValida('', 's3cr3t')).toBe(false);
+  });
+});
+
+describe('sendConversationMessage — el envío de sesión a GHL', () => {
+  it('POST a /conversations/messages con Version y Bearer', async () => {
+    const { sendConversationMessage, tipoDeCanal } =
+      await import('../api/_lib/ghl-send.js');
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      status: 201,
+      json: async () => ({}),
+    }));
+    const r = await sendConversationMessage(
+      { token: 'tok', fetchImpl },
+      {
+        type: tipoDeCanal('whatsapp')!,
+        contactId: 'c1',
+        message: 'hola 💚',
+      },
+    );
+    expect(r).toEqual({ ok: true, status: 201 });
+    const [url, init] = fetchImpl.mock.calls[0];
+    expect(url).toBe(
+      'https://services.leadconnectorhq.com/conversations/messages',
+    );
+    expect(init?.headers?.Authorization).toBe('Bearer tok');
+    expect(init?.headers?.Version).toBe('2021-07-28');
+    expect(JSON.parse(init?.body ?? '')).toEqual({
+      type: 'WhatsApp',
+      contactId: 'c1',
+      message: 'hola 💚',
+    });
+  });
+
+  it('no lanza ante red muerta — devuelve ok:false', async () => {
+    const { sendConversationMessage } = await import('../api/_lib/ghl-send.js');
+    const fetchImpl = vi.fn(async () => {
+      throw new Error('ECONNRESET');
+    });
+    const r = await sendConversationMessage(
+      { token: 'tok', fetchImpl },
+      { type: 'WhatsApp', contactId: 'c1', message: 'x' },
+    );
+    expect(r).toEqual({ ok: false, status: 0 });
+  });
+
+  it('mapea los canales de anima-bot a los type de GHL', async () => {
+    const { tipoDeCanal } = await import('../api/_lib/ghl-send.js');
+    expect(tipoDeCanal('whatsapp')).toBe('WhatsApp');
+    expect(tipoDeCanal('WhatsApp ')).toBe('WhatsApp');
+    expect(tipoDeCanal('instagram')).toBe('IG');
+    expect(tipoDeCanal('facebook')).toBe('FB');
+    expect(tipoDeCanal('telegram')).toBeNull();
+  });
+});
+
 describe('el fallback que oye María', () => {
   it('es un TurnoRespuesta válido, con estado que ella ya sabe decir', () => {
     expect(esTurnoRespuesta(FALLBACK_TURNO)).toBe(true);
