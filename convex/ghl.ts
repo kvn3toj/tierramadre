@@ -44,6 +44,7 @@ import {
   reservedItemIds,
   findReusableSale,
 } from './_lib/reservas';
+import { resolverMultiplicador, precioConMarkup } from './_lib/precioVitrina';
 import {
   isContactInactive,
   addContactTags,
@@ -302,14 +303,48 @@ export const createOrder = mutation({
      * opcional, así que el rail del bot conserva su compuerta sin tocarse.
      */
     skip_limit: v.optional(v.boolean()),
+    /**
+     * De qué registro viene esta compra. NO lleva precio ni multiplicador:
+     * el servidor los resuelve. Ausente = riel del bot = sin markup.
+     */
+    origen: v.optional(
+      v.object({
+        tipo: v.union(v.literal('vitrina'), v.literal('invitacion')),
+        token: v.string(),
+      }),
+    ),
     secret: v.string(),
   },
   handler: async (ctx, args) => {
     requireServerSecret(args.secret);
     if (!args.items.length) throw new ConvexError('EMPTY_ITEMS');
 
+    // Resolver el markup ANTES de sumar, porque decide cada precio.
+    let registroOrigen: { multiplicador?: number } | null = null;
+    if (args.origen?.tipo === 'vitrina') {
+      const v0 = await ctx.db
+        .query('vitrinas')
+        .withIndex('by_token', (q) => q.eq('token', args.origen!.token))
+        .first();
+      registroOrigen = v0 ? { multiplicador: v0.multiplier } : null;
+    } else if (args.origen?.tipo === 'invitacion') {
+      // La clave que el invitado guarda como TOKEN contiene el shortCode
+      // (InvitationPage.tsx). `invitations` NO tiene índice por boundToken,
+      // así que resolver «por token» literalmente sería un full-scan.
+      const inv = await ctx.db
+        .query('invitations')
+        .withIndex('by_shortCode', (q) => q.eq('shortCode', args.origen!.token))
+        .first();
+      registroOrigen = inv ? { multiplicador: inv.guestMultiplier } : null;
+    }
+
+    const resolucion = resolverMultiplicador(args.origen, registroOrigen);
+    if (!resolucion.ok) throw new ConvexError('ORIGEN_INVALIDO');
+    const multiplicador = resolucion.multiplicador;
+
     // 1. Reload prices/stock from the DB — never trust client-supplied amounts.
     let totalCOP = 0;
+    let precioBaseCOP = 0;
     const itemIds: string[] = [];
     for (const line of args.items) {
       const product = await ctx.db
@@ -320,7 +355,9 @@ export const createOrder = mutation({
       if (product.estado !== 'DISPONIBLE')
         throw new ConvexError(`NOT_AVAILABLE:${line.sku}`);
       const qty = Math.max(1, Math.floor(line.qty));
-      totalCOP += (product.precioCOP ?? 0) * qty;
+      const base = product.precioCOP ?? 0;
+      precioBaseCOP += base * qty;
+      totalCOP += precioConMarkup(base, multiplicador) * qty;
       for (let i = 0; i < qty; i++) itemIds.push(line.sku);
     }
 
@@ -426,6 +463,8 @@ export const createOrder = mutation({
       clientId,
       precioAcordadoCOP: totalCOP,
       totalCOP,
+      precioBaseCOP,
+      multiplicador,
       formaPago: args.forma_pago ?? 'mercadopago',
       estado: 'reservada' as const,
       ambassadorId,
