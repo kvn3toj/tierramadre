@@ -24,6 +24,45 @@ describe('parseTurno — lo que manda la tool de María', () => {
     });
   });
 
+  it('normaliza {{message.attachments}} en la forma que GHL lo mande', async () => {
+    const { normalizaAdjunto } = await import('../api/_lib/anima-turno.js');
+    const U1 = 'https://services.leadconnectorhq.com/media/f1.jpg';
+    const U2 = 'https://services.leadconnectorhq.com/media/f2.jpg';
+    // Array real, string JSON, CSV, espacio/nueva línea, URL sola — SIEMPRE la primera URL.
+    expect(normalizaAdjunto([U1, U2])).toBe(U1);
+    expect(normalizaAdjunto(JSON.stringify([U1, U2]))).toBe(U1);
+    expect(normalizaAdjunto(`${U1},${U2}`)).toBe(U1);
+    expect(normalizaAdjunto(`${U1}\n${U2}`)).toBe(U1);
+    expect(normalizaAdjunto(U1)).toBe(U1);
+  });
+
+  it('un adjunto vacío o ilegible queda en undefined — la PRESENCIA cambia el flujo en anima-bot', async () => {
+    const { normalizaAdjunto } = await import('../api/_lib/anima-turno.js');
+    for (const malo of [
+      undefined,
+      '',
+      '  ',
+      '[]',
+      '[""]',
+      '{{message.attachments}}', // el pill sin renderizar
+      'sin adjunto',
+      42,
+      { url: 'https://x' },
+    ]) {
+      expect(normalizaAdjunto(malo), JSON.stringify(malo)).toBeUndefined();
+    }
+  });
+
+  it('parseTurno pasa el adjunto normalizado al contrato de anima-bot', () => {
+    const U = 'https://services.leadconnectorhq.com/media/f1.jpg';
+    expect(parseTurno({ ...CUERPO, adjunto: `["${U}"]` })).toMatchObject({
+      adjunto: U,
+    });
+    // Cliente sin foto: el campo ni aparece.
+    const sin = parseTurno({ ...CUERPO, adjunto: '' });
+    expect(sin?.adjunto).toBeUndefined();
+  });
+
   it('rechaza cuerpos a medias en vez de crear leads fantasma', () => {
     for (const malo of [
       null,

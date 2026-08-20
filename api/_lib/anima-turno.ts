@@ -60,6 +60,32 @@ const txt = (v: unknown): string | undefined =>
   typeof v === 'string' && v.trim() !== '' ? v.trim() : undefined;
 
 /**
+ * `{{message.attachments}}` de GHL, en la forma que sea. El editor de pills no documenta cómo
+ * serializa un array, y por el precedente del header (ver `autorizacionValida`) no se confía en
+ * un solo formato: puede llegar como array real, como string JSON (`["u1","u2"]`), como URLs
+ * separadas por coma/espacio, o como una URL sola. Se toma la PRIMERA URL http(s) — anima-bot
+ * recibe UN `adjunto` y la primera foto es la referencia. Todo lo demás (vacíos, `[]`, un pill
+ * sin renderizar, texto arbitrario) queda en `undefined` en vez de viajar como basura: en
+ * anima-bot la sola PRESENCIA de `fotoReferencia` cambia el flujo.
+ */
+export function normalizaAdjunto(v: unknown): string | undefined {
+  const urls = (x: unknown): string[] => {
+    if (Array.isArray(x)) return x.flatMap(urls);
+    if (typeof x !== 'string') return [];
+    const s = x.trim();
+    if (s.startsWith('[')) {
+      try {
+        return urls(JSON.parse(s));
+      } catch {
+        // No era JSON: sigue el camino de texto plano.
+      }
+    }
+    return s.split(/[\s,]+/).filter((u) => /^https?:\/\//i.test(u));
+  };
+  return urls(v)[0];
+}
+
+/**
  * Valida el cuerpo que manda la tool de María. `null` antes que coaccionar un pedido a medias:
  * un 400 temprano se ve en el log del workflow; un turno con contacto vacío crea un lead
  * fantasma en anima-bot.
@@ -78,7 +104,7 @@ export function parseTurno(body: unknown): TurnoRequest | null {
     mensaje,
     nombre: txt(o.nombre),
     origen: txt(o.origen),
-    adjunto: txt(o.adjunto),
+    adjunto: normalizaAdjunto(o.adjunto),
   };
 }
 
