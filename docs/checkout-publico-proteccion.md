@@ -129,7 +129,37 @@ de sumarlo. `tests/checkoutBody.test.ts` prueba exactamente este caso
 ("CRITICAL: rejects a huge items array with a poisoned qty, on length
 alone").
 
-### 5.2 · La reserva de 30 minutos
+### 5.2 · Allowlist de origen (`api/_lib/checkoutOrigin.ts`)
+
+Añadida el **20 ago 2026**. El helper compartido `setCorsHeaders`
+(`api/_lib/cors.js`) manda `Access-Control-Allow-Origin: *` en todos los
+endpoints. Eso no le abre nada a `curl` —CORS lo imponen los navegadores, no
+el servidor—, pero sí habilita una variante concreta de abuso: **una página
+de un tercero puede hacer que los navegadores de sus visitantes posteen
+aquí**, apartando piedras con IPs legítimas y repartidas. Es exactamente el
+tráfico que un rate limit por IP no distingue de compradores reales.
+
+El endpoint ahora rechaza con **403 `ORIGIN_NOT_ALLOWED`** cualquier `Origin`
+que no esté en la lista, y refleja el origen concreto (con `Vary: Origin`) en
+vez del `*`. La lista es: `https://tierramadre.app`,
+`https://www.tierramadre.app`, el origen de `APP_URL`, y los extras
+separados por coma de la variable opcional **`CHECKOUT_ALLOWED_ORIGINS`** —
+un dominio nuevo se habilita por env, sin tocar código. Fuera de producción
+(`VERCEL_ENV !== 'production'`) se acepta además `localhost` / `127.0.0.1` en
+cualquier puerto, para que `vercel dev` funcione.
+
+**Una petición SIN cabecera `Origin` pasa**, a propósito: ningún llamante de
+servidor la manda (el riel del bot, un webhook, `curl`), bloquearla rompería
+a los legítimos y no frenaría a nadie —quien ataca desde su propia máquina
+simplemente la omite—. Por eso esto es un escalón, no la puerta: **no
+sustituye al WAF del paso 3**, le quita al atacante el apalancamiento de
+usar navegadores ajenos.
+
+La regla vive sólo en este endpoint. Cambiar `setCorsHeaders` habría movido
+el comportamiento de los ~40 endpoints de golpe para pagar esta factura una
+sola vez.
+
+### 5.3 · La reserva de 30 minutos
 
 `RESERVA_TTL_MS` (`convex/_lib/reservas.ts`) aparta las piedras de una venta
 `reservada` durante 30 minutos desde su `_creationTime`. Vencida esa
@@ -137,7 +167,7 @@ ventana, la reserva desaparece sola — no hay campo de estado que un proceso
 externo (el pull desde Sheets, por ejemplo) pueda pisar ni un reaper que
 pueda fallar y dejar una piedra bloqueada para siempre.
 
-### 5.3 · Idempotencia contra el doble clic
+### 5.4 · Idempotencia contra el doble clic
 
 `findReusableSale` busca, dentro del mismo TTL, una venta `reservada` que
 pertenezca al mismo cliente y contenga exactamente el mismo conjunto de
@@ -170,6 +200,9 @@ el edge, o simplemente carritos abandonados a una escala inusual.
   independiente
 - `tests/checkoutBody.test.ts` — casos que prueban esa validación, incluido
   el ataque de `qty` envenenado
+- `api/_lib/checkoutOrigin.ts` — allowlist de origen, pura y con tests
+  (`tests/checkoutOrigin.test.ts`)
 - `convex/_lib/reservas.ts` — `RESERVA_TTL_MS`, `MAX_ITEMS_POR_PEDIDO`,
-  `findReusableSale`, `reservedItemIds`
+  `findReusableSale`, `reservedItemIds`, `findReservationConflict` (lo que
+  consulta el riel del mostrador antes de vender)
 - `convex/ghl.ts` — `createOrder`, la mutation detrás del proxy de confianza

@@ -36,12 +36,45 @@ import {
   MP_NOT_CONFIGURED,
 } from './_lib/checkoutLink.js';
 import { parseCheckoutBody } from './_lib/checkoutBody.js';
+import {
+  allowedCheckoutOrigins,
+  isCheckoutOriginAllowed,
+} from './_lib/checkoutOrigin.js';
 import { api } from '../convex/_generated/api.js';
 
 const DEFAULT_APP_URL = 'https://tierramadre.app';
 
 export default withApiHandler(
   async (req: VercelRequest, res: VercelResponse) => {
+    // Allowlist de origen ANTES de cualquier trabajo: el helper compartido
+    // manda `Access-Control-Allow-Origin: *`, lo que deja que una web de un
+    // tercero aparte piedras desde el navegador de sus visitantes —con IPs
+    // legítimas y repartidas, que es lo que un rate limit por IP no ve. Ver
+    // `./_lib/checkoutOrigin.ts` para el alcance exacto (no autentica nada;
+    // una petición sin `Origin` pasa).
+    const origen = (req.headers.origin as string | undefined) ?? undefined;
+    const permitidos = allowedCheckoutOrigins({
+      APP_URL: process.env.APP_URL,
+      CHECKOUT_ALLOWED_ORIGINS: process.env.CHECKOUT_ALLOWED_ORIGINS,
+    });
+    if (
+      !isCheckoutOriginAllowed(origen, permitidos, {
+        // `vercel dev` y el server de Vite no corren en el dominio de prod.
+        allowLocalhost: process.env.VERCEL_ENV !== 'production',
+      })
+    ) {
+      console.warn(`[CheckoutCreateOrder] origen rechazado: ${origen}`);
+      return sendError(res, 403, 'ORIGIN_NOT_ALLOWED');
+    }
+    if (origen) {
+      // Reemplaza el `*` del helper por el origen concreto ya validado.
+      // `Vary: Origin` es obligatorio con una respuesta que depende del
+      // origen: sin él un CDN puede servirle a un origen la cabecera cacheada
+      // de otro.
+      res.setHeader('Access-Control-Allow-Origin', origen);
+      res.setHeader('Vary', 'Origin');
+    }
+
     if (!isConvexEnabled || !convexClient) {
       return sendError(res, 503, 'Convex backend not configured');
     }
