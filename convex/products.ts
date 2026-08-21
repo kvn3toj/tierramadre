@@ -353,6 +353,180 @@ export const getByItem = query({
 });
 
 /**
+ * Lista blanca de `productInventory` para las DOS queries públicas del
+ * catálogo (`publishedCatalog` y su espejo `getPublicByItem`).
+ *
+ * POR QUÉ EXISTE. Las dos son `query({})`, o sea públicas, y la URL del
+ * deployment viaja dentro del bundle de la página web. Medido contra
+ * producción el 2026-08-21, un `curl` anónimo a
+ * `valuable-mule-753.convex.cloud/api/query` bajó 340 KB con las 443 piezas
+ * publicadas y, dentro: la UBICACIÓN FÍSICA de 416 (OFI.CALI 224, ASESOR 130,
+ * OFI.BOGOTA 36, EMBAJADOR 23), el `asesor` de 309 con nombre y apellido (una
+ * asesora aparece 44 veces), el estado contable `caja` de 180 (Legalizada
+ * 113), `qr` en 428, `asesorActual` en 34 y `estadoAsesor` en 54. Para un
+ * negocio de esmeraldas eso no es un tema de privacidad: es un inventario
+ * geolocalizado de piedras de alto valor, abierto
+ * (docs/audits/2026-08-21-rieles-precio-costo.md §1).
+ *
+ * Nadie decidió publicarlo. La proyección se escribió una vez copiando la fila
+ * y las columnas se fueron sumando al literal sin que nadie las clasificara —
+ * el mismo mecanismo que `_lib/saleSafe.ts` documenta para las 14 columnas
+ * AQ→BE. Ahí la respuesta correcta fue una lista NEGRA, porque `get`/`getByItem`
+ * devuelven la fila entera y enumerar cada campo que lee cada consumidor
+ * rompería la UI en silencio. Acá es al revés: estas dos queries YA eran
+ * proyecciones explícitas, así que la lista blanca no le quita nada a nadie y
+ * sí cambia el modo de falla — un campo nuevo del SOT es invisible hasta que
+ * alguien lo declara, en vez de publicarse solo.
+ *
+ * El riel viejo (Google Sheets, `api/_lib/catalogProjection.ts`) ya borraba
+ * estos mismos siete campos para todo el que no fuera staff. El riel nuevo se
+ * los servía a cualquiera. Esto empareja los dos.
+ *
+ * QUÉ NO SE TOCA. `coleccion` y `estado` se quedan: la web pinta la colección
+ * y el "disponible / vendida" desde ahí. Y el STAFF no pierde nada — sigue
+ * recibiendo ubicación, asesor, caja y compañía por el riel autenticado de
+ * Sheets, que para `grant.kind === 'staff'` devuelve la fila completa
+ * (`projectForGrant`). Para el visitante anónimo, dejar de recibir
+ * `asesor`/`asesorActual` acá lo devuelve al camino que ya estaba diseñado
+ * para él: `resolveAsesorProducts` cae al endpoint `/api/ambassador-products`,
+ * que responde con números de ítem y sin nombres.
+ */
+export const CAMPOS_PUBLICOS_CATALOGO = [
+  // Identidad y ficha técnica
+  'itemId',
+  'nombre',
+  'peso',
+  'color',
+  'calidad',
+  'cantidad',
+  'talla',
+  'tallaAnillo',
+  'medidas',
+  'medidasValores',
+  'categoria',
+  // Precio de vitrina (el DERIVADO, nunca el costo — ver CAMPOS_RESERVADOS)
+  'precioFinalCOP',
+  // Lo que la web pinta como "disponible / vendida" y como colección
+  'estado',
+  'coleccion',
+  // Sello de publicación: gobierna el orden "lo más nuevo" y el gate de
+  // useTreasureFiltering. Es un timestamp, no dice dónde está la piedra.
+  'publishedAt',
+  // Medios, ya públicos por el proxy de Drive
+  'fotoUrl',
+  'certificadoUrl',
+  // Procedencia denormalizada del lote (pública por decisión 2026-06-30)
+  'mina',
+  'tratamiento',
+  'procedencia',
+  // Características de Fotosíntesis (públicas por decisión 2026-06-30)
+  'nivelRareza',
+  'calificacion',
+  'tipoEsmeralda',
+  'tipoJoya',
+  'tecnicaJoya',
+  'minerales',
+  'complementos',
+  // Copy evocador de captura; doble como descripción pública de la pieza
+  'observacion',
+] as const;
+
+/**
+ * Todo lo demás que vive en `productInventory`, enumerado a propósito.
+ *
+ * No es decoración: el test `tests/catalogoPublicoSinUbicacion.test.ts` exige
+ * que la unión de las dos listas sea EXACTAMENTE el esquema. Una columna nueva
+ * del SOT rompe ese test hasta que alguien decida a mano de qué lado va — que
+ * es justo la decisión que nunca se tomó para `ubicacion`, `asesor` y `caja`.
+ *
+ * Cuatro clases de dato, un solo criterio: lo que no le corresponde a quien
+ * mira una vitrina sin credencial.
+ *
+ *   · UBICACIÓN   ubicacion · caja · subLote   (dónde está la piedra)
+ *   · IDENTIDAD   asesor · asesorActual · estadoAsesor · cajaComprador
+ *   · PLATA       costoBaseCOP y toda la familia de costos/precios internos
+ *   · INTERNO     sincronía, banderas de publicación, notas y fórmulas
+ *
+ * `qr` no es dato sensible por sí mismo, pero es la URL directa a la ficha y
+ * ningún consumidor lo lee (la ficha arma su propio QR desde la ruta), así que
+ * sale por inútil antes que por peligroso.
+ */
+export const CAMPOS_RESERVADOS_CATALOGO = [
+  // UBICACIÓN FÍSICA — el hallazgo #1
+  'ubicacion',
+  'caja',
+  'subLote',
+  // IDENTIDAD DE TERCEROS — el hallazgo #1
+  'asesor',
+  'asesorActual',
+  'estadoAsesor',
+  'cajaComprador',
+  // Enlace redundante (nadie lo lee; la ficha arma el QR desde la ruta)
+  'qr',
+  // COSTO Y PRECIOS INTERNOS
+  'precioCOP',
+  'costoBaseCOP',
+  'precioFinalManual',
+  'precioEmbajadorCOP',
+  'precioPotencialCOP',
+  'precioConscienteCOP',
+  'costoLoteCOP',
+  'precioObjetivoCOP',
+  'cajaPrecioVentaCOP',
+  'cajaValorPagadoCOP',
+  'cajaSaldoCOP',
+  'cajaEstadoContable',
+  'rendimientoEsperado',
+  'rangoDescuento',
+  // OPERACIÓN INTERNA
+  'rowIndex',
+  'loteId',
+  'tipo',
+  'subtipoForm',
+  'preponderancia',
+  'mostrarEnCatalogo',
+  'cantidadEstimada',
+  'formulaGema',
+  'formulaJoya',
+  'pesoGr',
+  'productoUrl',
+  'carpetaFotosUrl',
+  'animaNotas',
+  'fuentes',
+  'notasConflictos',
+  'lastPulledAt',
+  'lastPushedAt',
+  'syncStatus',
+  'syncError',
+  'fieldsHash',
+] as const;
+
+type CampoPublicoCatalogo = (typeof CAMPOS_PUBLICOS_CATALOGO)[number];
+
+/**
+ * Construye la fila pública tomando SOLO los campos de la lista blanca.
+ *
+ * Deliberadamente NO es un spread con borrados encima: no hay literal donde
+ * agregar un campo de contrabando, y el tipo de retorno excluye lo reservado,
+ * así que leer `fila.ubicacion` río abajo falla en compilación y no en
+ * producción.
+ *
+ * Las claves ausentes se omiten en vez de viajar como `undefined` — es lo que
+ * hacía la proyección anterior de hecho (Convex no serializa `undefined`), y
+ * mantenerlo explícito deja el payload igual de chico.
+ */
+export function proyectaCatalogoPublico<T extends Record<string, unknown>>(
+  row: T,
+): Pick<T, Extract<keyof T, CampoPublicoCatalogo>> {
+  const out: Record<string, unknown> = {};
+  for (const campo of CAMPOS_PUBLICOS_CATALOGO) {
+    const valor = (row as Record<string, unknown>)[campo];
+    if (valor !== undefined) out[campo] = valor;
+  }
+  return out as Pick<T, Extract<keyof T, CampoPublicoCatalogo>>;
+}
+
+/**
  * Public, PROJECTED single-item lookup for the product-detail page.
  *
  * Unlike `get`/`getByItem` (which return the RAW row and would leak
@@ -364,6 +538,10 @@ export const getByItem = query({
  * that `publishedCatalog` can never surface (it filters on loteId). No publish
  * filter here: a scanned QR should resolve any real item. Price is limited to
  * the public ambassador tier; cost/consciente/sync stay internal.
+ *
+ * "The same public-safe fields as `publishedCatalog`" dejó de ser una promesa
+ * del docstring el 2026-08-21: las dos derivan de `CAMPOS_PUBLICOS_CATALOGO`,
+ * así que ahora es la misma lista o no compila.
  */
 export const getPublicByItem = query({
   args: { itemId: v.string() },
@@ -387,36 +565,17 @@ export const getPublicByItem = query({
       tratamiento = lot?.tratamiento;
     }
 
+    // Lista blanca compartida con `publishedCatalog` (ver
+    // CAMPOS_PUBLICOS_CATALOGO arriba): esta query es su espejo de un ítem, así
+    // que las dos tienen que recortar por el mismo lugar. `qr` salía por acá y
+    // ya no: nadie lo lee — la ficha arma su propio QR desde la ruta.
     return {
-      itemId: row.itemId,
-      nombre: row.nombre,
-      peso: row.peso,
-      color: row.color,
-      calidad: row.calidad,
-      cantidad: row.cantidad,
-      talla: row.talla,
-      tallaAnillo: row.tallaAnillo,
-      medidas: row.medidas,
-      medidasValores: row.medidasValores,
-      categoria: row.categoria,
-      precioFinalCOP: row.precioFinalCOP,
-      estado: row.estado,
-      qr: row.qr,
-      coleccion: row.coleccion,
-      fotoUrl: row.fotoUrl,
-      certificadoUrl: row.certificadoUrl,
-      // Fotosíntesis characteristics (public per decision 2026-06-30).
-      procedencia: row.procedencia,
-      nivelRareza: row.nivelRareza,
-      calificacion: row.calificacion,
-      tipoEsmeralda: row.tipoEsmeralda,
-      tipoJoya: row.tipoJoya,
-      tecnicaJoya: row.tecnicaJoya,
-      minerales: row.minerales,
-      complementos: row.complementos,
-      observacion: row.observacion,
+      ...proyectaCatalogoPublico(row),
       // Promoción de cierre de temporada, derivada de `observacion`.
       precioEspecial: precioEspecialDeObservacion(row.observacion),
+      // La procedencia del LOTE pisa la denormalizada de la fila: acá se
+      // resuelve por lectura porque un QR escaneado tiene que resolver
+      // cualquier ítem, incluso uno que nunca pasó por publicación.
       mina,
       tratamiento,
     };
@@ -547,12 +706,15 @@ export const publishedCatalog = query({
     // migrations.backfillLotProvenance.
 
     // Project ONLY the fields the customer catalog consumes (see
-    // useFotosintesisCatalog.PublishedRow). The public catalog price is the
-    // derived final price (precioFinalCOP = costoBaseCOP × 2.6, sheet column M);
-    // costoBaseCOP (L) is intentionally NOT projected so the public can't see
-    // cost. precioPotencialCOP, sync metadata and rowIndex stay internal. The
-    // Fotosíntesis characteristics block below is surfaced publicly per product
-    // decision 2026-06-30 (gem grade, origin, treatment, jewelry detail).
+    // useFotosintesisCatalog.PublishedRow), por LISTA BLANCA — la proyección la
+    // deriva `proyectaCatalogoPublico` de `CAMPOS_PUBLICOS_CATALOGO`, no un
+    // literal escrito a mano. El literal fue el defecto: se copió de la fila y
+    // le fueron entrando columnas hasta publicarle a cualquier anónimo la
+    // ubicación física de 409 piezas (auditoría del 2026-08-21, hallazgo #1).
+    // El precio público es el DERIVADO (precioFinalCOP = costoBaseCOP × 2.6,
+    // columna M de la hoja); costoBaseCOP (L), precioPotencialCOP, la metadata
+    // de sync y rowIndex se quedan adentro. Las características de Fotosíntesis
+    // son públicas por decisión de producto del 2026-06-30.
     //
     // NOTE: this projection shapes the payload sent to the client (Data Egress).
     // It does NOT reduce Database I/O — Convex bills that on documents SCANNED,
@@ -561,45 +723,10 @@ export const publishedCatalog = query({
     // bandwidth fix. See docs/audits/2026-08-12-convex-usage-audit.md §3.
     return published.map((row) => {
       return {
-        itemId: row.itemId,
-        nombre: row.nombre,
-        peso: row.peso,
-        color: row.color,
-        calidad: row.calidad,
-        cantidad: row.cantidad,
-        talla: row.talla,
-        tallaAnillo: row.tallaAnillo,
-        medidas: row.medidas,
-        medidasValores: row.medidasValores,
-        categoria: row.categoria,
-        precioFinalCOP: row.precioFinalCOP,
-        ubicacion: row.ubicacion,
-        asesor: row.asesor,
-        estado: row.estado,
-        qr: row.qr,
-        coleccion: row.coleccion,
-        caja: row.caja,
-        asesorActual: row.asesorActual,
-        estadoAsesor: row.estadoAsesor,
-        fotoUrl: row.fotoUrl,
-        certificadoUrl: row.certificadoUrl,
-        publishedAt: row.publishedAt,
-        // ── Fotosíntesis characteristics (surfaced publicly 2026-06-30) ──
-        procedencia: row.procedencia,
-        nivelRareza: row.nivelRareza,
-        calificacion: row.calificacion,
-        tipoEsmeralda: row.tipoEsmeralda,
-        tipoJoya: row.tipoJoya,
-        tecnicaJoya: row.tecnicaJoya,
-        minerales: row.minerales,
-        complementos: row.complementos,
-        observacion: row.observacion,
+        ...proyectaCatalogoPublico(row),
         // Promoción de cierre de temporada, derivada de `observacion` (no es
         // columna; ver _lib/precioEspecial.ts). Ausente si venció o no aplica.
         precioEspecial: precioEspecialDeObservacion(row.observacion),
-        // Lot-level provenance, denormalized from the `lots` table.
-        mina: row.mina,
-        tratamiento: row.tratamiento,
       };
     });
   },
