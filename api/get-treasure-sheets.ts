@@ -215,13 +215,32 @@ export function mapRowToTreasureItem(
     ).trim(),
     // Adaptador SOT v3 (2026-07-21): la legacy tenía "Precio COP"; el SOT v3 usa
     // `precioFinalCOP` (= costoBase × 2.6). Orden: precio cop (legacy) →
-    // precioFinalCOP (SOT v3) → precioEmbajadorCOP (SOT v2, deprecado) →
-    // posicional (solo legacy; en el SOT el índice 11 es costoBaseCOP).
+    // precioFinalCOP (SOT v3) → precioEmbajadorCOP (SOT v2, deprecado).
+    //
+    // SIN respaldo posicional (2026-08-21). Había un `getByIndex(11)` al final
+    // de la cadena, y el propio comentario ya advertía «en el SOT el índice 11
+    // es costoBaseCOP» — pero `SPREADSHEET_ID` HOY apunta al SOT v3
+    // (1oRw1KSh…), el mismo libro que FOTOSINTESIS_SPREADSHEET_ID. O sea que
+    // el respaldo no caía en un libro legacy: caía en la columna L del SOT.
+    //
+    // Efecto medido contra producción el 2026-08-21: 22 ítems sin precio
+    // servían su COSTO como precio de venta — $151.243.284 en total, con
+    // #544 «Viaje Estelar» ofertado a $41.340.039, que es exactamente lo que
+    // costó. Margen cero, y sin nada en pantalla que lo delatara.
+    //
+    // La cadena por encabezado ya cubre el caso legacy: si el libro es la
+    // legacy de 21 columnas, su columna «Precio COP» la encuentra
+    // PRECIO_COP por nombre. El posicional sólo se disparaba cuando NINGÚN
+    // encabezado de precio existía — que en el SOT significa «esta pieza no
+    // tiene precio», no «leé el costo». Sin precio, `parsePrice(null)` da 0 y
+    // useTreasureFiltering pinta «Consultar precio», que es la verdad.
+    //
+    // Mismo criterio que el `precioInternacional` de abajo, que ya lo aplicó
+    // ("NO positional fallback here") tras el reporte «Ubicación: 150820».
     precioCOP: parsePrice(
       getValue(INVENTARIO_HEADERS.PRECIO_COP) ||
         getValue(INVENTARIO_HEADERS.PRECIO_FINAL) ||
-        getValue(INVENTARIO_HEADERS.PRECIO_EMBAJADOR) ||
-        getByIndex(11),
+        getValue(INVENTARIO_HEADERS.PRECIO_EMBAJADOR),
     ),
     precioInternacional: 0,
     // NO positional fallback here. The `getByIndex` defaults encode the

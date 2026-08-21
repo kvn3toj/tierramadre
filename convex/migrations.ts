@@ -25,6 +25,18 @@ import { computePrecioFinal } from './_lib/pricing';
  * value is skipped, so re-running (or running after normal edits) is harmless.
  * Docs with no/zero costoBaseCOP get no price (computePrecioFinal → undefined).
  *
+ * RESPECTS `precioFinalManual` (2026-08-21). It did not, and that made a
+ * cumplida migration into a loaded gun: `precioFinalCOP` stopped being a
+ * projection of cost on 2026-07-23 — the SHEET owns column M and a pulled price
+ * stamps `precioFinalManual: true` (see _lib/pricing.ts and _lib/sheetPullMaps.ts).
+ * Measured against prod on 2026-08-21, a re-run would have ERASED 8 hand-typed
+ * prices whose cost is 0 ($38.273.001, among them #548 "Anillo Semilla" at
+ * $36.200.000) and reverted 352 more to costoBaseCOP × 2.6 — i.e. the whole real
+ * price list back to the flat markup. `precioFinalRefanPatch` already guards the
+ * lote re-fan this same way; this is the one path that still didn't.
+ *
+ * The backfill is therefore only for docs that never had a human price.
+ *
  *   npx convex run --prod migrations:backfillPrecioFinal '{}'
  */
 export const backfillPrecioFinal = internalMutation({
@@ -32,14 +44,19 @@ export const backfillPrecioFinal = internalMutation({
   handler: async (ctx) => {
     const rows = await ctx.db.query('productInventory').collect();
     let updated = 0;
+    let skippedManual = 0;
     for (const row of rows) {
+      if (row.precioFinalManual) {
+        skippedManual += 1;
+        continue;
+      }
       const next = computePrecioFinal(row.costoBaseCOP);
       if (next !== row.precioFinalCOP) {
         await ctx.db.patch(row._id, { precioFinalCOP: next });
         updated += 1;
       }
     }
-    return { scanned: rows.length, updated };
+    return { scanned: rows.length, updated, skippedManual };
   },
 });
 
