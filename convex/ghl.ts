@@ -25,7 +25,7 @@ import {
   type MutationCtx,
 } from './_generated/server';
 import { v, ConvexError } from 'convex/values';
-import { internal } from './_generated/api';
+import { api, internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
 import { allocateNext, formatSaleId } from './sequences';
 import {
@@ -630,11 +630,14 @@ export const markOrderPaid = mutation({
     // contenido de una fila `pending` o `error` (convex/products.ts). Es el
     // mecanismo que el repo ya usa para toda edición nacida en Convex.
     //
-    // OJO: nada empuja productInventory de vuelta a Sheets del lado del
-    // servidor (ese push sale de la UI de admin, api/admin-product-update.ts),
-    // así que la hoja NO se entera sola. Convex es lo que bloquea un segundo
-    // pedido, así que la doble venta sí queda cerrada; la reconciliación con
-    // la hoja es manual y está declarada en el spec.
+    // Y además se PROGRAMA el push a la hoja, igual que hace el riel del
+    // mostrador (`sales._create`). Hasta hoy no se hacía y el comentario
+    // declaraba la reconciliación como manual: la hoja seguía mostrando
+    // DISPONIBLE una piedra pagada en línea, y la hoja es lo que mira el
+    // equipo. «Convex bloquea el segundo pedido» sólo cubre los pedidos que
+    // pasan por Convex — una venta anotada mirando la hoja no pasa. Es el
+    // mismo par audit-row + `products.pushToSheet` que ya usa el POS, así que
+    // hereda su reintento (`retryPush`) y su registro de fallos.
     //
     // itemIds repite el sku cuando qty > 1 — de ahí el Set.
     let touchedPublished = false;
@@ -664,6 +667,20 @@ export const markOrderPaid = mutation({
       await ctx.db.patch(product._id, {
         estado: 'VENDIDA' as const,
         syncStatus: 'pending' as const,
+      });
+      const auditId = await ctx.db.insert('productEdits', {
+        itemId: product.itemId,
+        editorEmail: 'venta-online',
+        editedAt: new Date().toISOString(),
+        changes: [
+          { field: 'estado', before: product.estado, after: 'VENDIDA' },
+        ],
+        status: 'pending' as const,
+      });
+      await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
+        itemId: product.itemId,
+        auditId,
+        mode: 'patch',
       });
     }
     if (touchedPublished) await bumpCatalogVersion(ctx);
