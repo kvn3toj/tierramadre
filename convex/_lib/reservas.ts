@@ -53,6 +53,12 @@ export interface PendingSaleLike {
    */
   estado: string;
   /**
+   * `sales.saleId` — sólo para poder NOMBRAR la venta que aparta una piedra
+   * cuando se le niega la venta a un vendedor en el mostrador. Opcional
+   * porque los predicados de reserva no lo necesitan.
+   */
+  saleId?: string;
+  /**
    * `sales.multiplicador` — el markup con el que se cobró esta reserva.
    * `undefined` en toda fila anterior a este campo; se trata como x1 al
    * comparar (ver `findReusableSale`), no como "no comparable".
@@ -114,6 +120,46 @@ export function findReusableSale<T extends PendingSaleLike>(
     if (sale.clientId !== clientId) continue;
     if ((sale.multiplicador ?? 1) !== multiplicador) continue;
     if (orderFingerprint(sale.itemIds) === fingerprint) return sale;
+  }
+  return null;
+}
+
+/** El ítem apartado y la venta que lo aparta. */
+export interface ReservationConflict {
+  itemId: string;
+  /** `saleId` de la venta que lo tiene apartado, para poder nombrarla. */
+  saleId: string;
+}
+
+/**
+ * El primer ítem del pedido que otra venta tiene apartado, o `null`.
+ *
+ * Existe para el riel POS (`convex/sales._create`), que hasta hoy sólo miraba
+ * `productInventory.estado`: una piedra con un pago en línea en curso sigue
+ * `DISPONIBLE` —la reserva es derivada, justamente para que el pull de la
+ * hoja no pueda pisarla—, así que el mostrador la vendía encima. Cerrar el
+ * hueco del lado online y dejarlo abierto del lado de la tienda no cierra
+ * nada: la piedra es una sola.
+ *
+ * Devuelve QUÉ ítem y de QUÉ venta, no un booleano, porque el vendedor
+ * necesita saber qué cancelar. Recorre en el orden en que el llamante pidió
+ * los ítems —no en el orden de las ventas— para que el mensaje señale el
+ * primer ítem de SU lista y sea reproducible.
+ */
+export function findReservationConflict(
+  sales: PendingSaleLike[],
+  itemIds: string[],
+  now: number,
+  ttlMs: number = RESERVA_TTL_MS,
+): ReservationConflict | null {
+  const cutoff = now - ttlMs;
+  for (const itemId of itemIds) {
+    for (const sale of sales) {
+      if (sale.estado !== 'reservada') continue;
+      if (sale.creationTime < cutoff) continue;
+      if (!sale.itemIds.includes(itemId)) continue;
+      return { itemId, saleId: sale.saleId ?? '(sin saleId)' };
+    }
   }
   return null;
 }

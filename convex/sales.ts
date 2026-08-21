@@ -13,6 +13,7 @@ import { allocateNext, formatSaleId, saleSequenceName } from './sequences';
 import { requireAccessLevel } from './_lib/authz';
 import { isStaffSession } from './_lib/requireStaffSession';
 import { bumpCatalogVersion } from './_lib/catalogVersion';
+import { RESERVA_TTL_MS, findReservationConflict } from './_lib/reservas';
 
 // Free text (canonical: B | C | S | M). The venta UI sanitizes a custom
 // write-in to an uppercase, dash-free token before it reaches here, so it stays
@@ -223,6 +224,51 @@ export const _create = internalMutation({
         throw new Error(`Ítem ${itemId} ya está vendido`);
       }
       products.push(product);
+    }
+
+    // BR-6 no alcanza: un pago en línea en curso NO cambia
+    // `productInventory.estado`. La reserva es derivada a propósito —escribir
+    // RESERVADA en la hoja lo soltaría el siguiente pull, en mitad del pago
+    // (ver convex/_lib/reservas.ts)—, así que el bucle de arriba ve la piedra
+    // DISPONIBLE y el mostrador la vendería encima de un checkout vivo. La
+    // piedra es una sola: cerrar la carrera del lado online y dejarla abierta
+    // del lado de la tienda no cierra nada.
+    //
+    // La salida para el vendedor no es un flag de override —que a la larga se
+    // usa siempre— sino cancelar la venta que aparta: `_cancel` la pasa a
+    // `cancelada` y `findReservationConflict` deja de verla en el acto. Si
+    // nadie hace nada, la reserva vence sola a los 30 min.
+    //
+    // Misma lectura por rango de índice que el riel online: sólo las ventas
+    // `reservada` de los últimos 30 min, ancladas en `_creationTime`.
+    if (args.itemIds.length > 0) {
+      const ahora = Date.now();
+      const reservadas = await ctx.db
+        .query('sales')
+        .withIndex('by_estado', (q) =>
+          q
+            .eq('estado', 'reservada')
+            .gte('_creationTime', ahora - RESERVA_TTL_MS),
+        )
+        .collect();
+      const conflicto = findReservationConflict(
+        reservadas.map((s) => ({
+          clientId: s.clientId as string,
+          itemIds: s.itemIds,
+          creationTime: s._creationTime,
+          estado: s.estado,
+          saleId: s.saleId,
+        })),
+        args.itemIds,
+        ahora,
+      );
+      if (conflicto) {
+        throw new Error(
+          `Ítem ${conflicto.itemId} está apartado por un pago en línea en curso ` +
+            `(venta ${conflicto.saleId}). Cancela esa venta o espera a que venza ` +
+            `la reserva.`,
+        );
+      }
     }
 
     const seqValue = await allocateNext(ctx, saleSequenceName(args.sede));

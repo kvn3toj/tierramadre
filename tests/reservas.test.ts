@@ -5,6 +5,7 @@ import {
   reservedItemIds,
   orderFingerprint,
   findReusableSale,
+  findReservationConflict,
 } from '../convex/_lib/reservas';
 
 const NOW = Date.parse('2026-08-19T12:00:00.000Z');
@@ -183,5 +184,90 @@ describe('findReusableSale', () => {
     expect(
       findReusableSale([existing], 'c1', ['C-090'], NOW, RESERVA_TTL_MS, 2.6),
     ).toBeNull();
+  });
+});
+
+// El riel POS (convex/sales._create) no miraba las reservas: un cliente
+// pagando en línea y un cliente en el mostrador podían llevarse la misma
+// piedra. `findReservationConflict` es lo que el POS consulta antes de
+// vender — devuelve QUÉ ítem y de QUÉ venta, porque el mensaje al vendedor
+// tiene que decirle qué cancelar, no sólo que no puede.
+describe('findReservationConflict', () => {
+  const conSaleId = (
+    saleId: string,
+    itemIds: string[],
+    msAgo: number,
+    estado = 'reservada',
+  ) => ({ ...sale('c1', itemIds, msAgo, estado), saleId });
+
+  it('names the item and the sale holding it', () => {
+    expect(
+      findReservationConflict(
+        [conSaleId('VO-0007', ['C-090'], 60_000)],
+        ['C-090'],
+        NOW,
+      ),
+    ).toEqual({ itemId: 'C-090', saleId: 'VO-0007' });
+  });
+
+  it('returns null when nothing is held', () => {
+    expect(
+      findReservationConflict(
+        [conSaleId('VO-0007', ['C-091'], 60_000)],
+        ['C-090'],
+        NOW,
+      ),
+    ).toBeNull();
+  });
+
+  it('ignores a reservation older than the TTL', () => {
+    expect(
+      findReservationConflict(
+        [conSaleId('VO-0007', ['C-090'], RESERVA_TTL_MS + 1)],
+        ['C-090'],
+        NOW,
+      ),
+    ).toBeNull();
+  });
+
+  it('still blocks at the TTL boundary', () => {
+    expect(
+      findReservationConflict(
+        [conSaleId('VO-0007', ['C-090'], RESERVA_TTL_MS)],
+        ['C-090'],
+        NOW,
+      ),
+    ).toEqual({ itemId: 'C-090', saleId: 'VO-0007' });
+  });
+
+  it('ignores a confirmada sale — that stone is blocked by estado VENDIDA, not by a reserve', () => {
+    expect(
+      findReservationConflict(
+        [conSaleId('VO-0007', ['C-090'], 1000, 'confirmada')],
+        ['C-090'],
+        NOW,
+      ),
+    ).toBeNull();
+  });
+
+  it('reports the first conflict in the caller order, not the first sale', () => {
+    expect(
+      findReservationConflict(
+        [
+          conSaleId('VO-0008', ['C-091'], 1000),
+          conSaleId('VO-0007', ['C-090'], 2000),
+        ],
+        ['C-090', 'C-091'],
+        NOW,
+      ),
+    ).toEqual({ itemId: 'C-090', saleId: 'VO-0007' });
+  });
+
+  it('falls back to a readable placeholder when the holding sale has no saleId', () => {
+    const sinId = sale('c1', ['C-090'], 1000);
+    expect(findReservationConflict([sinId], ['C-090'], NOW)).toEqual({
+      itemId: 'C-090',
+      saleId: '(sin saleId)',
+    });
   });
 });
