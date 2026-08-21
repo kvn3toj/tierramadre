@@ -484,8 +484,15 @@ export const createOrder = mutation({
 
     // 6. Insert the pending sale.
     const nowIso = new Date(now).toISOString();
-    const allSales = await ctx.db.query('sales').collect();
-    const rowIndex = allSales.reduce((m, s) => Math.max(m, s.rowIndex), 1) + 1;
+    // Índice `by_rowIndex` en vez de `collect()` de la tabla entera: el
+    // endpoint público de checkout es anónimo, así que el costo de este
+    // escaneo lo fija quien llame, no el negocio.
+    const ultimaFila = await ctx.db
+      .query('sales')
+      .withIndex('by_rowIndex')
+      .order('desc')
+      .first();
+    const rowIndex = Math.max(ultimaFila?.rowIndex ?? 1, 1) + 1;
     await ctx.db.insert('sales', {
       saleId,
       sede: ONLINE_SEDE,

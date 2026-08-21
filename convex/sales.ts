@@ -275,8 +275,17 @@ export const _create = internalMutation({
     const saleId = formatSaleId(seqValue, args.sede);
 
     const now = new Date().toISOString();
-    const all = await ctx.db.query('sales').collect();
-    const maxRow = all.reduce((m, s) => Math.max(m, s.rowIndex), 1);
+    // El siguiente rowIndex sale del índice `by_rowIndex`, NO de un
+    // `collect()` de toda la tabla: leer las N ventas del histórico para
+    // quedarse con un número crece con cada venta y se paga en ancho de banda
+    // de Convex —el mismo recurso que este proyecto ya raciona— en la ruta
+    // caliente del mostrador. `order('desc').first()` es una lectura.
+    const ultima = await ctx.db
+      .query('sales')
+      .withIndex('by_rowIndex')
+      .order('desc')
+      .first();
+    const maxRow = Math.max(ultima?.rowIndex ?? 1, 1);
 
     // Strip `clientToken` — it's an idempotency control arg, not a `sales` column.
     const { clientToken, ...saleFields } = args;
