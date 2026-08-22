@@ -224,6 +224,24 @@ opcional de `saveEditPatchArgs`.
 `convex/_lib/sheetPullMaps.ts` (~520). Con `origen: 'hoja'` y **sin** `motivoBorrado`, jamás.
 Una celda vacía nunca significa «borrá».
 
+> **La regla explícita para el caso inverso**, porque si no se escribe se reintroduce sola
+> (planteado por `cronos` el 2026-08-22):
+>
+> **Cuando el SOT está vacío y el derivado tiene el dato, gana el derivado, y la hoja se
+> re-llena desde él.** Nunca al revés.
+>
+> Suena contraintuitivo —la hoja es el SOT, lo natural sería que mandara— y por eso hay que
+> decirlo. Una reconciliación escrita en la dirección «natural» hoja→Convex borraría #419
+> ($260.000) y #420 ($280.000), que son precios manuales que Convex conserva y la hoja perdió.
+> Sería el mismo defecto del hallazgo #6 del informe: **una ausencia tratada como un valor**.
+>
+> «El SOT manda» significa **el SOT manda sobre los valores que tiene**, no sobre los que le
+> faltan. Un hueco no es una afirmación.
+>
+> Corolario para cualquier reconciliación futura (`fotoSync:runFull`, un backfill, un script de
+> paridad): la comparación es de tres estados —igual / distinto / **ausente**— y `ausente` nunca
+> se resuelve borrando. Modelarla como dos estados es cómo nace este bug.
+
 Efecto secundario deseado: el sello `precioFinalManual` deja de ser la única defensa y pasa a
 significar solo lo que su nombre dice — «no re-derives este precio».
 

@@ -1080,10 +1080,23 @@ cubrieron. Agregarlo al portero es el arreglo; agregarlo a `EXENTOS` sin motivo,
 Agregá temporalmente a `convex/migrations.ts` una línea `costoBaseCOP: undefined,` dentro de
 cualquier `ctx.db.patch`, y quitá el import de `camposProtegidos` si lo hubiera.
 
+**ANTES de correr el test, comprobá que la mutación se aplicó de verdad:**
+
+```bash
+grep -c "costoBaseCOP: undefined," convex/migrations.ts   # tiene que ser ≥ 1
+```
+
+Esto no es ceremonia. El 2026-08-22, validando los candados de `cotizacion-save.ts` por
+mutación, a `cronos` **el `replace` no matcheó y falló mudo**: los 19 tests siguieron en verde y
+por un momento eso se leyó como «los candados muerden». No mordía nada — el archivo nunca había
+cambiado. **Una mutación que falla en silencio se disfraza exactamente de test que pasa**, y es
+el único modo de falla que un test de inspección no puede detectar por su cuenta.
+
 Run: `npx vitest run tests/camposProtegidosSinEsquivar.test.ts`
 Expected: FAIL, nombrando `convex/migrations.ts`
 
-Revertí el cambio temporal. **Un test de inspección que nunca se vio fallar no prueba nada.**
+Revertí el cambio temporal y confirmá la reversión con el mismo `grep` (tiene que dar 0).
+**Un test de inspección que nunca se vio fallar no prueba nada.**
 
 - [ ] **Step 4: Suite completa**
 
