@@ -16,20 +16,35 @@ import { defaultShadows } from '../../../design-system/tokens/shadows';
 import { whiteAlpha, blackAlpha } from '../../../design-system/utils/colorUtils';
 import { blurValues } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import {
+  BRAND_WHATSAPP_LINK,
+  BRAND_INSTAGRAM_LINK,
+  BRAND_WEBSITE_LINK,
+} from '../../../constants/brand-contact';
 
 // =============================================================================
 // CONSTANTS
 // =============================================================================
 
-const WHATSAPP_NUMBER = '+573113052755';
-const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER.replace('+', '')}`;
-const INSTAGRAM_LINK = 'https://www.instagram.com/tierramadre.co?igsh=dnJ3djRkOGIwdHhy';
-const WEBSITE_LINK = 'https://www.tierramadre.co';
-
 const SOCIAL_LINKS = [
-  { icon: WhatsApp, href: WHATSAPP_LINK, label: 'WhatsApp', color: emeraldCore.primary },
-  { icon: Instagram, href: INSTAGRAM_LINK, label: 'Instagram', color: '#E1306C' },
-  { icon: Language, href: WEBSITE_LINK, label: 'Sitio web', color: emeraldCore.primary },
+  {
+    icon: WhatsApp,
+    href: BRAND_WHATSAPP_LINK,
+    label: 'WhatsApp',
+    color: emeraldCore.primary,
+  },
+  {
+    icon: Instagram,
+    href: BRAND_INSTAGRAM_LINK,
+    label: 'Instagram',
+    color: '#E1306C',
+  },
+  {
+    icon: Language,
+    href: BRAND_WEBSITE_LINK,
+    label: 'Sitio web',
+    color: emeraldCore.primary,
+  },
 ];
 
 // =============================================================================
@@ -116,7 +131,7 @@ export const Footer: React.FC = () => {
             }}
           >
             <Link
-              href={WEBSITE_LINK}
+              href={BRAND_WEBSITE_LINK}
               target="_blank"
               rel="noopener noreferrer"
               sx={{

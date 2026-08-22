@@ -298,6 +298,11 @@ const InvitationPage = lazyWithRetry(
 );
 
 // Public Collection Page (shareable without auth)
+const RenacerPage = lazyWithRetry(
+  () => import('./pages/public/RenacerPage'),
+  'RenacerPage',
+);
+
 const CollectionPage = lazyWithRetry(
   () => import('./pages/collection/CollectionPage'),
   'CollectionPage',
@@ -1045,6 +1050,15 @@ function InvitationRouter() {
         element={
           <Suspense fallback={<LocalizedLoading messageKey="product" />}>
             <VitrinaPage />
+          </Suspense>
+        }
+      />
+      {/* Kit Renacer campaign landing — destination of the bracelet QR */}
+      <Route
+        path="/renacer/:code?"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerPage />
           </Suspense>
         }
       />
