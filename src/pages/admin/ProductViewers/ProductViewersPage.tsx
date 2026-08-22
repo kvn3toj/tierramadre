@@ -91,8 +91,16 @@ const ProductViewersPage: React.FC = () => {
     setIsCotizacionLoading(true);
 
     try {
+      // Candado del 2026-08-21 (hallazgo #2). Página de admin: la sesión ya
+      // está acuñada cuando se llega acá.
+      const sessionToken = readFreshSessionToken();
       const response = await fetch(
         `/api/cotizacion-save?action=productCotizaciones&itemId=${itemId}`,
+        {
+          headers: sessionToken
+            ? { Authorization: `Bearer ${sessionToken}` }
+            : undefined,
+        },
       );
       const result = await response.json();
 
