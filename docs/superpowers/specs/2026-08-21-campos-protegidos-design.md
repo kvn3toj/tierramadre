@@ -22,8 +22,16 @@ El mecanismo, en tres pasos que por separado son correctos:
 
 1. `computePrecioFinal(0)` devuelve `undefined` **a propósito** (`convex/_lib/pricing.ts:34`,
    «no phantom 0»): una pieza sin costo no debe mostrar `$0`.
-2. El re-fan de lote recalcula el precio desde el costo (`convex/lotItems.ts:427`). Con costo
-   0, el precio pasa de `150000` a `undefined`.
+2. Adjuntar un ítem a un lote lo re-deriva (`convex/lotItems.ts:427`, dentro de
+   `lotItems._create`). Con costo 0, el precio pasa de `150000` a `undefined`.
+
+   > **Corregido 2026-08-21 al mapear los sitios reales.** Una versión previa de esta spec
+   > culpaba al «re-fan de lote». El re-fan **está desactivado desde 2026-07-24**
+   > (`convex/lots.ts:327-334`: «the preponderancia-based derivation is fully deactivated…
+   > `refanned` is kept in the return shape (always 0 now)»). El derivador vivo es el alta /
+   > adjunción, que es coherente con los hechos: los cuatro dijes borrados son todos del
+   > lote TM-001 y se publicaron en esa ventana.
+
 3. El push a la hoja manda ese `undefined` como celda vacía (`convex/products.ts:1403`).
 
 Resultado: **se borra en Convex y en la hoja a la vez**. Por eso al revisar después no hay
@@ -219,11 +227,39 @@ Una celda vacía nunca significa «borrá».
 Efecto secundario deseado: el sello `precioFinalManual` deja de ser la única defensa y pasa a
 significar solo lo que su nombre dice — «no re-derives este precio».
 
-### 5.3 `lotItems` — alta y re-fan (derivación)
+### 5.3 `lotItems` y `lots` — las derivaciones
 
-`convex/lotItems.ts:427` y el re-fan vía `precioFinalRefanPatch`. Con `origen: 'derivacion'`.
-En el **alta** de un ítem nuevo no hay valor anterior, así que la regla no se activa y el
-sembrado de precio sigue funcionando igual.
+Dos sitios, con `origen: 'derivacion'`:
+
+**a. `convex/lotItems.ts:427` (`lotItems._create`).** Al dar de alta un ítem **nuevo** no hay
+valor anterior, así que la regla no se activa y el sembrado de precio sigue igual. Al
+**adjuntar un ítem que ya existía**, sí lo hay — y ese es el camino que borró los cuatro
+dijes.
+
+**b. `convex/lots.ts:531` (cancelación de lote).** Encontrado al mapear los sitios, no estaba
+en el diagnóstico original:
+
+```ts
+await ctx.db.patch(product._id, {
+  loteId: undefined,
+  preponderancia: undefined,
+  costoBaseCOP: undefined, // ← borra el costo de CADA ítem del lote
+  mostrarEnCatalogo: false,
+});
+```
+
+Cancelar un lote **vacía el costo de todos sus miembros de una vez**, incluido el que alguien
+tecleó a mano en la columna L. Es el borrado de mayor alcance de los tres, y es exactamente
+la clase que esta regla existe para frenar: una derivación, sin motivo, sobre plata.
+
+Decisión de diseño: **se bloquea**. Un lote cancelado deja de ser lote, pero sus piedras
+siguen habiendo costado lo que costaron. Si el negocio realmente quiere olvidar ese costo,
+que lo declare — la cancelación de lote pasa a mandar
+`motivoBorrado: "lote <id> cancelado: <razón>"`, y entonces sí borra. Eso convierte el caso
+en `origen: 'migracion'` (acción humana explícita), no en derivación.
+
+`precioFinalRefanPatch` **no** necesita portero: ya devuelve `{}` cuando el precio es humano,
+y su llamador (el re-fan) está desactivado desde 2026-07-24. Se deja como está.
 
 ### 5.4 `pushToSheet` — hacia la hoja
 
