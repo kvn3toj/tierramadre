@@ -351,6 +351,48 @@ Deliberadamente fuera de alcance, para que no crezca:
 
 ---
 
+## 8b. Dos hallazgos del 2026-08-21 que endurecen el diseño
+
+### `precioFinalManual` NO es un marcador de propiedad
+
+Medido contra el respaldo de prod: **416 de 576 ítems (72%) lo tienen**. El pull lo estampa
+cada vez que una celda de M cambia, así que en la práctica significa **«este valor pasó por la
+hoja alguna vez»**, no «un humano lo eligió a mano».
+
+Lo descubrió `tierramadre-fc` al aplicarlo como filtro en un repricing: filtrar por
+`precioFinalManual !== true` dejó el script **inerte, cero ítems seleccionados**. La
+recomendación original de esta sesión —usar el sello como criterio de propiedad— era **errada**,
+y queda anotada acá para que nadie la repita leyendo el histórico.
+
+**Consecuencia para este diseño: lo refuerza.** El portero **no consulta el sello en ningún
+momento**. Compara el valor viejo contra el nuevo, y punto. Si dependiera del sello heredaría
+un marcador que acierta el 72% de las veces. La regla «vacío nunca pisa a lleno» es
+justamente la capa que no necesita saber quién es el dueño.
+
+El sello conserva su único trabajo legítimo, el que le da el nombre: que el re-fan no
+re-derive un precio. Nada más.
+
+### El caso inverso: el SOT vacío y el derivado con el dato
+
+**#419 «Pares de tópitos plata rodinada» y #420 «Lote de gemas redondas».** Convex tiene
+precio ($260.000 y $280.000, los dos con `precioFinalManual: true`) y **la celda de la hoja
+está vacía**. Detectado por esta sesión en la verificación de tres vías de la mañana y
+reconfirmado de forma independiente por `tierramadre-fc` en su diff.
+
+Es la misma familia leída al revés: acá el que perdió el dato fue **el SOT**, y el store
+derivado es el que lo conserva.
+
+**Este diseño lo repara solo, sin código extra.** Hoy el push manda `precioFinalCOP ?? ''` y
+reescribe el vacío encima del vacío, así que la deriva se perpetúa. Con el cambio de §5.4 el
+push manda el valor cuando Convex lo conoce —y acá lo conoce—, así que **el siguiente push de
+#419 o #420 devuelve $260.000 y $280.000 a la columna M**. La hoja se auto-sana.
+
+Va a las pruebas de aceptación: correr el push de #419 y verificar que la celda queda con
+$260.000. Es el caso que demuestra que la regla no solo frena borrados, también revierte los
+que ya ocurrieron.
+
+---
+
 ## 9. Riesgo abierto
 
 **El `0` como marcador.** Hoy las piezas nacen con `costoBaseCOP: 0` significando «todavía no
