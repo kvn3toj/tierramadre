@@ -9,17 +9,19 @@
  * primary CTA hands the person over to WhatsApp with their bracelet code
  * pre-filled, so activation stays human until the backend gate exists.
  *
- * The QR may carry the bracelet code in the path (`/renacer/TM-0042`) or as
+ * The QR may carry the bracelet code in the path (`/renacer/m/TM-0042`) or as
  * `?c=CODE`; when present it is shown back and injected into the WhatsApp
  * message. The path form is the one to PRINT: index.html's version-mismatch
  * reload redirects to `window.location.pathname` and drops the query string,
  * so a `?c=` code can be lost for a returning visitor after a deploy.
+ *
+ * Routing (public, no auth) lives in RenacerRoutes.
  */
 
 import { useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Box, Button, Stack, Typography } from '@mui/material';
-import { brandWhatsAppLink } from '../../constants/brand-contact';
+import { brandWhatsAppLink } from '../../../constants/brand-contact';
 
 /** Campaign palette — read from the campaign artwork, not from the app theme. */
 const CAMPAIGN = {

@@ -298,9 +298,9 @@ const InvitationPage = lazyWithRetry(
 );
 
 // Public Collection Page (shareable without auth)
-const RenacerPage = lazyWithRetry(
-  () => import('./pages/public/RenacerPage'),
-  'RenacerPage',
+const RenacerRoutes = lazyWithRetry(
+  () => import('./pages/public/renacer/RenacerRoutes'),
+  'RenacerRoutes',
 );
 
 const CollectionPage = lazyWithRetry(
@@ -1053,12 +1053,14 @@ function InvitationRouter() {
           </Suspense>
         }
       />
-      {/* Kit Renacer campaign landing — destination of the bracelet QR */}
+      {/* Kit Renacer campaign — destination of the bracelet QR. The whole
+          subtree sits here, above the auth check: the landing and every screen
+          adjacent to it are public, no sign-in anywhere in the flow. */}
       <Route
-        path="/renacer/:code?"
+        path="/renacer/*"
         element={
           <Suspense fallback={<LocalizedLoading messageKey="general" />}>
-            <RenacerPage />
+            <RenacerRoutes />
           </Suspense>
         }
       />
@@ -1147,7 +1149,9 @@ function shouldShowSplash(): boolean {
     path.startsWith('/product/') ||
     path.startsWith('/p/') ||
     path.startsWith('/invite/') ||
-    path.startsWith('/g/')
+    path.startsWith('/g/') ||
+    path === '/renacer' ||
+    path.startsWith('/renacer/')
   ) {
     return false;
   }

@@ -4,6 +4,10 @@
  * Target: https://tierramadre.app/renacer
  * Output: public/qr-renacer.svg (vector, use this for printing)
  *
+ * Per-bracelet QR (the code goes in the path, never in a query string — see
+ * RenacerPage): node scripts/generate-renacer-qr.mjs \
+ *   https://tierramadre.app/renacer/m/TM-0042 public/qr-renacer-TM-0042.svg
+ *
  * Run: node scripts/generate-renacer-qr.mjs [url] [outfile]
  */
 import { writeFileSync } from 'node:fs';
