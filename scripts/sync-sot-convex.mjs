@@ -16,6 +16,9 @@
  *   node scripts/sync-sot-convex.mjs --tables inventory,lots
  *   node scripts/sync-sot-convex.mjs --all                # las 6 tablas del SOT
  *   node scripts/sync-sot-convex.mjs --http               # vía /sync/foto + token
+ *
+ * Con --http --prod se exige CONVEX_SITE_URL_PROD (https://<prod>.convex.site):
+ * el site de .env.local es el de dev y jamás debe recibir un pull de prod.
  */
 import { spawnSync } from 'node:child_process';
 import { config } from 'dotenv';
@@ -50,6 +53,12 @@ const isProd = has('--prod');
 console.log(
   `\n🔄 Pull Hoja → Convex  ·  deployment: ${isProd ? 'PROD' : 'dev'}  ·  tablas: ${tables.join(', ')}\n`,
 );
+if (isProd && process.env.CONVEX_DEPLOYMENT?.startsWith('dev:')) {
+  console.log(
+    `   (CONVEX_DEPLOYMENT=${process.env.CONVEX_DEPLOYMENT} es dev; --prod lo` +
+      ` ignora y apunta al deployment de producción del mismo proyecto)\n`,
+  );
+}
 
 function viaCli() {
   const args = ['convex', 'run'];
@@ -60,15 +69,25 @@ function viaCli() {
 }
 
 async function viaHttp() {
-  const site =
-    process.env.CONVEX_SITE_URL ?? process.env.VITE_CONVEX_SITE_URL ?? '';
+  // Con --prod NUNCA caer al site de dev de .env.local: exigir la URL de prod.
+  const site = isProd
+    ? (process.env.CONVEX_SITE_URL_PROD ?? '')
+    : (process.env.CONVEX_SITE_URL ?? process.env.VITE_CONVEX_SITE_URL ?? '');
   const token = process.env.SHEET_SYNC_TOKEN;
-  if (!site) throw new Error('Falta CONVEX_SITE_URL / VITE_CONVEX_SITE_URL');
+  if (!site)
+    throw new Error(
+      isProd
+        ? 'Falta CONVEX_SITE_URL_PROD (https://<prod>.convex.site). Sin ella,' +
+            ' --http --prod postearía al site de dev. Usa el modo CLI (sin --http),' +
+            ' que resuelve prod solo.'
+        : 'Falta CONVEX_SITE_URL / VITE_CONVEX_SITE_URL',
+    );
   if (!token)
     throw new Error(
       'Falta SHEET_SYNC_TOKEN (sólo vive en el deployment). Usa el modo CLI —' +
         ' corre este script sin --http.',
     );
+  console.log(`   POST → ${site.replace(/\/$/, '')}/sync/foto`);
   const res = await fetch(`${site.replace(/\/$/, '')}/sync/foto`, {
     method: 'POST',
     headers: {

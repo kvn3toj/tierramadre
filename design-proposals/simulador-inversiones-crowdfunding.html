@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Tierra Mädre — Simulador</title>
+<style>
+/* ================================================================
+   TIERRA MÄDRE · skin de producción (tierramadre.app)
+   Negro puro · SF Pro · un solo acento #00C992 · cards sin borde
+   Marcas de dataviz validadas (6 checks): --tm-viz-1 / --tm-viz-2
+   ================================================================ */
+:root{
+  --tm-bg:#000000; --tm-surface:#111415; --tm-well:#1B1F20;
+  --tm-border:#24282A; --tm-hairline:rgba(255,255,255,.09);
+  --tm-text:#FFFFFF; --tm-muted:#9BA1A6; --tm-subtle:#63696E;
+  --tm-accent:#00C992; --tm-accent-strong:#00C992; --tm-accent-pure:#34D399;
+  --tm-on-accent:#05130D; --tm-danger:#E5736C; --tm-warning:#D9A94E;
+  --tm-shadow:0 18px 40px -24px rgba(0,0,0,.7);
+  --tm-scrim:rgba(0,0,0,.6);
+  --tm-bar:rgba(6,8,8,.82);
+  --tm-viz-1:#00A87C; --tm-viz-2:#B28A2E; --tm-viz-gold-text:#D9B563;
+  --tm-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",system-ui,'Segoe UI',Roboto,sans-serif;
+  --tm-mono:ui-monospace,"SF Mono",Menlo,monospace;
+  --tm-r-well:12px; --tm-r-control:12px; --tm-r-card:22px; --tm-r-sheet:24px; --tm-r-pill:999px;
+  --tm-ease:cubic-bezier(0.22,1,0.36,1); --tm-ease-exit:cubic-bezier(0.55,0,1,0.45);
+  --tm-fast:160ms; --tm-base:240ms; --tm-slow:420ms;
+  --tabh:64px;
+  color-scheme:dark;
+}
+:root[data-theme="light"]{
+  --tm-bg:#F2F2F7; --tm-surface:#FFFFFF; --tm-well:#E9E9EE;
+  --tm-border:#DCDCE0; --tm-hairline:rgba(0,0,0,.08);
+  --tm-text:#0B0F0E; --tm-muted:#5C6360; --tm-subtle:#8C928F;
+  --tm-accent:#00785C; --tm-accent-strong:#00785C; --tm-accent-pure:#00AF84;
+  --tm-on-accent:#FFFFFF;
+  --tm-shadow:0 18px 40px -24px rgba(13,30,24,.25);
+  --tm-scrim:rgba(20,24,26,.45);
+  --tm-bar:rgba(255,255,255,.86);
+  --tm-viz-gold-text:#8A5F1B;
+  color-scheme:light;
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important}
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--tm-bg);color:var(--tm-text);
+  font-family:var(--tm-ui);font-size:1rem;line-height:1.5;min-height:100vh;
+  transition:background-color var(--tm-base) var(--tm-ease),color var(--tm-base) var(--tm-ease);
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:560px;margin:0 auto;padding:18px 18px calc(100px + env(safe-area-inset-bottom))}
+body[data-page="sim"] .wrap{padding-bottom:calc(216px + env(safe-area-inset-bottom))}
+
+/* ---------- tipos ---------- */
+.t-title1{font-weight:800;font-size:1.5rem;line-height:1.15;letter-spacing:-.02em}
+.t-title2{font-weight:700;font-size:1.3rem;line-height:1.2;letter-spacing:-.015em}
+.t-overline{font-size:.75rem;line-height:1.4;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:var(--tm-subtle)}
+.t-footnote{font-size:.8125rem;line-height:1.45}
+.t-callout{font-size:.9375rem;line-height:1.5}
+.t-data{font-variant-numeric:tabular-nums;font-weight:600}
+
+/* ---------- foco / press ---------- */
+:where(button,input,summary,[tabindex]):focus-visible{outline:2px solid var(--tm-accent);outline-offset:2px;border-radius:var(--tm-r-control)}
+button{font-family:var(--tm-ui);color:var(--tm-text);cursor:pointer}
+button:active{opacity:.8}
+
+/* ---------- header ---------- */
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+h1{font-size:1.05rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+h1 .dot{color:var(--tm-accent)}
+.hright{display:flex;align-items:center;gap:8px}
+.pill{font-size:.6875rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tm-subtle);padding:5px 0}
+.theme{width:40px;height:40px;border-radius:var(--tm-r-pill);border:none;background:var(--tm-surface);font-size:.9rem;display:grid;place-items:center}
+
+/* ---------- gemas: segmentos ligeros ---------- */
+.gems{display:flex;gap:8px;margin-bottom:14px}
+.gem{position:relative;flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--tm-surface);border:none;border-radius:var(--tm-r-pill);padding:9px 6px;min-height:44px;transition:background-color var(--tm-fast) var(--tm-ease)}
+.gem svg{width:18px;height:18px;flex:none;opacity:.4;filter:grayscale(1);transition:opacity var(--tm-fast) var(--tm-ease),filter var(--tm-fast) var(--tm-ease)}
+.gem .n{font-weight:600;font-size:.875rem;color:var(--tm-muted)}
+.gem .t{display:none}
+.gem .tick{display:none}
+.gem[aria-pressed="true"]{background:color-mix(in srgb,var(--tm-accent) 14%,var(--tm-surface))}
+.gem[aria-pressed="true"] svg{opacity:1;filter:none}
+.gem[aria-pressed="true"] .n{color:var(--tm-accent);font-weight:700}
+
+/* ---------- aporte: una sola línea ---------- */
+.aporte{display:flex;align-items:center;gap:14px;padding:6px 2px 16px;border:none;background:none}
+.aporte .t-overline{white-space:nowrap}
+.aporte b{font-weight:700;font-variant-numeric:tabular-nums;font-size:1.05rem;min-width:84px;text-align:right}
+input[type="range"]{flex:1;appearance:none;-webkit-appearance:none;height:4px;border-radius:2px;background:linear-gradient(to right,var(--tm-accent) var(--pct,25%),var(--tm-well) var(--pct,25%));cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:none;box-shadow:0 1px 6px rgba(0,0,0,.5)}
+:root[data-theme="light"] input[type="range"]::-webkit-slider-thumb{background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.35)}
+input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:none}
+input[type="range"]:focus-visible{outline:2px solid var(--tm-accent);outline-offset:4px}
+
+/* ---------- vitrina ---------- */
+.hero{background:var(--tm-surface);border:none;border-radius:var(--tm-r-card);padding:20px 18px 14px}
+.pieza{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:.75rem;font-weight:600;border:none;background:none;padding:0;white-space:nowrap}
+.chip.g{color:var(--tm-accent)}
+.chip.o{color:var(--tm-viz-gold-text)}
+.chip.w{color:var(--tm-warning)}
+#pg-sim .backs{display:none}
+.hero .cap{text-align:center;margin:10px 0 2px}
+.big{font-weight:800;font-variant-numeric:tabular-nums;font-size:clamp(2.6rem,12vw,3.6rem);line-height:1.05;text-align:center;letter-spacing:-.03em;transition:color var(--tm-base) var(--tm-ease)}
+.big.won{color:var(--tm-accent)}
+.delta{text-align:center;font-weight:600;font-size:.9375rem;color:var(--tm-accent);min-height:1.5em}
+.delta.zero{color:var(--tm-subtle)}
+
+/* ---------- camino al objetivo ---------- */
+.goal{margin:12px 2px 0}
+.goal .row2{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.goal .pctlbl{font-weight:700;font-variant-numeric:tabular-nums;font-size:.8125rem;color:var(--tm-text)}
+.goal .track{height:5px;border-radius:var(--tm-r-pill);background:var(--tm-well);overflow:hidden}
+.goal .fill{height:100%;border-radius:var(--tm-r-pill);background:var(--tm-accent);transform-origin:left;transform:scaleX(var(--g,0));transition:transform var(--tm-base) var(--tm-ease)}
+.goal.celebrate .fill{animation:goalpulse .8s var(--tm-ease) 2}
+@keyframes goalpulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* ---------- gráfica ---------- */
+.chartbox{position:relative;margin:12px -4px 0}
+.chartbox svg{display:block;width:100%;height:auto}
+.chartbox:focus-visible{outline:2px solid var(--tm-accent);outline-offset:2px;border-radius:12px}
+.bigplay{position:absolute;inset:0;display:grid;place-items:center;background:transparent;border:none}
+.bigplay span{width:70px;height:70px;border-radius:var(--tm-r-pill);background:var(--tm-accent);color:var(--tm-on-accent);display:grid;place-items:center;font-size:1.5rem;padding-left:5px;box-shadow:var(--tm-shadow);transition:opacity var(--tm-fast) var(--tm-ease)}
+.bigplay:hover span{opacity:.9}
+.tooltip{position:absolute;pointer-events:none;background:var(--tm-well);border:none;border-radius:14px;padding:9px 12px;font-size:.8125rem;opacity:0;transition:opacity var(--tm-fast) var(--tm-ease);z-index:1000;min-width:130px;box-shadow:var(--tm-shadow)}
+.tooltip.show{opacity:1}
+.tooltip .d{font-size:.6875rem;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:var(--tm-subtle);margin-bottom:3px}
+.tooltip .r{display:flex;gap:7px;align-items:center;margin-top:2px}
+.tooltip .k{width:11px;border-top:2.5px solid var(--tm-viz-1);border-radius:2px}
+.tooltip .r.au .k{border-top-color:var(--tm-viz-2)}
+.tooltip b{font-weight:700;font-variant-numeric:tabular-nums}
+.tooltip .r span{color:var(--tm-muted)}
+.mini-leg{display:flex;justify-content:center;gap:16px;font-size:.75rem;color:var(--tm-subtle);margin-top:2px}
+.mini-leg i{font-style:normal;display:inline-flex;align-items:center;gap:5px}
+.mini-leg .l1{width:14px;border-top:2px solid var(--tm-viz-1);border-radius:2px;display:inline-block}
+.mini-leg .d1{width:7px;height:7px;border-radius:50%;background:var(--tm-viz-2);display:inline-block}
+details.tbl{margin-top:4px;text-align:center}
+details.tbl summary{cursor:pointer;font-size:.75rem;color:var(--tm-subtle);list-style:none;display:inline-block;padding:6px 10px}
+details.tbl summary:hover{color:var(--tm-accent)}
+table.data{width:100%;border-collapse:collapse;margin-top:6px;font-size:.8125rem;text-align:right}
+table.data th{font-weight:600;font-size:.6875rem;letter-spacing:.06em;text-transform:uppercase;color:var(--tm-subtle);padding:5px 6px;border-bottom:1px solid var(--tm-hairline)}
+table.data td{padding:5px 6px;border-bottom:1px solid var(--tm-hairline);font-variant-numeric:tabular-nums;color:var(--tm-text)}
+table.data th:first-child,table.data td:first-child{text-align:left}
+
+/* ---------- ruta ---------- */
+.steps{display:flex;justify-content:space-between;margin:18px 8px 2px;position:relative}
+.steps .rail,.steps .railfill{position:absolute;left:26px;right:26px;top:19px;height:2px;background:var(--tm-well);z-index:0}
+.steps .railfill{background:var(--tm-accent);transform-origin:left;transform:scaleX(var(--p,0));transition:transform var(--tm-base) var(--tm-ease)}
+.step{position:relative;z-index:1;text-align:center;width:54px}
+.step .ic{width:40px;height:40px;margin:0 auto;border-radius:var(--tm-r-pill);background:var(--tm-well);border:none;display:grid;place-items:center;font-size:1rem;filter:grayscale(1);opacity:.4;transition:opacity var(--tm-fast) var(--tm-ease),filter var(--tm-fast) var(--tm-ease)}
+.step .lb{font-size:.75rem;color:var(--tm-subtle);margin-top:5px;font-weight:500}
+.step.done .ic,.step.now .ic{filter:none;opacity:1}
+.step.now .ic{background:color-mix(in srgb,var(--tm-accent) 18%,var(--tm-well))}
+.playing .step.now .ic{animation:pulse 1.5s var(--tm-ease) infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+.step.done .lb,.step.now .lb{color:var(--tm-text);font-weight:600}
+
+/* ---------- siguiente + ticker: filas silenciosas ---------- */
+.next{display:flex;justify-content:center;align-items:baseline;gap:8px;margin:12px 0 0;font-size:.8125rem;color:var(--tm-muted)}
+.next b{color:var(--tm-text);font-weight:600}
+.next .eta{font-variant-numeric:tabular-nums;color:var(--tm-accent);font-weight:600}
+.ticker{display:flex;align-items:center;gap:10px;background:none;border:none;border-top:1px solid var(--tm-hairline);padding:13px 2px;margin-top:12px;font-size:.9375rem;min-height:46px;width:100%;text-align:left;cursor:pointer}
+.ticker:hover .tx{color:var(--tm-text)}
+.ticker .ic{flex:none}
+.ticker .tx{color:var(--tm-muted);transition:color var(--tm-fast) var(--tm-ease)}
+.ticker .tx b{color:var(--tm-text);font-weight:600;font-variant-numeric:tabular-nums}
+.ticker .chev{margin-left:auto;color:var(--tm-subtle);flex:none}
+.ticker.flash{animation:tick var(--tm-slow) var(--tm-ease)}
+@keyframes tick{0%{opacity:.3;transform:translateY(4px)}100%{opacity:1;transform:none}}
+
+/* ---------- resultados: columnas sin caja ---------- */
+.outs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px;border-top:1px solid var(--tm-hairline);padding-top:14px}
+.out{background:none;border:none;border-radius:0;padding:0;text-align:center}
+.out .v{font-weight:700;font-variant-numeric:tabular-nums;font-size:1.05rem;margin-top:3px}
+.out .p{font-size:.8125rem;color:var(--tm-accent);font-weight:600}
+.out.min .p{color:var(--tm-warning)}
+.social{text-align:center;font-size:.8125rem;color:var(--tm-muted);margin-top:14px}
+.social b{color:var(--tm-accent);font-weight:600;font-variant-numeric:tabular-nums}
+.note{text-align:center;font-size:.75rem;color:var(--tm-subtle);margin-top:16px}
+
+/* ---------- transport (solo simulador) ---------- */
+.bar{display:none;position:fixed;left:0;right:0;bottom:calc(var(--tabh) + env(safe-area-inset-bottom));background:var(--tm-bar);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--tm-hairline);z-index:900}
+body[data-page="sim"] .bar{display:block}
+.bar .in{max-width:560px;margin:0 auto;padding:10px 18px 12px}
+.bar input[type="range"]{width:100%;margin-bottom:10px}
+.bar .row{display:flex;align-items:center;gap:8px}
+.btn{border:none;background:var(--tm-surface);color:var(--tm-text);border-radius:var(--tm-r-control);min-width:44px;min-height:44px;padding:0 13px;font-weight:600;font-size:.9375rem;transition:background-color var(--tm-fast) var(--tm-ease)}
+.btn.play{background:var(--tm-accent);color:var(--tm-on-accent);width:48px;font-size:1rem}
+.btn[aria-pressed="true"]{background:color-mix(in srgb,var(--tm-accent) 16%,var(--tm-surface));color:var(--tm-accent)}
+.bar .clock{margin-left:auto;display:inline-flex;align-items:center;gap:7px;font-variant-numeric:tabular-nums;font-size:.8125rem;color:var(--tm-muted)}
+.bar .clock b{color:var(--tm-text);font-weight:700}
+.livedot{width:7px;height:7px;border-radius:50%;background:var(--tm-well)}
+.playing .livedot{background:var(--tm-accent-pure);animation:pulse 1.6s var(--tm-ease) infinite}
+
+/* ---------- sheets ---------- */
+.scrim{position:fixed;inset:0;background:var(--tm-scrim);z-index:1000;opacity:0;transition:opacity var(--tm-base) var(--tm-ease);pointer-events:none}
+.scrim.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:1100;background:var(--tm-surface);border:none;border-radius:var(--tm-r-sheet) var(--tm-r-sheet) 0 0;box-shadow:var(--tm-shadow);max-width:560px;margin:0 auto;max-height:70dvh;display:flex;flex-direction:column;transform:translateY(105%);transition:transform var(--tm-base) var(--tm-ease-exit)}
+@supports not (height:1dvh){.sheet{max-height:70vh}}
+.sheet.open{transform:translateY(0);transition:transform var(--tm-slow) var(--tm-ease)}
+.sheet .head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px 10px;border-bottom:1px solid var(--tm-hairline)}
+.sheet .grab{width:36px;height:4px;border-radius:var(--tm-r-pill);background:var(--tm-well);margin:8px auto 0}
+.sheet .close{width:44px;height:44px;border:none;background:transparent;font-size:1rem;color:var(--tm-muted);border-radius:var(--tm-r-pill)}
+.sheet ul{list-style:none;overflow-y:auto;overscroll-behavior:contain;padding:4px 18px calc(16px + env(safe-area-inset-bottom))}
+.sheet li{display:flex;gap:10px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--tm-hairline);font-size:.9375rem}
+.sheet li:last-child{border-bottom:none}
+.sheet li .ic2{flex:none}
+.sheet li .tx2{color:var(--tm-text)}
+.sheet li .d2{margin-left:auto;flex:none;font-variant-numeric:tabular-nums;font-size:.6875rem;color:var(--tm-subtle)}
+
+/* ---------- páginas & tab bar ---------- */
+.page{display:none}
+.page.active{display:block}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:999;background:var(--tm-bar);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--tm-hairline)}
+.tabbar .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
+.tbi{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:transparent;color:var(--tm-subtle);font-size:.6875rem;font-weight:600;padding:6px 0 8px;min-height:48px;border-radius:12px}
+.tbi svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tbi[aria-current="page"]{color:var(--tm-accent)}
+.tbi[aria-current="page"]::after{content:"";position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:22px;height:3px;border-radius:2px;background:var(--tm-accent)}
+
+/* ---------- filas de datos ---------- */
+.rowln{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--tm-hairline);font-size:.9375rem}
+.rowln:last-child{border-bottom:none}
+.rowln span{color:var(--tm-muted)}
+.rowln b{font-weight:700;font-variant-numeric:tabular-nums;color:var(--tm-text)}
+
+/* ---------- Inicio ---------- */
+.hero-line{font-weight:800;font-size:clamp(1.8rem,7vw,2.4rem);line-height:1.12;letter-spacing:-.03em;text-align:center;margin:28px 0 6px}
+.hero-line em{font-style:normal;color:var(--tm-accent)}
+.hero-sub{text-align:center;color:var(--tm-muted);font-size:.9375rem;margin-bottom:24px}
+.how{margin-bottom:16px}
+.how .st{background:none;border:none;border-top:1px solid var(--tm-hairline);border-radius:0;padding:16px 2px;display:flex;gap:14px;align-items:flex-start}
+.how .num{flex:none;width:42px;height:42px;border-radius:var(--tm-r-pill);background:var(--tm-surface);border:none;display:grid;place-items:center;font-size:1.1rem}
+.how .st b{display:block;font-size:1rem;margin-bottom:2px}
+.how .st p{color:var(--tm-muted);font-size:.9rem}
+.strip{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;font-size:.6875rem;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:var(--tm-subtle);margin:16px 0 22px;text-align:center}
+.cta{display:block;width:100%;border:none;background:var(--tm-accent);color:var(--tm-on-accent);border-radius:14px;padding:15px;font-size:1rem;font-weight:700;font-family:var(--tm-ui);min-height:50px}
+.btn2{display:block;width:100%;border:none;background:var(--tm-surface);color:var(--tm-text);border-radius:14px;padding:14px;font-size:.9375rem;font-weight:600;min-height:48px}
+.sheet .btn2{background:var(--tm-well)}
+
+/* ---------- Lotes ---------- */
+.lrow{display:flex;gap:14px;align-items:center;background:var(--tm-surface);border:none;border-radius:18px;padding:14px;margin-bottom:10px;cursor:pointer;width:100%;text-align:left;font-family:var(--tm-ui);color:var(--tm-text);transition:background-color var(--tm-fast) var(--tm-ease)}
+.lrow:hover{background:#171B1C}
+:root[data-theme="light"] .lrow:hover{background:#F7F7FA}
+.lrow .gw{flex:none;width:62px;height:62px;border-radius:14px;background:var(--tm-well);border:none;display:grid;place-items:center}
+.lrow .gw svg{width:34px;height:34px}
+.lrow .mid{flex:1;min-width:0}
+.lrow .nm2{font-weight:700;font-size:1.05rem;letter-spacing:-.01em}
+.lrow .sub3{color:var(--tm-muted);font-size:.8125rem}
+.lrow .fin{font-variant-numeric:tabular-nums;font-size:.78rem;font-weight:600;color:var(--tm-accent);margin-top:3px}
+.lrow .chev2{color:var(--tm-subtle);flex:none}
+
+/* ---------- Detalle ---------- */
+.backrow{display:flex;align-items:center;gap:4px;margin-bottom:10px}
+.backbtn{border:none;background:transparent;color:var(--tm-accent);font-size:.9375rem;font-weight:600;padding:10px 10px 10px 0;display:inline-flex;align-items:center;gap:4px;min-height:44px}
+.dwell{background:var(--tm-surface);border:none;border-radius:var(--tm-r-card);display:grid;place-items:center;height:200px;margin-bottom:16px}
+.dwell svg{width:92px;height:92px}
+.dsec{background:none;border:none;border-top:1px solid var(--tm-hairline);border-radius:0;padding:16px 0;margin-bottom:0}
+.spec{font-size:.8125rem;color:var(--tm-muted);margin-top:4px}
+.doc{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--tm-hairline);font-size:.9375rem}
+.doc:last-child{border-bottom:none}
+.doc .dn{color:var(--tm-text)}
+.doc .demo{margin-left:auto;font-size:.6875rem;font-weight:600;color:var(--tm-subtle);background:var(--tm-well);border-radius:var(--tm-r-pill);padding:3px 9px}
+#pg-detalle .backs{margin:14px 0 16px}
+.backs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}
+.back{font-size:.75rem;font-weight:600;border:none;background:var(--tm-well);border-radius:var(--tm-r-pill);padding:5px 11px;color:var(--tm-muted)}
+.back.ok{color:var(--tm-accent);background:color-mix(in srgb,var(--tm-accent) 12%,var(--tm-well))}
+
+/* ---------- Invertir ---------- */
+.istep{display:none;padding:4px 18px calc(18px + env(safe-area-inset-bottom))}
+.istep.active{display:block}
+.qamts{display:flex;gap:8px;margin:12px 0}
+.qa{flex:1;border:none;background:var(--tm-well);color:var(--tm-text);border-radius:12px;padding:11px 0;font-weight:600;font-variant-numeric:tabular-nums;min-height:44px}
+.qa[aria-pressed="true"]{background:color-mix(in srgb,var(--tm-accent) 16%,var(--tm-well));color:var(--tm-accent)}
+.imonto{font-weight:800;font-variant-numeric:tabular-nums;font-size:2.3rem;letter-spacing:-.02em;text-align:center;margin:8px 0 4px}
+.chk{display:flex;gap:10px;align-items:flex-start;margin:14px 0;font-size:.875rem;color:var(--tm-muted);cursor:pointer}
+.chk input{width:20px;height:20px;accent-color:var(--tm-accent);margin-top:2px}
+.okwrap{text-align:center;padding:12px 0 4px}
+.okball{width:70px;height:70px;border-radius:var(--tm-r-pill);background:var(--tm-accent);color:var(--tm-on-accent);font-size:1.9rem;display:grid;place-items:center;margin:0 auto 12px;animation:okin var(--tm-slow) var(--tm-ease)}
+@keyframes okin{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+
+/* ---------- Portafolio ---------- */
+.pempty{text-align:center;padding:48px 10px}
+.pempty .l1e{font-weight:700;font-size:1.3rem;letter-spacing:-.01em;margin-bottom:16px}
+.pinv{background:var(--tm-surface);border:none;border-radius:18px;padding:14px 16px;margin-bottom:10px}
+.pinv .top2{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.pinv .nm3{font-weight:700;font-size:1rem}
+.ptot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 16px}
+.ptot .out{text-align:center}
+.ptot .out .v{font-size:1rem}
+
+
+/* ================================================================
+   CAPA EDITORIAL · composición asimétrica, iconos SVG, sin cajas
+   ================================================================ */
+/* hero fluye sobre el negro; solo la gráfica tiene superficie */
+.hero{background:none;border-radius:0;padding:6px 2px 0}
+.hero .cap{text-align:left;border-top:1px solid var(--tm-hairline);padding-top:16px;margin:14px 0 4px}
+.big{text-align:left;font-size:clamp(2.8rem,13vw,4rem);letter-spacing:-.035em}
+.delta{text-align:left}
+.goal{margin-top:14px}
+.chartbox{background:var(--tm-surface);border-radius:20px;padding:12px 8px 8px;margin:14px -2px 0}
+.bigplay span{box-shadow:0 18px 50px -12px rgba(0,201,146,.45)}
+.mini-leg{margin-top:8px}
+.steps{margin-top:22px}
+.next{justify-content:flex-start;padding-left:2px}
+.ticker{margin-top:14px}
+.outs{text-align:left}
+.out{text-align:left}
+.social{text-align:left;display:flex;align-items:center;gap:8px}
+.social svg{width:16px;height:16px;flex:none;color:var(--tm-accent)}
+.note{text-align:left}
+
+/* iconos svg: tamaños */
+.step .ic svg{width:18px;height:18px}
+.step .ic{color:var(--tm-subtle)}
+.step.done .ic,.step.now .ic{color:var(--tm-accent)}
+.ticker .ic,.sheet li .ic2{display:grid;place-items:center;width:20px;color:var(--tm-muted)}
+.ticker .ic svg,.sheet li .ic2 svg{width:17px;height:17px}
+.sheet li .ic2{align-self:center}
+.doc .dicon{display:grid;place-items:center;width:20px;color:var(--tm-muted)}
+.doc .dicon svg{width:17px;height:17px}
+.btn svg{width:18px;height:18px;display:block;margin:0 auto}
+.btn.play svg{width:20px;height:20px}
+.theme svg{width:17px;height:17px}
+
+/* chips: punto de color, tipografía sobria */
+.chip{gap:6px;font-size:.75rem;font-weight:600;letter-spacing:.01em}
+.chip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+
+/* CTAs tipo prod: píldora con flecha */
+.cta{border-radius:var(--tm-r-pill);position:relative}
+.cta::after{content:"→";margin-left:8px;font-weight:700}
+.btn2{border-radius:var(--tm-r-pill)}
+
+/* inicio: numerales editoriales */
+.hero-line{text-align:left}
+.hero-sub{text-align:left;max-width:38ch;margin-left:0}
+.how .num{background:none;border:none;width:auto;height:auto;font-size:.8125rem;font-weight:700;color:var(--tm-accent);font-variant-numeric:tabular-nums;letter-spacing:.06em;padding-top:2px}
+.how .st{gap:16px;padding:18px 2px}
+.strip{justify-content:flex-start;text-align:left}
+
+/* lotes / detalle: alineación editorial */
+#pg-lotes .t-overline,#pg-portafolio .t-overline{border-top:none}
+.dsec .t-overline{margin-bottom:8px}
+#pg-detalle .backs{justify-content:flex-start}
+
+/* outs con regla vertical sutil entre columnas */
+.outs{gap:0}
+.out{padding:0 12px}
+.out:first-child{padding-left:2px}
+.out+.out{border-left:1px solid var(--tm-hairline)}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Tierra Mädre<span class="dot">.</span></h1>
+    <div class="hright">
+      <span class="pill">◈ Simulación</span>
+      <button class="theme" id="btnTheme" aria-label="Cambiar entre modo claro y oscuro"></button>
+    </div>
+  </header>
+
+  <!-- ============ PÁGINA: SIMULADOR ============ -->
+  <section class="page" id="pg-sim">
+  <!-- 1 · elige tu gema -->
+  <div class="gems" role="group" aria-label="Elige tu lote">
+    <button class="gem" data-l="raiz" aria-pressed="false">
+      <span class="tick" aria-hidden="true">✓</span>
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3L5 9l7 12 7-12-7-6z" fill="#34c99b" opacity=".9"/><path d="M12 3L9 9h6l-3-6zM5 9h4l3 12L5 9zm10 0h4l-7 12 3-12z" fill="#0e6b52"/></svg>
+      <div class="n">Raíz</div><div class="t">$1.000</div>
+    </button>
+    <button class="gem" data-l="tiempo" aria-pressed="false">
+      <span class="tick" aria-hidden="true">✓</span>
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2L4 8.5 12 22l8-13.5L12 2z" fill="#34c99b" opacity=".9"/><path d="M12 2L8.5 8.5h7L12 2zM4 8.5h4.5L12 22 4 8.5zm11.5 0H20L12 22l3.5-13.5z" fill="#0e6b52"/></svg>
+      <div class="n">Tiempo</div><div class="t">$10.000</div>
+    </button>
+    <button class="gem" data-l="semilla" aria-pressed="true">
+      <span class="tick" aria-hidden="true">✓</span>
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="13" r="6.5" stroke="#d4af37" stroke-width="1.4"/><path d="M12 8.5L8 12l4 5 4-5-4-3.5z" fill="#34c99b"/><path d="M12 8.5L10 12h4l-2-3.5zM8 12h2l2 5-4-5zm6 0h2l-4 5 2-5z" fill="#0e6b52"/><path d="M9 4l1.2 1.2M15 4l-1.2 1.2M12 2.6v1.7" stroke="#d4af37" stroke-width="1.2" stroke-linecap="round"/></svg>
+      <div class="n">Semilla</div><div class="t">$100.000</div>
+    </button>
+  </div>
+
+  <!-- 2 · tu aporte -->
+  <div class="aporte">
+    <span class="t-overline">Mi aporte</span>
+    <input type="range" id="slAporte" min="100" max="100000" step="100" value="2500" aria-label="Mi aporte en USDT">
+    <b id="aporteVal">$2.500</b>
+  </div>
+
+  <!-- 3 · la vitrina -->
+  <div class="hero">
+    <div class="pieza">
+      <div class="t-title2" id="piezaNm">Anillo · Esmeralda Chivor 2,2 ct</div>
+      <span class="chip o" id="fase">En subasta</span>
+    </div>
+    <div class="backs" id="backs" aria-label="Respaldos del lote"></div>
+
+    <div class="cap t-overline" id="bigCap">Hoy recibirías</div>
+    <div class="big" id="bigNum">$2.750</div>
+    <div class="delta" id="bigDelta">▲ +10%</div>
+
+    <div class="goal" id="goal">
+      <div class="row2"><span class="t-overline">Camino al objetivo</span><span class="pctlbl" id="goalPct">33%</span></div>
+      <div class="track"><div class="fill" id="goalFill"></div></div>
+    </div>
+
+    <div class="chartbox" id="chartBox" tabindex="0" role="img" aria-label="Curva de valorización del lote. Flechas del teclado para recorrer los días; los datos también están en la tabla.">
+      <svg id="chart" viewBox="0 0 640 240" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+      <div class="tooltip" id="tt"></div>
+      <button class="bigplay" id="bigPlay" aria-label="Reproducir simulación"><span><svg viewBox="0 0 24 24" width="26" height="26"><path d="M8 5.5v13l11-6.5-11-6.5z" fill="currentColor"/></svg></span></button>
+    </div>
+    <div class="mini-leg" aria-hidden="true"><i><span class="l1"></span>valor</i><i><span class="d1"></span>subastas</i></div>
+    <details class="tbl"><summary>datos ▾</summary><div style="overflow-x:auto"><table class="data" id="dataTable"></table></div></details>
+
+    <div class="steps" id="steps">
+      <span class="rail" aria-hidden="true"></span><span class="railfill" aria-hidden="true"></span>
+      <div class="step" data-s="0"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.8-3.2 3.2-4.8 6-4.8s5.2 1.6 6 4.8"/><circle cx="17.2" cy="9.2" r="2.4"/><path d="M16.6 15.3c2.2.5 3.8 1.8 4.4 4.2"/></svg></div><div class="lb">Recaudo</div></div>
+      <div class="step" data-s="1"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5h10l4 5.5-9 11.5L3 9l4-5.5z"/><path d="M3 9h18M12 20.5L8.4 9l2.4-5.5M12 20.5L15.6 9l-2.4-5.5"/></svg></div><div class="lb">Gema</div></div>
+      <div class="step" data-s="2"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 4.5l6 6M11 7l6 6M14.7 5.7L6.2 14.2l3.6 3.6 8.5-8.5"/><path d="M3 21h9"/></svg></div><div class="lb">Subasta</div></div>
+      <div class="step" data-s="3"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/></svg></div><div class="lb">Pago</div></div>
+    </div>
+
+    <div class="next" id="next"><span class="t-overline">Siguiente</span><b id="nextNm">—</b><span class="eta" id="nextEta"></span></div>
+
+    <button class="ticker" id="ticker" aria-haspopup="dialog" aria-label="Último movimiento — toca para ver el historial completo">
+      <span class="ic" id="tkIc" aria-hidden="true"></span><span class="tx" id="tkTx" aria-live="polite">Dale ▶ para ver tu inversión en el tiempo.</span>
+      <span class="chev" aria-hidden="true">›</span>
+    </button>
+  </div>
+
+  <!-- 4 · escenarios -->
+  <div class="outs">
+    <div class="out min"><div class="t-overline">Seguro</div><div class="v" id="oMin">$2.750</div><div class="p">+10%</div></div>
+    <div class="out"><div class="t-overline">Desde</div><div class="v" id="oBase">$3.022</div><div class="p" id="oBaseP">+21%</div></div>
+    <div class="out"><div class="t-overline">Hasta</div><div class="v" id="oObj">$6.313</div><div class="p" id="oObjP">+153%</div></div>
+  </div>
+  <div class="social" id="social">☀ El 10% de tu ganancia lleva luz solar a Coscuez</div>
+
+  <p class="note">Prototipo — datos simulados con el modelo real de la hoja de inversiones. No representa operaciones reales.</p>
+  </section>
+
+  <!-- ============ PÁGINA: INICIO ============ -->
+  <section class="page" id="pg-inicio">
+    <div class="hero-line">La esmeralda trabaja.<br><em>Tú la acompañas.</em></div>
+    <div class="hero-sub">Crowdfunding con respaldo en piedras preciosas colombianas.</div>
+    <div class="how">
+      <div class="st"><div class="num">01</div><div><b>Eliges tu gema</b><p>Cada lote está respaldado por una pieza física certificada (GIA) y avaluada en EE. UU.</p></div></div>
+      <div class="st"><div class="num">02</div><div><b>La llevamos a subasta</b><p>Casas de subastas en Estados Unidos. Sigues cada puja y cada hito en tiempo real.</p></div></div>
+      <div class="st"><div class="num">03</div><div><b>Recibes tu pago</b><p>El 50% de la ganancia es tuyo: desde +21% hasta +153%. Si no hay venta al plazo máximo, retorno asegurado del 110%.</p></div></div>
+    </div>
+    <div class="strip"><span>+1.200 familias</span><span>·</span><span>0 trabajo infantil</span><span>·</span><span>3 generaciones</span><span>·</span><span>luz solar para Coscuez</span></div>
+    <button class="cta" id="ctaLotes">Ver los lotes disponibles</button>
+    <p class="note">Prototipo de simulación — no representa una oferta real de inversión.</p>
+  </section>
+
+  <!-- ============ PÁGINA: LOTES ============ -->
+  <section class="page" id="pg-lotes">
+    <div class="t-overline" style="margin:6px 0 12px">Lotes disponibles</div>
+    <div id="loteList"></div>
+    <p class="note">Toca un lote para ver la pieza, sus respaldos y su modelo financiero.</p>
+  </section>
+
+  <!-- ============ PÁGINA: DETALLE ============ -->
+  <section class="page" id="pg-detalle">
+    <div class="backrow"><button class="backbtn" id="btnBack">‹ Lotes</button></div>
+    <div class="dwell" id="dWell"></div>
+    <div class="pieza" style="margin-bottom:4px">
+      <div class="t-title2" id="dNombre">—</div>
+      <span class="chip g" id="dChip">—</span>
+    </div>
+    <div class="spec" id="dSpec">—</div>
+    <div class="backs" id="dBacks" style="justify-content:flex-start;margin:12px 0 14px"></div>
+
+    <div class="dsec">
+      <div class="t-overline" style="margin-bottom:6px">Modelo financiero</div>
+      <div id="dFin"></div>
+    </div>
+    <div class="dsec">
+      <div class="t-overline" style="margin-bottom:6px">Documentos</div>
+      <div class="doc"><span class="dicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-5-5z"/><path d="M14 3v5h5"/></svg></span><span class="dn">Certificado GIA</span><span class="demo" id="dDocGia">pendiente</span></div>
+      <div class="doc"><span class="dicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-5-5z"/><path d="M14 3v5h5"/></svg></span><span class="dn">Avalúo estadounidense</span><span class="demo" id="dDocAval">pendiente</span></div>
+      <div class="doc"><span class="dicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-5-5z"/><path d="M14 3v5h5"/></svg></span><span class="dn">Contrato de inversión</span><span class="demo">demo</span></div>
+    </div>
+    <div class="dsec">
+      <div class="t-overline" style="margin-bottom:6px">Origen</div>
+      <p style="color:var(--tm-muted);font-size:.9375rem">Minería artesanal del territorio La Paz — Coscuez, Boyacá. Tres generaciones, cero trabajo infantil. El 10% de la ganancia del inversionista financia energía solar para la vereda Chánares.</p>
+    </div>
+    <button class="cta" id="btnInvertir">Invertir en este lote</button>
+    <div style="height:8px"></div>
+    <button class="btn2" id="btnVerSim2">Ver su simulación en tiempo real</button>
+  </section>
+
+  <!-- ============ PÁGINA: PORTAFOLIO ============ -->
+  <section class="page" id="pg-portafolio">
+    <div class="t-overline" style="margin:6px 0 12px">Mi portafolio</div>
+    <div id="pfBody"></div>
+  </section>
+</div>
+
+<!-- sheet de historial -->
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Historial de movimientos del lote">
+  <div class="grab" aria-hidden="true"></div>
+  <div class="head">
+    <span class="t-overline">Movimientos del lote</span>
+    <button class="close" id="sheetClose" aria-label="Cerrar historial">✕</button>
+  </div>
+  <ul id="histList"></ul>
+</section>
+
+<!-- sheet: flujo de inversión -->
+<section class="sheet" id="sheet2" role="dialog" aria-modal="true" aria-label="Invertir en el lote">
+  <div class="grab" aria-hidden="true"></div>
+  <div class="head">
+    <span class="t-overline" id="s2Title">Invertir · Semilla</span>
+    <button class="close" id="sheet2Close" aria-label="Cerrar">✕</button>
+  </div>
+  <!-- paso 1: monto -->
+  <div class="istep active" id="ist1">
+    <div class="t-overline" style="text-align:center;margin-top:10px">Mi aporte (USDT)</div>
+    <div class="imonto" id="iMonto">$2.500</div>
+    <input type="range" id="iSlider" min="100" max="100000" step="100" value="2500" aria-label="Monto a invertir">
+    <div class="qamts">
+      <button class="qa" data-q="2500">$2.500</button>
+      <button class="qa" data-q="5000">$5.000</button>
+      <button class="qa" data-q="10000">$10.000</button>
+    </div>
+    <button class="cta" id="iNext">Continuar</button>
+  </div>
+  <!-- paso 2: resumen con fricción deliberada -->
+  <div class="istep" id="ist2">
+    <div id="iResumen" style="margin-top:6px"></div>
+    <label class="chk"><input type="checkbox" id="iChk">Entiendo que la venta puede tomar hasta el plazo máximo y que, de no venderse, recibo el retorno asegurado del 110% de mi aporte.</label>
+    <button class="cta" id="iConfirm" disabled style="opacity:.45">Confirmar inversión</button>
+    <div style="height:8px"></div>
+    <button class="btn2" id="iBack">‹ Cambiar monto</button>
+  </div>
+  <!-- paso 3: éxito -->
+  <div class="istep" id="ist3">
+    <div class="okwrap">
+      <div class="okball"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+      <div class="t-title2" style="margin-bottom:4px">Inversión registrada</div>
+      <p style="color:var(--tm-muted);font-size:.9375rem;margin-bottom:16px" id="iOkTxt">—</p>
+    </div>
+    <button class="cta" id="iGoSim">Ver mi inversión en tiempo real</button>
+    <div style="height:8px"></div>
+    <button class="btn2" id="iGoPf">Ir a mi portafolio</button>
+  </div>
+</section>
+
+<!-- tab bar de lugares (§5.3: la tab bar navega, nunca muta datos) -->
+<nav class="tabbar" aria-label="Navegación principal">
+  <div class="in">
+    <button class="tbi" data-p="inicio" aria-current="false"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 9.5V21h14V9.5"/></svg>Inicio</button>
+    <button class="tbi" data-p="lotes" aria-current="false"><svg viewBox="0 0 24 24"><path d="M12 3L5 9l7 12 7-12-7-6z"/><path d="M5 9h14M12 3l-3 6 3 12 3-12-3-6z"/></svg>Lotes</button>
+    <button class="tbi" data-p="sim" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 3 6-8 3 4"/><path d="M3 21h18"/></svg>Simulador</button>
+    <button class="tbi" data-p="portafolio" aria-current="false"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V6a3 3 0 016 0v2"/></svg>Portafolio</button>
+  </div>
+</nav>
+
+<!-- transport del simulador (solo en la página Simulador) -->
+<div class="bar">
+  <div class="in">
+    <input type="range" id="scrub" min="0" max="430" value="0" step="1" aria-label="Línea de tiempo (días)">
+    <div class="row">
+      <button class="btn play" id="btnPlay" aria-pressed="false" aria-label="Reproducir o pausar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 5.5v13l11-6.5-11-6.5z" fill="currentColor" stroke="none"/></svg></button>
+      <button class="btn spd" data-v="2" aria-pressed="true">1×</button>
+      <button class="btn spd" data-v="14" aria-pressed="false">7×</button>
+      <button class="btn spd" data-v="60" aria-pressed="false">30×</button>
+      <button class="btn" id="btnReset" aria-label="Reiniciar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3.5 12a8.5 8.5 0 108.5-8.5c-3 0-5.6 1.5-7.1 3.8"/><path d="M4.5 3v4.5H9"/></svg></button>
+      <span class="clock"><span class="livedot" aria-hidden="true"></span>Mes <b id="clockM">0</b></span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   TIERRA MÄDRE · SIMULADOR — DS3 "Quiet Emerald"
+   MODEL = parámetros del spreadsheet (fijos).
+   buildSim() = fuente de datos SIMULADA → punto único de reemplazo
+   por el backend real (Convex) devolviendo el mismo shape.
+   ================================================================ */
+'use strict';
+
+const MODEL = {
+  raiz:    { nombre:'Raíz',    pieza:'Esmeralda certificada',            inversion:1000,   avaluo:1800,   comision:0.12, base:1980,   objetivo:4680,   maxMes:12, fund:15, gia:30, aval:38, list:45,  aucts:[75,115,150,195,240,300] },
+  tiempo:  { nombre:'Tiempo',  pieza:'Set de gemas de color',            inversion:10000,  avaluo:17100,  comision:0.25, base:18810,  objetivo:51300,  maxMes:14, fund:30, gia:55, aval:65, list:80,  aucts:[140,200,260,300,360,405] },
+  semilla: { nombre:'Semilla', pieza:'Anillo · Esmeralda Chivor 2,2 ct', inversion:100000, avaluo:180000, comision:0.25, base:189000, objetivo:540000, maxMes:14, fund:45, gia:70, aval:82, list:95,  aucts:[155,215,270,330,390,415] }
+};
+const OUT = { raiz:{tipo:'base',dia:150}, tiempo:{tipo:'seguro'}, semilla:{tipo:'objetivo',dia:270} };
+
+function pago(l,P){ const g=Math.max(0,P*(1-l.comision)-l.inversion)*0.5; return { pago:l.inversion+g, gan:g, soc:g*0.10 }; }
+const pagoSeg = l => ({ pago:l.inversion*1.10, gan:l.inversion*0.10, soc:0 });
+
+const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
+const fmt = new Intl.NumberFormat('es-CO',{maximumFractionDigits:0});
+const money = v => '$'+fmt.format(Math.round(v));
+const kfmt = v => v>=1000 ? '$'+(v/1000).toFixed(v%1000>=50&&v<10000?1:0).replace('.',',')+'k' : money(v);
+const lerp=(a,b,t)=>a+(b-a)*t, smooth=t=>t*t*(3-2*t);
+function rng(seed){let a=seed>>>0;return()=>{a|=0;a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
+
+
+/* ---- iconografía propia (trazo 1.7, 24vb) — nunca emojis ---- */
+const ICONS={
+  users:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c.8-3.2 3.2-4.8 6-4.8s5.2 1.6 6 4.8"/><circle cx="17.2" cy="9.2" r="2.4"/><path d="M16.6 15.3c2.2.5 3.8 1.8 4.4 4.2"/>',
+  check:'<path d="M20 6L9 17l-5-5"/>',
+  award:'<circle cx="12" cy="9" r="4.6"/><path d="M9.2 13.2L8 21l4-2 4 2-1.2-7.8"/>',
+  gavel:'<path d="M13.5 4.5l6 6M11 7l6 6M14.7 5.7L6.2 14.2l3.6 3.6 8.5-8.5"/><path d="M3 21h9"/>',
+  eye:'<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+  banknote:'<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 12h.01M18 12h.01"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2.5V5M12 19v2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2.5 12H5M19 12h2.5M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/>',
+  shield:'<path d="M12 3l7.5 2.8V12c0 4.6-3.2 7.6-7.5 9-4.3-1.4-7.5-4.4-7.5-9V5.8L12 3z"/><path d="M9 12l2 2 4-4"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 7.5L12 13l8.5-5.5"/>',
+  gem:'<path d="M7 3.5h10l4 5.5-9 11.5L3 9l4-5.5z"/><path d="M3 9h18M12 20.5L8.4 9l2.4-5.5M12 20.5L15.6 9l-2.4-5.5"/>',
+  file:'<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-5-5z"/><path d="M14 3v5h5"/>',
+  play:'<path d="M8 5.5v13l11-6.5-11-6.5z" fill="currentColor" stroke="none"/>',
+  pause:'<path d="M8 5.5v13M16 5.5v13" stroke-width="2.4"/>',
+  reset:'<path d="M3.5 12a8.5 8.5 0 108.5-8.5c-3 0-5.6 1.5-7.1 3.8"/><path d="M4.5 3v4.5H9"/>',
+  moon:'<path d="M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 1010.5 10.5z"/>'
+};
+const icon=n=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[n]||ICONS.gem)+'</svg>';
+
+function buildSim(seed){
+  const sim={};
+  for(const id in MODEL){
+    const l=MODEL[id], out=OUT[id], rnd=rng(seed*7919+id.length*131);
+    const maxDia=l.maxMes*30, venta=out.tipo!=='seguro';
+    const saleDay=venta?out.dia:maxDia;
+    const salePrice=!venta?null: out.tipo==='base'?Math.round(l.base*(1.02+rnd()*0.04)):l.objetivo;
+    const aucts=l.aucts.filter(d=>d<saleDay-6); if(venta)aucts.push(saleDay);
+    const nA=aucts.length;
+    const bids=aucts.map((d,i)=>{ const isSale=venta&&d===saleDay, t=nA<=1?1:i/(nA-1);
+      const m=isSale?salePrice: venta?Math.round(lerp(l.base*0.78,salePrice,t)*(0.96+rnd()*0.05))
+                                     :Math.round(l.base*lerp(0.62,0.88,t)*(0.97+rnd()*0.05));
+      return {dia:d,monto:m,sale:isSale}; });
+    // curva: plana hasta cada subasta, re-estimación después, salto del martillo
+    const anchors=[[0,l.avaluo*0.97],[l.fund,l.avaluo],[l.list,l.avaluo*1.05]];
+    const capSeg=l.base*0.93; let cur=l.avaluo*1.05;
+    for(const b of bids){ if(b.sale)continue;
+      const nc=venta?Math.max(cur,Math.min(b.monto*1.15,salePrice*0.98)):Math.min(capSeg,Math.max(cur,b.monto*1.12));
+      if(nc>cur+1){anchors.push([b.dia-1,cur]);anchors.push([b.dia+4,nc]);cur=nc;} }
+    const endVal=venta?salePrice:capSeg;
+    const endDay=venta?saleDay:Math.min(maxDia,Math.max(310,(bids.length?bids[bids.length-1].dia+6:310)));
+    if(venta)anchors.push([Math.max(0,endDay-2),cur]);
+    anchors.push([endDay,endVal]);
+    const path=new Array(431); let wig=0;
+    for(let d=0;d<431;d++){ let v;
+      if(d>=endDay)v=endVal;
+      else{let i=0;while(i<anchors.length-1&&anchors[i+1][0]<=d)i++;
+        const[a0,v0]=anchors[i],[a1,v1]=anchors[Math.min(i+1,anchors.length-1)];
+        v=a1===a0?v1:lerp(v0,v1,smooth((d-a0)/Math.max(1,a1-a0)));}
+      wig=wig*0.92+(rnd()-0.5)*0.006;
+      path[d]=Math.max(l.avaluo*0.9,v*(1+((d>l.list&&d<endDay)?wig:0)));}
+    // eventos cortos para el ticker
+    const ev=[];
+    const push=(dia,ic,tx)=>ev.push({dia,ic,tx});
+    push(2,'users','Recaudo en marcha');
+    push(Math.round(l.fund*0.6),'users','Recaudo al '+(60+Math.floor(rnd()*15))+'%');
+    push(l.fund,'check','Recaudo completo — '+money(l.inversion));
+    push(l.gia,'award','Certificación GIA emitida');
+    push(l.list,'gavel','La pieza entra a subasta en EE. UU.');
+    let watchers=14+Math.floor(rnd()*18);
+    for(const b of bids){
+      if(b.sale){ push(b.dia,'gavel','Adjudicada — martillo a '+money(b.monto)); }
+      else{ watchers+=6+Math.floor(rnd()*16);
+        push(b.dia-6,'eye',watchers+' coleccionistas siguen la pieza');
+        push(b.dia,'gavel','Mejor puja: '+money(b.monto)+(b.monto<l.base?' — bajo reserva':'')); } }
+    if(venta){ const pg=pago(l,salePrice);
+      push(saleDay+3,'banknote','Pagos enviados a inversionistas');
+      if(pg.soc>0)push(saleDay+5,'sun','Aporte social girado a Coscuez'); }
+    else{ push(maxDia,'shield','Seguro 110% activado'); push(maxDia+3,'banknote','Pago seguro enviado'); }
+    ev.sort((a,b)=>a.dia-b.dia);
+    sim[id]={l,venta,saleDay,salePrice,maxDia,bids,path,ev,endDay};
+  }
+  return sim;
+}
+
+/* ---- motor ---- */
+const Engine={day:0,speed:2,playing:false,_raf:null,_t0:null,max:430,
+  start(){if(this.playing)return;this.playing=true;this._t0=null;document.body.classList.add('playing');this._ui();this._loop();},
+  pause(){this.playing=false;if(this._raf)cancelAnimationFrame(this._raf);this._raf=null;document.body.classList.remove('playing');this._ui();},
+  toggle(){this.playing?this.pause():this.start();},
+  setDay(d){this.day=Math.max(0,Math.min(this.max,d));render();},
+  _loop(){this._raf=requestAnimationFrame(t=>{if(!this.playing)return;
+    if(this._t0==null)this._t0=t;const dt=(t-this._t0)/1000;this._t0=t;
+    this.day=Math.min(this.max,this.day+dt*this.speed);render();
+    if(this.day>=this.max){this.pause();return;}this._loop();});},
+  _ui(){const b=$('#btnPlay');b.innerHTML=icon(this.playing?'pause':'play');b.setAttribute('aria-pressed',String(this.playing));
+    $('#bigPlay').style.display=(this.playing||this.day>2)?'none':'grid';}
+};
+
+const UI={gem:'semilla',monto:2500,focus:null,_tick:'',_scrub:false};
+let SIM=buildSim(2026);
+
+/* ---- tema: los colores de la gráfica se LEEN de los tokens --tm-* ---- */
+let theme='dark';
+let TOK={};
+function readTokens(){
+  const cs=getComputedStyle(document.documentElement);
+  const g=n=>cs.getPropertyValue(n).trim();
+  TOK={surface:g('--tm-surface'),text:g('--tm-text'),muted:g('--tm-muted'),subtle:g('--tm-subtle'),
+       hairline:g('--tm-hairline'),border:g('--tm-border'),viz1:g('--tm-viz-1'),viz2:g('--tm-viz-2'),
+       warning:g('--tm-warning')};
+}
+function applyTheme(t){
+  theme=t;document.documentElement.dataset.theme=t;
+  const b=$('#btnTheme'); if(b)b.innerHTML=icon(t==='dark'?'sun':'moon');
+  readTokens();render();
+}
+
+/* ---- helpers ---- */
+const S=()=>SIM[UI.gem];
+function mejorPuja(day){let b=null;for(const x of S().bids){if(x.dia<=day&&(!b||x.monto>b.monto))b=x;}return b;}
+function proy(day){ const s=S(),l=s.l;
+  if(s.venta&&day>=s.saleDay)return{e:'vendido',...pago(l,s.salePrice)};
+  if(!s.venta&&day>=s.maxDia)return{e:'seguro',...pagoSeg(l)};
+  const b=mejorPuja(day);
+  if(b&&b.monto>=l.base)return{e:'puja',...pago(l,b.monto)};
+  return{e:'piso',...pagoSeg(l)};}
+function etapa(day){ const s=S();
+  if(day>=s.saleDay)return 3;
+  if(day>=s.l.list)return 2;
+  if(day>=s.l.fund)return 1;
+  return 0;}
+
+/* ---- gráfica ---- */
+const CH={w:640,h:240,pl:10,pr:14,pt:26,pb:22};
+const svgEl=(n,a)=>{const e=document.createElementNS('http://www.w3.org/2000/svg',n);for(const k in a)e.setAttribute(k,a[k]);return e;};
+function renderChart(){
+  const s=S(),l=s.l,day=Math.floor(Engine.day);
+  const svg=$('#chart');svg.textContent='';
+  const{w,h,pl,pr,pt,pb}=CH,x0=pl,x1=w-pr,y0=pt,y1=h-pb;
+  const vMin=l.avaluo*0.8,vMax=l.objetivo*1.08;
+  const X=d=>x0+(d/430)*(x1-x0), Y=v=>y1-((v-vMin)/(vMax-vMin))*(y1-y0);
+  // zona protegida: bajo la reserva no hay venta → aplica el retorno asegurado 110%
+  const yRes=Y(l.base);
+  svg.appendChild(svgEl('rect',{x:x0,y:yRes,width:x1-x0,height:Math.max(0,y1-yRes),fill:TOK.warning,'fill-opacity':'0.05'}));
+  svg.appendChild(svgEl('line',{x1:x0,x2:x1,y1:yRes,y2:yRes,stroke:TOK.hairline,'stroke-width':1}));
+  const zp=svgEl('text',{x:x1-4,y:y1-6,'text-anchor':'end',fill:TOK.subtle,'font-size':9.5,'font-family':'-apple-system,system-ui,sans-serif','font-weight':600});
+  zp.textContent='zona protegida · seguro 110%';svg.appendChild(zp);
+  const rl=svgEl('text',{x:x1-4,y:yRes-4,'text-anchor':'end',fill:TOK.subtle,'font-size':9.5,'font-family':'-apple-system,system-ui,sans-serif','font-weight':600});
+  rl.textContent='reserva '+kfmt(l.base);svg.appendChild(rl);
+  // referencia: objetivo
+  svg.appendChild(svgEl('line',{x1:x0,x2:x1,y1:Y(l.objetivo),y2:Y(l.objetivo),stroke:TOK.hairline,'stroke-width':1}));
+  const to=svgEl('text',{x:x1,y:Y(l.objetivo)-5,'text-anchor':'end',fill:TOK.subtle,'font-size':10,'font-family':'-apple-system,system-ui,sans-serif','font-weight':600});
+  to.textContent='objetivo '+kfmt(l.objetivo);svg.appendChild(to);
+  // eje X mínimo
+  for(const m of[0,7,14]){const t=svgEl('text',{x:X(m*30),y:h-4,'text-anchor':m?'middle':'start',fill:TOK.subtle,'font-size':9.5,'font-family':'-apple-system,system-ui,sans-serif'});t.textContent='M'+m;svg.appendChild(t);}
+  // área + línea (marca validada --tm-viz-1)
+  const upto=Math.min(day,430);let dl='',da='';
+  for(let d=0;d<=upto;d++){const px=X(d).toFixed(1),py=Y(s.path[d]).toFixed(1);dl+=(d?'L':'M')+px+','+py;da+=(d?'L':'M')+px+','+py;}
+  if(upto>0){
+    da+='L'+X(upto).toFixed(1)+','+y1+'L'+x0+','+y1+'Z';
+    const area=svgEl('path',{d:da,fill:TOK.viz1,'fill-opacity':'0.10'});svg.appendChild(area);
+    svg.appendChild(svgEl('path',{d:dl,fill:'none',stroke:TOK.viz1,'stroke-width':2.5,'stroke-linecap':'round','stroke-linejoin':'round'}));
+  }
+  // subastas (marca validada --tm-viz-2, anillo de superficie 2px)
+  for(const b of s.bids){if(b.dia>day)continue;
+    svg.appendChild(svgEl('circle',{cx:X(b.dia),cy:Y(b.monto),r:b.sale?6:4.5,fill:TOK.viz2,stroke:TOK.surface,'stroke-width':2}));}
+  // punto + etiqueta del valor actual (etiqueta directa selectiva)
+  if(upto>0){const cy=Y(s.path[upto]);
+    svg.appendChild(svgEl('circle',{cx:X(upto),cy,r:5,fill:TOK.viz1,stroke:TOK.surface,'stroke-width':2.5}));
+    const near=Math.abs(cy-Y(l.objetivo))<15;
+    const t=svgEl('text',{x:Math.min(X(upto)+9,x1-52),y:near?cy+18:cy-9,fill:TOK.text,'font-size':12,'font-weight':700,'font-family':'-apple-system,system-ui,sans-serif'});
+    t.textContent=kfmt(s.path[upto]);svg.appendChild(t);}
+  // crosshair
+  if(UI.focus!=null&&UI.focus<=upto){const fx=X(UI.focus);
+    svg.appendChild(svgEl('line',{x1:fx,x2:fx,y1:y0,y2:y1,stroke:TOK.muted,'stroke-width':1}));
+    svg.appendChild(svgEl('circle',{cx:fx,cy:Y(s.path[UI.focus]),r:4,fill:TOK.viz1,stroke:TOK.surface,'stroke-width':2}));}
+}
+function showTT(d,px,py){
+  UI.focus=d;const s=S(),tt=$('#tt');tt.textContent='';
+  const dv=document.createElement('div');dv.className='d';dv.textContent='Mes '+Math.floor(d/30)+' · Día '+d;tt.appendChild(dv);
+  const r1=document.createElement('div');r1.className='r';
+  r1.appendChild(Object.assign(document.createElement('span'),{className:'k'}));
+  const b1=document.createElement('b');b1.textContent=money(s.path[Math.min(d,430)]);r1.appendChild(b1);tt.appendChild(r1);
+  const bp=mejorPuja(d);
+  if(bp){const r2=document.createElement('div');r2.className='r au';
+    r2.appendChild(Object.assign(document.createElement('span'),{className:'k'}));
+    const b2=document.createElement('b');b2.textContent=money(bp.monto);r2.appendChild(b2);
+    const sp=document.createElement('span');sp.textContent='puja';r2.appendChild(sp);tt.appendChild(r2);}
+  const box=$('#chartBox'),rect=box.getBoundingClientRect();
+  if(px==null){px=((CH.pl+(d/430)*(CH.w-CH.pl-CH.pr))/CH.w)*rect.width;py=rect.height*0.3;}
+  tt.style.left=Math.max(4,Math.min(rect.width-140,px+12))+'px';
+  tt.style.top=Math.max(4,py-16)+'px';
+  tt.classList.add('show');renderChart();
+}
+function hideTT(){UI.focus=null;$('#tt').classList.remove('show');renderChart();}
+
+function renderTable(){
+  const s=S(),day=Math.floor(Engine.day),tbl=$('#dataTable');
+  const key=UI.gem+'|'+day; if(tbl.dataset.k===key)return; tbl.dataset.k=key;
+  tbl.textContent='';
+  const tr=document.createElement('tr');
+  for(const h of['Mes','Valor','Puja']){const th=document.createElement('th');th.textContent=h;tr.appendChild(th);}
+  tbl.appendChild(tr);
+  for(let m=0;m<=Math.min(14,Math.floor(day/30));m++){
+    const dE=Math.min(day,m*30+29),r=document.createElement('tr');
+    const c=t=>{const td=document.createElement('td');td.textContent=t;r.appendChild(td);};
+    c('M'+m);c(money(s.path[Math.min(dE,430)]));
+    const bp=mejorPuja(dE);c(bp?money(bp.monto):'—');
+    tbl.appendChild(r);}
+}
+
+/* ---- respaldos, objetivo, próximo hito, historial ---- */
+function renderBacks(day){
+  const l=S().l;
+  const items=[
+    ['GIA', day>=l.gia], ['Avalúo USA', day>=l.aval],
+    ['Seguro 110%', true], ['Gema física', true]
+  ];
+  const el=$('#backs');
+  const key=UI.gem+'|'+items.map(i=>i[1]?1:0).join('');
+  if(el.dataset.k===key)return; el.dataset.k=key;
+  el.textContent='';
+  for(const[nm,ok]of items){
+    const s=document.createElement('span');
+    s.className='back'+(ok?' ok':'');
+    s.textContent=nm+(ok?' ✓':' ·');
+    el.appendChild(s);
+  }
+}
+function renderGoal(day,p){
+  const s=S(),l=s.l;
+  const val=(p.e==='vendido')?s.salePrice:s.path[Math.min(day,430)];
+  const pct=Math.min(100,val/l.objetivo*100);
+  $('#goalFill').style.setProperty('--g',String(pct/100));
+  $('#goalPct').textContent=Math.round(pct)+'%';
+  // micro-celebración al cruzar reserva (primera puja válida) o venderse
+  const st=p.e, k=UI.gem;
+  if(!UI._st)UI._st={};
+  if(UI._st[k]!==st){
+    const was=UI._st[k]; UI._st[k]=st;
+    if(was&&(st==='puja'||st==='vendido')){
+      const g=$('#goal');g.classList.remove('celebrate');void g.offsetWidth;g.classList.add('celebrate');
+    }
+  }
+}
+function nextHito(day){
+  const s=S(),l=s.l;
+  const c=[[l.fund,'Cierre de recaudo'],[l.gia,'Certificación GIA'],[l.aval,'Avalúo USA'],[l.list,'Entrada a subasta']];
+  let n=1;
+  for(const b of s.bids){ c.push([b.dia, b.sale?(s.venta?'Subasta de cierre':'')||'Subasta':'Subasta '+(n++)]); }
+  if(!s.venta)c.push([s.maxDia,'Activación seguro 110%']);
+  c.push([s.saleDay+3,'Dispersión de pagos']);
+  c.sort((a,b)=>a[0]-b[0]);
+  for(const[d,nm]of c){ if(d>day)return{d,nm}; }
+  return null;
+}
+function renderNext(day){
+  const nx=nextHito(day);
+  if(!nx){ $('#nextNm').textContent='Operación completada ✓'; $('#nextEta').textContent=''; return; }
+  const rest=nx.d-day;
+  $('#nextNm').textContent=nx.nm;
+  $('#nextEta').textContent=rest<=45?('en '+rest+(rest===1?' día':' días')):('en ~'+Math.round(rest/30)+' meses');
+}
+let sheetOpen=false;
+function renderHist(){
+  const day=Math.floor(Engine.day);
+  const ul=$('#histList');
+  const evs=S().ev.filter(e=>e.dia<=day);
+  const key=UI.gem+'|'+evs.length;
+  if(ul.dataset.k===key)return; ul.dataset.k=key;
+  ul.textContent='';
+  if(!evs.length){const li=document.createElement('li');li.textContent='Aún no hay movimientos — dale ▶.';ul.appendChild(li);return;}
+  for(let i=evs.length-1;i>=0;i--){
+    const e=evs[i],li=document.createElement('li');
+    const ic=document.createElement('span');ic.className='ic2';ic.innerHTML=icon(e.ic);li.appendChild(ic);
+    const tx=document.createElement('span');tx.className='tx2';tx.textContent=e.tx;li.appendChild(tx);
+    const d2=document.createElement('span');d2.className='d2';d2.textContent='M'+Math.floor(e.dia/30)+' · D'+e.dia;li.appendChild(d2);
+    ul.appendChild(li);
+  }
+}
+function openSheet(){sheetOpen=true;renderHist();$('#sheet').classList.add('open');$('#scrim').classList.add('open');$('#sheetClose').focus();}
+function closeSheet(){if(!sheetOpen)return;sheetOpen=false;$('#sheet').classList.remove('open');if(!sheet2Open)$('#scrim').classList.remove('open');$('#ticker').focus();}
+
+/* ---- render ---- */
+function render(){
+  const s=S(),l=s.l,day=Math.floor(Engine.day);
+  if(PAGE==='portafolio')renderPf();
+  if(PAGE==='detalle')renderDetalleLive(day);
+  $('#clockM').textContent=String(Math.floor(day/30));
+  const sc=$('#scrub');if(!UI._scrub)sc.value=day;
+  sc.style.setProperty('--pct',(day/430*100)+'%');
+  const et=etapa(day),p=proy(day);
+  const fase=$('#fase');
+  if(p.e==='vendido'){fase.className='chip g';fase.textContent='Vendida';}
+  else if(p.e==='seguro'){fase.className='chip w';fase.textContent='Seguro 110%';}
+  else if(et===2){fase.className='chip o';fase.textContent='En subasta';}
+  else if(et===1){fase.className='chip o';fase.textContent='Preparación';}
+  else{fase.className='chip g';fase.textContent='Recaudo';}
+  $('#piezaNm').textContent=l.pieza;
+  const share=UI.monto/l.inversion, miPago=p.pago*share;
+  const done=p.e==='vendido'||p.e==='seguro';
+  $('#bigCap').textContent=done?(p.e==='vendido'?'Recibiste':'Recibiste · seguro 110%'):'Hoy recibirías';
+  const bn=$('#bigNum');bn.textContent=money(miPago);bn.classList.toggle('won',done);
+  const rend=(miPago/UI.monto-1)*100;
+  const bd=$('#bigDelta');bd.textContent='▲ +'+(rend>=100?Math.round(rend):rend.toFixed(1).replace('.',','))+'%'+(done?'':' hasta ahora');
+  bd.classList.toggle('zero',!done&&p.e==='piso');
+  $$('#steps .step').forEach((el,i)=>{el.className='step'+(i<et?' done':i===et?' now':'');});
+  $('#steps .railfill').style.setProperty('--p',String(et/3));
+  const evs=s.ev.filter(e=>e.dia<=day);
+  const last=evs[evs.length-1];
+  const key=UI.gem+'|'+evs.length;
+  if(key!==UI._tick){UI._tick=key;
+    const tk=$('#ticker');
+    $('#tkIc').innerHTML=icon(last?last.ic:'gem');
+    $('#tkTx').textContent=last?last.tx:'Dale ▶ para ver tu inversión en el tiempo.';
+    tk.classList.remove('flash');void tk.offsetWidth;tk.classList.add('flash');}
+  const pB=pago(l,l.base),pO=pago(l,l.objetivo);
+  $('#oMin').textContent=money(l.inversion*1.10*share);
+  $('#oBase').textContent=money(pB.pago*share);
+  $('#oBaseP').textContent='+'+Math.round((pB.pago/l.inversion-1)*100)+'%';
+  $('#oObj').textContent=money(pO.pago*share);
+  $('#oObjP').textContent='+'+Math.round((pO.pago/l.inversion-1)*100)+'%';
+  const soc=$('#social');
+  if(p.soc*share>=1){soc.innerHTML=icon('sun')+' <b>'+money(p.soc*share)+'</b> de tu ganancia llevan luz solar a Coscuez';}
+  else soc.innerHTML=icon('sun')+' El 10% de tu ganancia lleva luz solar a Coscuez';
+  renderBacks(day);renderGoal(day,p);renderNext(day);
+  if(sheetOpen)renderHist();
+  renderChart();renderTable();
+  $('#bigPlay').style.display=(Engine.playing||day>2)?'none':'grid';
+}
+
+/* ---- eventos ---- */
+function setGem(id){
+  UI.gem=id;
+  $$('.gem').forEach(g=>g.setAttribute('aria-pressed',String(g.dataset.l===id)));
+  const l=MODEL[id],sl=$('#slAporte');
+  sl.max=l.inversion; if(UI.monto>l.inversion)UI.monto=l.inversion;
+  sl.value=UI.monto;
+  sl.style.setProperty('--pct',(UI.monto-100)/(l.inversion-100)*100+'%');
+  $('#aporteVal').textContent=money(UI.monto);
+  UI._tick='';hideTT();render();
+}
+$$('.gem').forEach(g=>g.addEventListener('click',()=>setGem(g.dataset.l)));
+$('#slAporte').addEventListener('input',e=>{
+  UI.monto=parseInt(e.target.value,10);
+  const l=MODEL[UI.gem];
+  e.target.style.setProperty('--pct',(UI.monto-100)/(l.inversion-100)*100+'%');
+  $('#aporteVal').textContent=money(UI.monto);render();});
+$('#btnPlay').addEventListener('click',()=>Engine.toggle());
+$('#bigPlay').addEventListener('click',()=>Engine.start());
+$$('.spd').forEach(b=>b.addEventListener('click',()=>{Engine.speed=parseFloat(b.dataset.v);
+  $$('.spd').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));}));
+$('#btnReset').addEventListener('click',()=>{SIM=buildSim(1+Math.floor(Math.random()*99999));UI._tick='';Engine.pause();Engine.setDay(0);});
+$('#scrub').addEventListener('pointerdown',()=>UI._scrub=true);
+$('#scrub').addEventListener('pointerup',()=>UI._scrub=false);
+$('#scrub').addEventListener('input',e=>Engine.setDay(parseFloat(e.target.value)));
+const box=$('#chartBox');
+box.addEventListener('pointermove',ev=>{
+  if(Engine.day<2)return;
+  const r=box.getBoundingClientRect();
+  const rel=(ev.clientX-r.left)/r.width*CH.w;
+  const d=Math.round((rel-CH.pl)/(CH.w-CH.pl-CH.pr)*430);
+  showTT(Math.max(0,Math.min(Math.floor(Engine.day),d)),ev.clientX-r.left,ev.clientY-r.top);});
+box.addEventListener('pointerleave',hideTT);
+box.addEventListener('keydown',e=>{
+  const day=Math.floor(Engine.day);let d=UI.focus==null?day:UI.focus;
+  if(e.key==='Escape'){hideTT();return;}
+  if(e.key==='ArrowRight')d=Math.min(day,d+(e.shiftKey?30:5));
+  else if(e.key==='ArrowLeft')d=Math.max(0,d-(e.shiftKey?30:5));
+  else if(e.key==='Home')d=0; else if(e.key==='End')d=day; else return;
+  e.preventDefault();showTT(d);});
+document.addEventListener('keydown',e=>{
+  if(e.target.matches('input,select,textarea'))return;
+  if(e.key===' '){e.preventDefault();Engine.toggle();}});
+$('#btnTheme').addEventListener('click',()=>applyTheme(theme==='dark'?'light':'dark'));
+$('#ticker').addEventListener('click',openSheet);
+$('#sheetClose').addEventListener('click',closeSheet);
+$('#scrim').addEventListener('click',()=>{closeSheet();closeSheet2();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();closeSheet2();}});
+
+/* ================================================================
+   PÁGINAS ADYACENTES · router + lotes + detalle + invertir + portafolio
+   ================================================================ */
+let PAGE='sim', DET='semilla';
+const PGMAP={sim:'pg-sim',inicio:'pg-inicio',lotes:'pg-lotes',detalle:'pg-detalle',portafolio:'pg-portafolio'};
+const SPECS={
+  raiz:'Esmeralda suelta · certificada GIA · pieza ilustrativa',
+  tiempo:'Set curado de gemas de color · mercado NSE alto · ilustrativo',
+  semilla:'2,2 ct · Extrafina F1 · joya 5,5 g · 18 k · 6 diamantes · filigrana vintage'
+};
+const gemSvg=id=>document.querySelector('.gem[data-l="'+id+'"] svg').outerHTML;
+const withGem=(id,fn)=>{const o=UI.gem;UI.gem=id;const r=fn();UI.gem=o;return r;};
+function faseChip(id,day){
+  return withGem(id,()=>{
+    const p=proy(day),et=etapa(day);
+    if(p.e==='vendido')return['chip g','Vendida'];
+    if(p.e==='seguro')return['chip w','Seguro 110%'];
+    if(et===2)return['chip o','En subasta'];
+    if(et===1)return['chip o','Preparación'];
+    return['chip g','Recaudo'];
+  });
+}
+function go(p){
+  PAGE=p;document.body.dataset.page=p;
+  $$('.page').forEach(s=>s.classList.remove('active'));
+  document.getElementById(PGMAP[p]).classList.add('active');
+  const tab=p==='detalle'?'lotes':p;
+  $$('.tbi').forEach(b=>b.setAttribute('aria-current',b.dataset.p===tab?'page':'false'));
+  if(p==='lotes')renderLotes();
+  if(p==='detalle')renderDetalle();
+  if(p==='portafolio'){delete $('#pfBody').dataset.k;renderPf();}
+  if(p==='sim')render();
+  window.scrollTo(0,0);
+}
+/* — lotes — */
+function renderLotes(){
+  const day=Math.floor(Engine.day),cont=$('#loteList');
+  cont.textContent='';
+  for(const id in MODEL){
+    const l=MODEL[id];
+    const pB=pago(l,l.base),pO=pago(l,l.objetivo);
+    const row=document.createElement('button');row.className='lrow';
+    row.setAttribute('aria-label','Ver lote '+l.nombre);
+    const gw=document.createElement('span');gw.className='gw';gw.innerHTML=gemSvg(id);row.appendChild(gw);
+    const mid=document.createElement('span');mid.className='mid';
+    const top=document.createElement('span');top.style.display='flex';top.style.gap='8px';top.style.alignItems='center';
+    const nm=document.createElement('span');nm.className='nm2';nm.textContent=l.nombre;top.appendChild(nm);
+    const[cc,ct]=faseChip(id,day);
+    const ch=document.createElement('span');ch.className=cc;ch.style.fontSize='.6rem';ch.textContent=ct;top.appendChild(ch);
+    mid.appendChild(top);
+    const s3=document.createElement('span');s3.className='sub3';s3.style.display='block';s3.textContent=l.pieza+' · ticket '+money(l.inversion);mid.appendChild(s3);
+    const fin=document.createElement('span');fin.className='fin';fin.style.display='block';
+    fin.textContent='+'+Math.round((pB.pago/l.inversion-1)*100)+'% a +'+Math.round((pO.pago/l.inversion-1)*100)+'% · '+(id==='raiz'?'2–12':'6–14')+' meses · piso 110%';
+    mid.appendChild(fin);row.appendChild(mid);
+    const cv=document.createElement('span');cv.className='chev2';cv.textContent='›';row.appendChild(cv);
+    row.addEventListener('click',()=>{DET=id;go('detalle');});
+    cont.appendChild(row);
+  }
+}
+/* — detalle — */
+function renderDetalle(){
+  const l=MODEL[DET];
+  $('#dWell').innerHTML=gemSvg(DET);
+  $('#dNombre').textContent=l.pieza;
+  $('#dSpec').textContent=SPECS[DET];
+  const fin=$('#dFin');fin.textContent='';
+  const row=(a,b2)=>{const r=document.createElement('div');r.className='rowln';
+    const s=document.createElement('span');s.textContent=a;const b=document.createElement('b');b.textContent=b2;
+    r.appendChild(s);r.appendChild(b);fin.appendChild(r);};
+  const pB=pago(l,l.base),pO=pago(l,l.objetivo);
+  row('Ticket del lote',money(l.inversion));
+  row('Avalúo estimado',money(l.avaluo));
+  row('Precio base (reserva)',money(l.base));
+  row('Precio objetivo',money(l.objetivo));
+  row('Rendimiento','+'+Math.round((pB.pago/l.inversion-1)*100)+'% a +'+Math.round((pO.pago/l.inversion-1)*100)+'%');
+  row('Tiempo estimado',(DET==='raiz'?'2 a 12':'6 a 14')+' meses');
+  row('Piso asegurado','110% del aporte');
+  delete $('#dBacks').dataset.k;
+  renderDetalleLive(Math.floor(Engine.day),true);
+}
+function renderDetalleLive(day,force){
+  const el=$('#dBacks');
+  const key=DET+'|'+day;
+  if(!force&&el.dataset.k===key)return;el.dataset.k=key;
+  const l=MODEL[DET];
+  const[cc,ct]=faseChip(DET,day);
+  const chip=$('#dChip');chip.className=cc;chip.textContent=ct;
+  el.textContent='';
+  for(const[nm,ok]of[['GIA',day>=l.gia],['Avalúo USA',day>=l.aval],['Seguro 110%',true],['Gema física',true]]){
+    const s=document.createElement('span');s.className='back'+(ok?' ok':'');s.textContent=nm+(ok?' ✓':' ·');el.appendChild(s);}
+  $('#dDocGia').textContent=day>=l.gia?'demo ↓':'pendiente';
+  $('#dDocAval').textContent=day>=l.aval?'demo ↓':'pendiente';
+}
+/* — invertir (sheet) — */
+let sheet2Open=false;
+const INV={gem:'semilla',monto:2500};
+function updISlider(){
+  const l=MODEL[INV.gem],sl=$('#iSlider');
+  sl.style.setProperty('--pct',(INV.monto-100)/(l.inversion-100)*100+'%');
+  $('#iMonto').textContent=money(INV.monto);
+  $$('.qa').forEach(q=>q.setAttribute('aria-pressed',String(parseInt(q.dataset.q,10)===INV.monto)));
+}
+function showIStep(n){
+  ['#ist1','#ist2','#ist3'].forEach((s,i)=>$(s).classList.toggle('active',i===n-1));
+  if(n===2){
+    const l=MODEL[INV.gem],share=INV.monto/l.inversion;
+    const pB=pago(l,l.base),pO=pago(l,l.objetivo);
+    const r=$('#iResumen');r.textContent='';
+    const add=(a,b2)=>{const d=document.createElement('div');d.className='rowln';
+      const s=document.createElement('span');s.textContent=a;const b=document.createElement('b');b.textContent=b2;
+      d.appendChild(s);d.appendChild(b);r.appendChild(d);};
+    add('Lote',l.nombre+' — '+l.pieza);
+    add('Mi aporte',money(INV.monto));
+    add('Participación',(share*100).toFixed(share<0.01?2:1).replace('.',',')+'%');
+    add('Pago desde (precio base)',money(pB.pago*share));
+    add('Pago hasta (objetivo)',money(pO.pago*share));
+    add('Piso asegurado (110%)',money(INV.monto*1.10));
+    add('Plazo máximo',(l.maxMes)+' meses');
+    const c=$('#iChk');c.checked=false;
+    const b=$('#iConfirm');b.disabled=true;b.style.opacity='.45';
+  }
+}
+function openInvest(id){
+  INV.gem=id;const l=MODEL[id];
+  INV.monto=Math.min(INV.monto,l.inversion)||2500;
+  $('#s2Title').textContent='Invertir · '+l.nombre;
+  const sl=$('#iSlider');sl.max=l.inversion;sl.value=INV.monto;updISlider();
+  showIStep(1);
+  sheet2Open=true;$('#sheet2').classList.add('open');$('#scrim').classList.add('open');$('#sheet2Close').focus();
+}
+function closeSheet2(){if(!sheet2Open)return;sheet2Open=false;$('#sheet2').classList.remove('open');if(!sheetOpen)$('#scrim').classList.remove('open');}
+/* — portafolio — */
+const PORTFOLIO=[];
+function renderPf(){
+  const day=Math.floor(Engine.day),body=$('#pfBody');
+  const key=day+'|'+PORTFOLIO.length;
+  if(body.dataset.k===key)return;body.dataset.k=key;
+  body.textContent='';
+  if(!PORTFOLIO.length){
+    const e=document.createElement('div');e.className='pempty';
+    const t=document.createElement('div');t.className='l1e';t.textContent='Tu primera gema te espera.';e.appendChild(t);
+    const b=document.createElement('button');b.className='cta';b.textContent='Explorar los lotes';b.style.maxWidth='260px';b.style.margin='0 auto';
+    b.addEventListener('click',()=>go('lotes'));e.appendChild(b);
+    body.appendChild(e);return;
+  }
+  let tA=0,tP=0,tS=0;
+  const rows=[];
+  for(const inv of PORTFOLIO){
+    const l=MODEL[inv.gem],share=inv.monto/l.inversion;
+    const p=withGem(inv.gem,()=>proy(day));
+    tA+=inv.monto;tP+=p.pago*share;tS+=p.soc*share;
+    rows.push({inv,l,p,share});
+  }
+  const tot=document.createElement('div');tot.className='ptot';
+  for(const[lab,val]of[['Aportado',money(tA)],['Proyectado hoy',money(tP)],['Aporte social',money(tS)]]){
+    const o=document.createElement('div');o.className='out';
+    const a=document.createElement('div');a.className='t-overline';a.textContent=lab;o.appendChild(a);
+    const v=document.createElement('div');v.className='v';v.textContent=val;o.appendChild(v);
+    tot.appendChild(o);}
+  body.appendChild(tot);
+  for(const{inv,l,p,share}of rows){
+    const c=document.createElement('div');c.className='pinv';
+    const top=document.createElement('div');top.className='top2';
+    const nm=document.createElement('div');nm.className='nm3';nm.textContent=l.nombre+' · '+money(inv.monto);top.appendChild(nm);
+    const[cc,ct]=faseChip(inv.gem,day);
+    const ch=document.createElement('span');ch.className=cc;ch.textContent=ct;top.appendChild(ch);
+    c.appendChild(top);
+    const r1=document.createElement('div');r1.className='rowln';
+    const s1=document.createElement('span');s1.textContent=(p.e==='vendido'||p.e==='seguro')?'Pago recibido':'Pago proyectado hoy';
+    const b1=document.createElement('b');b1.textContent=money(p.pago*share)+'  ·  +'+Math.round((p.pago*share/inv.monto-1)*100)+'%';
+    r1.appendChild(s1);r1.appendChild(b1);c.appendChild(r1);
+    const vb=document.createElement('button');vb.className='btn2';vb.style.marginTop='10px';vb.textContent='Ver en el simulador';
+    vb.addEventListener('click',()=>{UI.monto=inv.monto;setGem(inv.gem);go('sim');});
+    c.appendChild(vb);
+    body.appendChild(c);
+  }
+  const n=document.createElement('p');n.className='note';n.textContent='Los estados avanzan con el reloj de la pestaña Simulador.';
+  body.appendChild(n);
+}
+/* — wiring de páginas — */
+$$('.tbi').forEach(b=>b.addEventListener('click',()=>go(b.dataset.p)));
+$('#ctaLotes').addEventListener('click',()=>go('lotes'));
+$('#btnBack').addEventListener('click',()=>go('lotes'));
+$('#btnInvertir').addEventListener('click',()=>openInvest(DET));
+$('#btnVerSim2').addEventListener('click',()=>{setGem(DET);go('sim');});
+$('#iSlider').addEventListener('input',e=>{INV.monto=parseInt(e.target.value,10);updISlider();});
+$$('.qa').forEach(q=>q.addEventListener('click',()=>{
+  const l=MODEL[INV.gem];INV.monto=Math.min(parseInt(q.dataset.q,10),l.inversion);
+  $('#iSlider').value=INV.monto;updISlider();}));
+$('#iNext').addEventListener('click',()=>showIStep(2));
+$('#iBack').addEventListener('click',()=>showIStep(1));
+$('#iChk').addEventListener('change',e=>{const b=$('#iConfirm');b.disabled=!e.target.checked;b.style.opacity=e.target.checked?'1':'.45';});
+$('#iConfirm').addEventListener('click',()=>{
+  PORTFOLIO.push({gem:INV.gem,monto:INV.monto,dia:Math.floor(Engine.day)});
+  const l=MODEL[INV.gem],share=INV.monto/l.inversion;
+  $('#iOkTxt').textContent='Aportaste '+money(INV.monto)+' al lote '+l.nombre+' — participación del '+(share*100).toFixed(share<0.01?2:1).replace('.',',')+'%.';
+  showIStep(3);
+});
+$('#iGoSim').addEventListener('click',()=>{
+  closeSheet2();UI.monto=INV.monto;setGem(INV.gem);go('sim');
+  if(!Engine.playing&&Engine.day<3)Engine.start();
+});
+$('#iGoPf').addEventListener('click',()=>{closeSheet2();go('portafolio');});
+$('#sheet2Close').addEventListener('click',closeSheet2);
+
+applyTheme(theme);
+setGem('semilla');
+go('inicio');
+</script>
+</body>
+</html>
