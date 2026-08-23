@@ -427,8 +427,6 @@ export const CAMPOS_PUBLICOS_CATALOGO = [
   'tecnicaJoya',
   'minerales',
   'complementos',
-  // Copy evocador de captura; doble como descripción pública de la pieza
-  'observacion',
 ] as const;
 
 /**
@@ -499,6 +497,29 @@ export const CAMPOS_RESERVADOS_CATALOGO = [
   'syncStatus',
   'syncError',
   'fieldsHash',
+  // BITÁCORA INTERNA — se movió de CAMPOS_PUBLICOS_CATALOGO el 2026-08-23.
+  //
+  // Estaba acá arriba como "copy evocador de captura; doble como descripción
+  // pública de la pieza". En la práctica dejó de serlo hace rato: se convirtió
+  // en la bitácora de costeo del ítem, y `getPublicByItem` la devuelve SIN
+  // credencial, así que todo eso era legible por cualquiera con el número de
+  // ítem — y los ítems se numeran de corrido y el QR es /p/<n>.
+  //
+  // Medido el 2026-08-23 sobre las 443 filas publicadas: 210 traían texto en
+  // `observacion` y **204 de esas 210 eran bitácora interna** — tarifa por
+  // quilate, fórmula del precio de lista, número de factura, y en nueve de
+  // ellas la frase literal "Piso de negociación $X (× 3.5) — INTERNO, no se
+  // anuncia". Las 6 restantes tampoco eran copy de cliente ("canutillos para
+  // lapidar", "Reserva para péndulos"). No se pierde nada publicable.
+  //
+  // `precioEspecial` NO se rompe: `precioEspecialDeObservacion()` lee
+  // `row.observacion` del documento crudo, antes de esta proyección.
+  //
+  // Si algún día hace falta una descripción pública de verdad, va en un campo
+  // propio (`descripcionPublica`), no reutilizando la bitácora: el error acá
+  // fue que un campo con dos públicos distintos siempre termina sirviendo al
+  // equivocado.
+  'observacion',
 ] as const;
 
 type CampoPublicoCatalogo = (typeof CAMPOS_PUBLICOS_CATALOGO)[number];
