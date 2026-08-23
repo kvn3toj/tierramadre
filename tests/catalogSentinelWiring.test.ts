@@ -66,10 +66,11 @@ describe('catalog sentinel wiring', () => {
   it('actually inspected the modules it claims to guard', () => {
     // Guards the guard: if a refactor renames the table or the patch shape, the
     // regexes above would match nothing and this suite would pass vacuously
-    // while covering literally nothing. These four are the known movers of
-    // catalog-visible state as of 2026-08-12.
+    // while covering literally nothing. These five are the known movers of
+    // catalog-visible state as of 2026-08-19 (ghl.ts added for online payments).
     expect(covered.sort()).toEqual([
       'asesorMovements.ts',
+      'ghl.ts',
       'lots.ts',
       'migrations.ts',
       'sales.ts',

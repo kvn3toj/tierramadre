@@ -1179,6 +1179,16 @@ export default defineSchema({
     paymentProvider: v.optional(v.string()),
     providerTxId: v.optional(v.string()),
     providerStatus: v.optional(v.string()),
+    /**
+     * Desglose del precio de una venta online. `totalCOP` es lo COBRADO; estos
+     * dos dicen de dónde salió. Sin ellos no se puede auditar después si una
+     * venta salió a x1 o a x2,6, y reconstruirlo es imposible porque el
+     * multiplicador de la vitrina pudo cambiar.
+     *
+     * Convex-only, FUERA de COLUMN_MAPS — igual que los campos de pago.
+     */
+    precioBaseCOP: v.optional(v.number()),
+    multiplicador: v.optional(v.number()),
     paidAt: v.optional(v.string()),
     promotionCode: v.optional(v.string()),
     shippingAddress: v.optional(

@@ -32,6 +32,8 @@ export interface Permission {
   isInvitadoEspecial: boolean;
   canViewPrices: boolean;
   canUseManualProduct: boolean;
+  /** Can fix a Vitrina's sale-price multiplier (admin, embajador, invitado especial — NOT asesor). */
+  canUseMultiplier: boolean;
   /** Can create/share client-facing "Vitrina" links (staff + invitado especial). */
   canShareVitrina: boolean;
   /** Can open the Cuentas hub and create client cotizaciones (staff + invitado especial). */

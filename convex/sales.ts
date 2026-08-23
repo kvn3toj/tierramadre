@@ -13,6 +13,7 @@ import { allocateNext, formatSaleId, saleSequenceName } from './sequences';
 import { requireAccessLevel } from './_lib/authz';
 import { isStaffSession } from './_lib/requireStaffSession';
 import { bumpCatalogVersion } from './_lib/catalogVersion';
+import { RESERVA_TTL_MS, findReservationConflict } from './_lib/reservas';
 
 // Free text (canonical: B | C | S | M). The venta UI sanitizes a custom
 // write-in to an uppercase, dash-free token before it reaches here, so it stays
@@ -56,6 +57,28 @@ export const get = query({
   handler: async (ctx, { id, sessionToken }) => {
     if (!(await isStaffSession(sessionToken))) return null;
     return ctx.db.get(id);
+  },
+});
+
+/**
+ * Estado de un pedido para la página de confirmación. PÚBLICA a propósito:
+ * quien pagó no tiene sesión. Por eso devuelve el mínimo —estado, número y
+ * total— y NUNCA el cliente, la comisión, el embajador ni los itemIds:
+ * cualquiera con el link la puede llamar, y un saleId es adivinable.
+ */
+export const estadoPublico = query({
+  args: { saleId: v.string() },
+  handler: async (ctx, { saleId }) => {
+    const sale = await ctx.db
+      .query('sales')
+      .withIndex('by_saleId', (q) => q.eq('saleId', saleId))
+      .first();
+    if (!sale) return null;
+    return {
+      saleId: sale.saleId,
+      estado: sale.estado,
+      totalCOP: sale.totalCOP,
+    };
   },
 });
 
@@ -203,12 +226,66 @@ export const _create = internalMutation({
       products.push(product);
     }
 
+    // BR-6 no alcanza: un pago en línea en curso NO cambia
+    // `productInventory.estado`. La reserva es derivada a propósito —escribir
+    // RESERVADA en la hoja lo soltaría el siguiente pull, en mitad del pago
+    // (ver convex/_lib/reservas.ts)—, así que el bucle de arriba ve la piedra
+    // DISPONIBLE y el mostrador la vendería encima de un checkout vivo. La
+    // piedra es una sola: cerrar la carrera del lado online y dejarla abierta
+    // del lado de la tienda no cierra nada.
+    //
+    // La salida para el vendedor no es un flag de override —que a la larga se
+    // usa siempre— sino cancelar la venta que aparta: `_cancel` la pasa a
+    // `cancelada` y `findReservationConflict` deja de verla en el acto. Si
+    // nadie hace nada, la reserva vence sola a los 30 min.
+    //
+    // Misma lectura por rango de índice que el riel online: sólo las ventas
+    // `reservada` de los últimos 30 min, ancladas en `_creationTime`.
+    if (args.itemIds.length > 0) {
+      const ahora = Date.now();
+      const reservadas = await ctx.db
+        .query('sales')
+        .withIndex('by_estado', (q) =>
+          q
+            .eq('estado', 'reservada')
+            .gte('_creationTime', ahora - RESERVA_TTL_MS),
+        )
+        .collect();
+      const conflicto = findReservationConflict(
+        reservadas.map((s) => ({
+          clientId: s.clientId as string,
+          itemIds: s.itemIds,
+          creationTime: s._creationTime,
+          estado: s.estado,
+          saleId: s.saleId,
+        })),
+        args.itemIds,
+        ahora,
+      );
+      if (conflicto) {
+        throw new Error(
+          `Ítem ${conflicto.itemId} está apartado por un pago en línea en curso ` +
+            `(venta ${conflicto.saleId}). Cancela esa venta o espera a que venza ` +
+            `la reserva.`,
+        );
+      }
+    }
+
     const seqValue = await allocateNext(ctx, saleSequenceName(args.sede));
     const saleId = formatSaleId(seqValue, args.sede);
 
     const now = new Date().toISOString();
-    const all = await ctx.db.query('sales').collect();
-    const maxRow = all.reduce((m, s) => Math.max(m, s.rowIndex), 1);
+    // El siguiente rowIndex sale del índice `by_rowIndex`, NO de un
+    // `collect()` de toda la tabla: leer las N ventas del histórico para
+    // quedarse con un número crece con cada venta y se paga en ancho de banda
+    // de Convex —el mismo recurso que este proyecto ya raciona— en la ruta
+    // caliente del mostrador. `order('desc').first()` es una lectura.
+    const ultima = await ctx.db
+      .query('sales')
+      .withIndex('by_rowIndex')
+      .order('desc')
+      .first();
+    const maxRow = Math.max(ultima?.rowIndex ?? 1, 1);
 
     // Strip `clientToken` — it's an idempotency control arg, not a `sales` column.
     const { clientToken, ...saleFields } = args;

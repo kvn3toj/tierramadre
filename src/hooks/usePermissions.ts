@@ -5,6 +5,18 @@
 import { useMemo } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import type { Permission } from '../types/auth';
+import { puedeFijarMultiplicador } from '../utils/permisosMultiplicador';
+
+/**
+ * Re-exported so callers can keep importing it from this hook module (its
+ * original home per the plan). The implementation lives in
+ * `../utils/permisosMultiplicador.ts` — a React-free module — because
+ * `api/vitrina.ts` needs the SAME function and cannot import this file
+ * directly (it drags in `AuthContext.tsx`, which needs `--jsx`/DOM/
+ * `import.meta.env`, none configured in `api/tsconfig.json`). See that
+ * file's header for the full rationale.
+ */
+export { puedeFijarMultiplicador };
 
 export const usePermissions = (): Permission => {
   const { accessLevel } = useAuthContext();
@@ -31,6 +43,9 @@ export const usePermissions = (): Permission => {
       isInvitadoEspecial,
       canViewPrices: !isProvider, // Providers cannot see prices
       canUseManualProduct: isAdmin || isEmbajador, // Only admin and embajador can use manual products
+      // Who may fix the multiplier that determines a Vitrina's sale price.
+      // Sharing and pricing are different permissions — see puedeFijarMultiplicador.
+      canUseMultiplier: puedeFijarMultiplicador(accessLevel),
       // Sharing a client Vitrina is allowed for staff AND special guests.
       canShareVitrina: isStaff || isInvitadoEspecial,
       // Creating client cotizaciones is allowed for staff AND special guests.
