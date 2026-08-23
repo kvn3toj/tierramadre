@@ -8,6 +8,7 @@
 
 import { useState, useCallback } from 'react';
 import { createLogger } from '../utils/logger';
+import { readFreshSessionToken } from '../utils/sessionToken';
 import { useGlobalLoading } from '../contexts/GlobalLoadingContext';
 import type { AiJewelryPreview } from './useCotizacion';
 
@@ -107,8 +108,19 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
       setError(null);
 
       try {
+        // Candado del 2026-08-21 (hallazgo #2). El servidor ya NO lee el
+        // `?email=` de la URL —era el IDOR: cambiarlo por el correo de otra
+        // asesora entregaba sus clientes— pero se sigue mandando porque no
+        // estorba y deja la llamada legible en los logs. Quien manda es el
+        // token.
+        const sessionToken = readFreshSessionToken();
         const response = await fetch(
           `/api/cotizacion-save?email=${encodeURIComponent(email)}`,
+          {
+            headers: sessionToken
+              ? { Authorization: `Bearer ${sessionToken}` }
+              : undefined,
+          },
         );
 
         // Check if response is ok before parsing JSON
@@ -145,10 +157,17 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
       startLoading();
 
       try {
+        // Candado del 2026-08-21 (hallazgo #2): el POST insertaba cotizaciones
+        // —con nombre y teléfono de cliente— sin credencial. El `asesorEmail`
+        // del cuerpo ya no decide de quién es: el servidor lo toma del token.
+        const sessionToken = readFreshSessionToken();
         const response = await fetch('/api/cotizacion-save', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            ...(sessionToken
+              ? { Authorization: `Bearer ${sessionToken}` }
+              : {}),
           },
           body: JSON.stringify(params),
         });
@@ -226,9 +245,19 @@ export function useCotizacionHistory(): UseCotizacionHistoryReturn {
       });
 
       try {
+        // Candado del 2026-08-21 (hallazgo #2): este DELETE no pedía nada y
+        // borraba el PDF de Drive de forma PERMANENTE. Ahora exige sesión, el
+        // dueño sale del token, y del otro lado la cotización se anula
+        // (papelera + fila marcada) en vez de desaparecer.
+        const sessionToken = readFreshSessionToken();
         const response = await fetch(
           `/api/cotizacion-save?id=${encodeURIComponent(id)}&email=${encodeURIComponent(email)}`,
-          { method: 'DELETE' },
+          {
+            method: 'DELETE',
+            headers: sessionToken
+              ? { Authorization: `Bearer ${sessionToken}` }
+              : undefined,
+          },
         );
 
         if (!response.ok) {

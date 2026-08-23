@@ -27,6 +27,7 @@ import { requireBotSecret } from './_lib/botAuth';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import {
   CONFIG_PRECIOS_2026_07,
+  CONFIG_PRECIOS_2026_08,
   configVigenteEn,
   costoFijoUnitario,
   type ConfigPrecios,
@@ -534,26 +535,39 @@ export const previewLoteViaBot = action({
 });
 
 /**
- * Siembra la configuración de julio 2026. Idempotente por `vigenteDesde`: correrlo
- * dos veces no duplica la regla ni la pisa.
+ * Siembra las configuraciones conocidas. Idempotente por `vigenteDesde`:
+ * correrlo dos veces no duplica una regla ni la pisa — cada semilla que falte
+ * se inserta, las que ya existen se dejan quietas.
  */
 export const seedConfig = internalMutation({
   args: {},
   handler: async (ctx) => {
+    const semillas: Array<{ config: ConfigPrecios; notas: string }> = [
+      {
+        config: CONFIG_PRECIOS_2026_07,
+        notas:
+          'Semilla del Modelo v2 tras reparar B5 el 2026-07-25: $33.651.815 de ' +
+          'gasto fijo mensual. El divisor sale de COUNT(lotes activos), no de B6.',
+      },
+      {
+        config: CONFIG_PRECIOS_2026_08,
+        notas:
+          'Gemas gravadas con IVA 19% en venta nacional (TM es responsable de ' +
+          'IVA; art. 424 ET no excluye piedras preciosas — verificado ' +
+          '2026-08-20). Gema y joya comparten divisor desde esta regla.',
+      },
+    ];
     const existentes = await ctx.db.query('configPrecios').collect();
-    if (
-      existentes.some(
-        (f) => f.vigenteDesde === CONFIG_PRECIOS_2026_07.vigenteDesde,
-      )
-    ) {
-      return { creada: false, motivo: 'la regla ya existe' };
+    const creadas: string[] = [];
+    for (const { config, notas } of semillas) {
+      if (existentes.some((f) => f.vigenteDesde === config.vigenteDesde)) {
+        continue;
+      }
+      await ctx.db.insert('configPrecios', { ...config, notas });
+      creadas.push(config.vigenteDesde);
     }
-    await ctx.db.insert('configPrecios', {
-      ...CONFIG_PRECIOS_2026_07,
-      notas:
-        'Semilla del Modelo v2 tras reparar B5 el 2026-07-25: $33.651.815 de ' +
-        'gasto fijo mensual. El divisor sale de COUNT(lotes activos), no de B6.',
-    });
-    return { creada: true };
+    return creadas.length
+      ? { creada: true, vigencias: creadas }
+      : { creada: false, motivo: 'todas las reglas ya existen' };
   },
 });
