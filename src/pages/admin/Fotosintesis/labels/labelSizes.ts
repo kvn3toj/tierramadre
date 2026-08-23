@@ -97,8 +97,8 @@ export const LABEL_SIZES: Record<LabelSizeId, LabelSize> = {
     heightPx: 120,
     // Per HALF, not per label — the duo layout lays out two 120 px cells. The
     // value is what's left after the brand mark's 20 px floor sets the footer
-    // and two properly-led text lines set the 24 px column; see the geometry
-    // note in LabelDuoPreview.
+    // and two properly-led lines of NOMBRE set the 26 px column; see the
+    // geometry note in LabelDuoPreview.
     qrPx: 82,
     showLogo: false,
     itemsPerLabel: 2,
@@ -126,19 +126,25 @@ export const DUO_LAYOUT = {
   padTop: 5,
   padLeft: 5,
   padBottom: 5,
-  /** 1 px tighter than the rest, to fund the text column's 24th pixel. */
-  padRight: 4,
-  /** QR → rotated text column. */
-  gutterX: 5,
+  /**
+   * 2 px tighter than the rest. That pixel and gutterX's fund the text
+   * column's 25th and 26th — the two lines of nombre. Safe to take from HERE
+   * because this edge abuts the text column, not the QR's quiet zone.
+   */
+  padRight: 3,
+  /** QR → rotated text column. 1 px tighter than padTop/padLeft for the same
+   *  reason, and still wider than the QR's one-module (3.3 px) quiet zone. */
+  gutterX: 4,
   /** QR → footer. */
   gutterY: 8,
-  /** Width of the rotated column = the two line boxes stacked. */
-  textColPx: 24,
+  /** Width of the rotated column = the nombre's TWO line boxes stacked. */
+  textColPx: 26,
   nombrePx: 11,
-  /** > nombrePx: without leading the descenders land on the peso below. */
+  /** > nombrePx: without leading the two name lines' ink collides. */
   nombreLeadingPx: 13,
+  /** The peso rides in the FOOTER now, horizontal — see LabelDuoPreview. */
   pesoPx: 9,
-  /** > pesoPx, same reason. */
+  /** > pesoPx: its line box still needs leading, rotated or not. */
   pesoLeadingPx: 11,
   footerPx: 20,
   /**

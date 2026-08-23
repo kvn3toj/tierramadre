@@ -157,17 +157,18 @@ describe('DUO_LAYOUT', () => {
     expect(down).toBe(duo.heightPx);
   });
 
-  it('gives both rotated lines real leading, so their ink cannot collide', () => {
-    // The bug this guards: line-height == font-size put the nombre's
-    // descenders on top of the peso, and the two lines printed as one smudge.
+  it('gives every line real leading, so its ink cannot collide', () => {
+    // The bug this guards: line-height == font-size put one line's descenders
+    // on top of the next, and the two printed as one smudge.
     expect(DUO_LAYOUT.nombreLeadingPx).toBeGreaterThan(DUO_LAYOUT.nombrePx);
     expect(DUO_LAYOUT.pesoLeadingPx).toBeGreaterThan(DUO_LAYOUT.pesoPx);
   });
 
-  it('sizes the text column to exactly the two line boxes', () => {
-    expect(DUO_LAYOUT.nombreLeadingPx + DUO_LAYOUT.pesoLeadingPx).toBe(
-      DUO_LAYOUT.textColPx,
-    );
+  it('sizes the text column to exactly two lines of nombre', () => {
+    // The column is the NAME's, whole: the peso moved to the footer so that
+    // "Sentir de la Montaña" gets two 82 px lines instead of being cut to
+    // "Sentir de la M…" on one. A third line would print past the die cut.
+    expect(DUO_LAYOUT.nombreLeadingPx * 2).toBe(DUO_LAYOUT.textColPx);
   });
 
   it('keeps the brand mark at or above the size where it still reads', () => {

@@ -73,7 +73,11 @@ def wrap(d, text, font, max_w, max_lines=2):
                 break
     if cur and len(lines) < max_lines:
         lines.append(cur)
-    if len(" ".join(lines)) < len(text):
+    # Compare CONTENT, not length: text.split() collapses double spaces and
+    # newlines, so a name carrying either (many do, inherited from the legacy
+    # sheet) came out shorter than the original and got an "…" appended
+    # without a single word having been dropped.
+    if " ".join(lines) != " ".join(text.split()):
         while lines and d.textlength(lines[-1] + "…", font=font) > max_w:
             lines[-1] = lines[-1][:-1]
         lines[-1] = lines[-1].rstrip() + "…"

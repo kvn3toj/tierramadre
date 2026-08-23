@@ -19,10 +19,10 @@ import { LABEL_MARK_DATA_URI } from './markDataUri';
  * whole reason this layout exists — see `LABEL_SIZES.T15X30_DUO`.
  *
  * ── Why the text is rotated ────────────────────────────────────────────────
- * Each half is 120 px (15 mm) wide. A horizontal name/peso column beside the QR
- * would take ~60 px of that, leaving a QR too small to scan. Rotating the text
- * 90° turns its LENGTH into the cell's height (which is otherwise wasted beside
- * a square QR) and costs only its two line boxes in width — 24 px instead of 60.
+ * Each half is 120 px (15 mm) wide. A horizontal name column beside the QR would
+ * take ~60 px of that, leaving a QR too small to scan. Rotating the text 90°
+ * turns its LENGTH into the cell's height (which is otherwise wasted beside a
+ * square QR) and costs only its two line boxes in width — 26 px instead of 60.
  * The QR keeps 82 px, which is what makes this layout viable at all.
  *
  * ── Why transform and not writing-mode ─────────────────────────────────────
@@ -37,7 +37,7 @@ import { LABEL_MARK_DATA_URI } from './markDataUri';
  * ── Geometry (authored at DESIGN_DPI = 203, so 1 px = 1 printer dot) ────────
  * Both axes must sum to the 120 px cell, and they share the QR:
  *
- *   across:  5 pad + 82 QR + 5 gutter + 24 text column + 4 pad  = 120
+ *   across:  5 pad + 82 QR + 4 gutter + 26 text column + 3 pad  = 120
  *   down:    5 pad + 82 QR + 8 gutter + 20 footer      + 5 pad  = 120
  *
  * The two gutters differ ON PURPOSE. An earlier version used a single gutter,
@@ -47,16 +47,25 @@ import { LABEL_MARK_DATA_URI } from './markDataUri';
  *   • The FOOTER is 20 px because the brand mark stops reading below that.
  *     Verified against a 1-bit simulation of the head: at 16 px the mark's four
  *     loops close up and its four dots disappear.
- *   • The TEXT COLUMN is 24 px because two rotated lines need real LEADING. It
- *     was 20 px (11 + 9, line-height == font-size), and with no leading the
- *     nombre's descenders ran into the peso underneath — the lines read as one
- *     smudge on tape. Line boxes are 13 + 11 now, so each line carries ~2 px of
- *     clearance and the ink never touches.
+ *   • The TEXT COLUMN is 26 px because it holds TWO lines of nombre at 13 px of
+ *     leading each. Leading, not font size, sets that: at line-height ==
+ *     font-size the descenders of one line landed on the next and the two
+ *     printed as one smudge on tape. 13 px gives each line ~2 px of clearance.
  *
- * Different gutters buy the text column those 4 px without charging the QR for
- * all of them — the symbol gave up 1 px (83 → 82) and the rest came out of the
- * generous bottom gutter. Change anything here and re-derive BOTH sums, or
- * content prints off the die cut.
+ * Different gutters buy the text column those 6 px without charging the QR for
+ * all of them — the symbol gave up 1 px (83 → 82), the rest came out of the
+ * generous bottom gutter and, for the last 2 px, of gutterX and padRight (5 → 4
+ * and 4 → 3). Change anything here and re-derive BOTH sums, or content prints
+ * off the die cut.
+ *
+ * ── Why the peso is in the footer and not the column ────────────────────────
+ * It used to share the rotated column with the nombre, which capped the name at
+ * ONE 82 px line — about 15 characters, so "Sentir de la Montaña" printed as
+ * "Sentir de la M…". The footer had the room to spare (the mark's 20 px plus
+ * the item number leave over half the 120 px width empty), so the peso moved
+ * there and the whole column became two lines of nombre: ~30 characters, with
+ * the QR untouched and no type made smaller. 8 px type was tried for this and
+ * rejected — at 203 DPI the digits close up.
  */
 
 // Single source of truth, imported rather than restated: labelSizes.test.ts
@@ -86,7 +95,8 @@ export interface LabelDuoPreviewProps {
 // not survive a 1-bit head (see markDataUri.ts), so the layout owns it and no
 // caller can substitute the green original by accident.
 
-/** One 15 × 15 mm half: QR + rotated nombre/peso + the mark and #itemId. */
+/** One 15 × 15 mm half: QR + the rotated nombre + a footer of mark, #itemId
+ *  and peso. */
 function DuoCell({
   item,
   stock,
@@ -136,10 +146,11 @@ function DuoCell({
               style={{ display: 'block', flexShrink: 0 }}
             />
 
-            {/* Rotated text column. The wrapper reserves the FOOTPRINT
-                (24 × 82); the inner box is laid out at its natural 82 × 24 and
-                rotated about its centre, so the two land on each other without
-                any translate arithmetic to get wrong. */}
+            {/* Rotated text column, TWO lines of nombre. The wrapper reserves
+                the FOOTPRINT (26 × 82); the inner box is laid out at its natural
+                82 × 26 and rotated about its centre, so the two land on each
+                other without any translate arithmetic to get wrong. The 82 px
+                is what each line gets to wrap in — the QR's own height, reused. */}
             <Box
               sx={{
                 position: 'relative',
@@ -159,9 +170,9 @@ function DuoCell({
                   transform: 'translate(-50%, -50%) rotate(90deg)',
                   display: 'flex',
                   // After the 90° turn this column axis runs RIGHT-to-LEFT on
-                  // the label, so the first child ends up furthest from the QR.
-                  // nombre first therefore puts peso next to the QR, matching
-                  // the reference layout.
+                  // the label, so the first line ends up furthest from the QR —
+                  // which is where a reader starts, matching the reference
+                  // layout.
                   flexDirection: 'column',
                   justifyContent: 'center',
                   alignItems: 'center',
@@ -172,49 +183,53 @@ function DuoCell({
                   <Box
                     sx={{
                       // Line box is TALLER than the font on purpose. With
-                      // line-height == font-size the descenders here landed on
-                      // the peso below and the two lines printed as one smudge.
+                      // line-height == font-size the first line's descenders
+                      // landed on the second and the two printed as one smudge.
                       fontFamily: fontFamilies.system,
                       fontSize: `${L.nombrePx}px`,
                       lineHeight: `${L.nombreLeadingPx}px`,
                       color: '#000000',
                       maxWidth: '100%',
+                      // TWO lines, then ellipsis — 2 × nombreLeadingPx is
+                      // exactly textColPx, so a third line would print past the
+                      // die cut. -webkit-box rather than `nowrap` + ellipsis:
+                      // that combination capped the name at one 82 px line
+                      // (~15 chars) and is what truncated "Sentir de la M…".
+                      display: '-webkit-box',
+                      WebkitBoxOrient: 'vertical',
+                      WebkitLineClamp: 2,
+                      // maxHeight is the BELT to the clamp's braces, and it is
+                      // load-bearing: snapDOM hands layout back to the browser
+                      // so the clamp applies, but the html2canvas FALLBACK
+                      // reimplements CSS and ships no -webkit-line-clamp at all
+                      // (checked: neither property appears in its dist). Without
+                      // a height cap that path would lay a long name out over
+                      // three lines, 39 px inside a 26 px column, and spill it
+                      // across the QR. With one, the fallback merely clips the
+                      // third line — worse label, still a scannable one.
+                      maxHeight: `${L.textColPx}px`,
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
+                      // Deliberately NOT `wordBreak: break-all`: a name that
+                      // still overflows should lose whole words to the ellipsis
+                      // rather than print a fragment that reads as a typo.
                     }}
                   >
                     {item.nombre}
-                  </Box>
-                )}
-                {item.peso && (
-                  <Box
-                    sx={{
-                      // 13 + 11 = 24 = textColPx exactly. 8 px type was tried
-                      // and rejected: in a 1-bit simulation of the 203 DPI head
-                      // the digits close up and "0,18 ct" stops being readable.
-                      fontFamily: fontFamilies.system,
-                      fontSize: `${L.pesoPx}px`,
-                      lineHeight: `${L.pesoLeadingPx}px`,
-                      color: '#000000',
-                      maxWidth: '100%',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {item.peso}
                   </Box>
                 )}
               </Box>
             </Box>
           </Box>
 
-          {/* Footer: the Tierra Mädre mark + item number, horizontal, on BOTH
-              halves — each half becomes its own sticker once cut, so a mark on
-              only one of them would ship half the boxes unbranded. This is also
-              the line a human reads when the QR is scuffed, so the number stays
-              the largest text on the cell. */}
+          {/* Footer: the Tierra Mädre mark + item number + peso, horizontal, on
+              BOTH halves — each half becomes its own sticker once cut, so a mark
+              on only one of them would ship half the boxes unbranded. This is
+              also the line a human reads when the QR is scuffed, so the number
+              stays the largest text on the cell and the peso is deliberately
+              smaller, set apart on the far edge rather than beside it. The mark
+              (20) + the number (~45) left over half the 120 px empty, which is
+              the room the peso moved here to use. */}
           <Box
             sx={{
               height: `${L.footerPx}px`,
@@ -250,6 +265,33 @@ function DuoCell({
             >
               #{item.itemId}
             </Box>
+            {item.peso && (
+              <Box
+                sx={{
+                  // Pushed to the right edge so it never crowds the number —
+                  // the two must not read as one string, and #itemId has to
+                  // stay the thing the eye lands on.
+                  //
+                  // 9 px is unchanged from when this rode in the rotated column,
+                  // and so is its legibility: in a 1-bit simulation of the head
+                  // the digits hold and the COMMA is the first thing to close,
+                  // horizontal and rotated alike. Turning it horizontal bought
+                  // the name its second line, not a sharper peso. 8 px was tried
+                  // and rejected — there the digits themselves close up.
+                  marginLeft: 'auto',
+                  fontFamily: fontFamilies.system,
+                  fontSize: `${L.pesoPx}px`,
+                  lineHeight: `${L.pesoLeadingPx}px`,
+                  color: '#000000',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  flexShrink: 0,
+                }}
+              >
+                {item.peso}
+              </Box>
+            )}
           </Box>
         </>
       )}
