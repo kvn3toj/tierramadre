@@ -319,6 +319,14 @@ const PublicProductPage = lazyWithRetry(
   'PublicProductPage',
 );
 
+// Public post-payment landing — both checkout rails redirect here
+// (see api/_lib/checkoutLink.ts). No app shell, no auth: whoever just paid
+// may have no session at all.
+const PedidoConfirmadoPage = lazyWithRetry(
+  () => import('./pages/PedidoConfirmadoPage'),
+  'PedidoConfirmadoPage',
+);
+
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'treasure' | 'ambassadors';
 
@@ -1048,6 +1056,16 @@ function InvitationRouter() {
           </Suspense>
         }
       />
+      {/* Post-payment landing (e.g. /pedido-confirmado/VB-0001) — both
+          checkout rails redirect here; the customer may have no session. */}
+      <Route
+        path="/pedido-confirmado/:saleId"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <PedidoConfirmadoPage />
+          </Suspense>
+        }
+      />
       <Route path="*" element={<AuthenticatedApp />} />
     </Routes>
   );
@@ -1100,6 +1118,24 @@ function AuthenticatedApp() {
             </Suspense>
           }
         />
+        {/* El carrito del visitante anónimo. La MISMA CartPage que usa el
+            staff — la de arriba, dentro del shell — no una copia: el carrito
+            vive en `sessionStorage` (`useCart`) y no toca AuthContext, y sin
+            sesión `AuthContext` ya devuelve `accessLevel: 'guest'`, que es
+            justo la audiencia que ve "Pagar". Duplicar la pantalla sería
+            garantizar que las dos se desincronicen.
+
+            Va acá y no en el bloque público de InvitationRouter a propósito:
+            una ruta pública allá GANARÍA sobre la autenticada y le sacaría el
+            shell de la app al staff en su propio carrito. */}
+        <Route
+          path="/cart"
+          element={
+            <Suspense fallback={<LocalizedLoading messageKey="selection" />}>
+              <CartPage />
+            </Suspense>
+          }
+        />
         <Route path="*" element={<WelcomeScreen />} />
       </Routes>
     );
@@ -1133,7 +1169,9 @@ function shouldShowSplash(): boolean {
     path.startsWith('/product/') ||
     path.startsWith('/p/') ||
     path.startsWith('/invite/') ||
-    path.startsWith('/g/')
+    path.startsWith('/g/') ||
+    path === '/cart' ||
+    path.startsWith('/pedido-confirmado/')
   ) {
     return false;
   }

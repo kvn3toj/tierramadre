@@ -16,7 +16,7 @@ type FetchLike = (
   init?: { method?: string; headers?: Record<string, string>; body?: string },
 ) => Promise<{ ok: boolean; status: number; json: () => Promise<any> }>;
 
-const MP_BASE = "https://api.mercadopago.com";
+const MP_BASE = 'https://api.mercadopago.com';
 
 export interface MpPreferenceItem {
   title: string;
@@ -31,6 +31,29 @@ export interface BuildPreferenceInput {
   orderId: string;
   notificationUrl: string;
   backUrls?: { success?: string; pending?: string; failure?: string };
+  /**
+   * ISO8601 (e.g. `2026-08-19T12:30:00.000Z`, `Date#toISOString()`'s
+   * output) — the instant the reservation expires. Converted to MP's
+   * documented offset form before it reaches `expiration_date_to`; see
+   * `toMpExpirationFormat` below. Optional so existing callers (and their
+   * tests) are unaffected.
+   */
+  expirationTime?: string;
+}
+
+/**
+ * MP's own `expiration_date_to` example is offset-bearing
+ * (`2016-02-28T17:00:00.000-04:00`), and a bare `Z` suffix is reported to be
+ * rejected — which would make `createPreference` throw on every order, since
+ * `PAYMENT_PROVIDER` is unset in production and MercadoPago is the live rail.
+ * `Z` and `+00:00` denote the identical UTC instant, so this swaps the
+ * suffix `Date#toISOString()` produces for the offset form MP's example
+ * uses — no timezone is invented, `+00:00` IS UTC. Built by trimming the
+ * trailing `Z` off the ISO string (not by re-deriving date fields), so the
+ * output can never drift from the instant it was given.
+ */
+export function toMpExpirationFormat(iso: string): string {
+  return iso.endsWith('Z') ? `${iso.slice(0, -1)}+00:00` : iso;
 }
 
 /** Build the MP `/checkout/preferences` request body (currency defaults to COP). */
@@ -38,12 +61,18 @@ export function buildPreference(
   input: BuildPreferenceInput,
 ): Record<string, unknown> {
   return {
-    items: input.items.map((i) => ({ currency_id: "COP", ...i })),
+    items: input.items.map((i) => ({ currency_id: 'COP', ...i })),
     payer: input.payer,
     external_reference: input.orderId,
     notification_url: input.notificationUrl,
     back_urls: input.backUrls,
-    auto_return: "approved",
+    auto_return: 'approved',
+    ...(input.expirationTime
+      ? {
+          expires: true,
+          expiration_date_to: toMpExpirationFormat(input.expirationTime),
+        }
+      : {}),
   };
 }
 
@@ -53,10 +82,10 @@ export async function createPreference(
   fetchImpl: FetchLike = globalThis.fetch as unknown as FetchLike,
 ): Promise<{ id: string; init_point: string }> {
   const res = await fetchImpl(`${MP_BASE}/checkout/preferences`, {
-    method: "POST",
+    method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
   });
@@ -80,7 +109,7 @@ export async function fetchPayment(
   fetchImpl: FetchLike = globalThis.fetch as unknown as FetchLike,
 ): Promise<MpPayment> {
   const res = await fetchImpl(`${MP_BASE}/v1/payments/${paymentId}`, {
-    method: "GET",
+    method: 'GET',
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!res.ok) throw new Error(`MP fetchPayment failed: ${res.status}`);

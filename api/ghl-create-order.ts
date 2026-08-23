@@ -19,8 +19,13 @@ import { ConvexError } from 'convex/values';
 import { withApiHandler, sendError, sendSuccess } from './_lib/index.js';
 import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
 import { bearerMatches } from './_lib/bearer.js';
-import { buildPreference, createPreference } from './_lib/mp-preference.js';
-import { buildCheckoutUrl } from './_lib/wompi.js';
+import {
+  resolveProvider,
+  buildPaymentLink,
+  WOMPI_NOT_CONFIGURED,
+  MP_NOT_CONFIGURED,
+} from './_lib/checkoutLink.js';
+import { parseCheckoutBody } from './_lib/checkoutBody.js';
 import { api } from '../convex/_generated/api.js';
 
 const DEFAULT_APP_URL = 'https://tierra-madre-studio.vercel.app';
@@ -52,13 +57,20 @@ export default withApiHandler(
       return sendError(res, 503, 'Convex backend not configured');
     }
 
-    const body = (req.body ?? {}) as OrderBody;
-    if (!body.contact?.celular) {
-      return sendError(res, 400, 'Missing contact.celular');
+    // Mismo validador que el checkout público (`checkout-create-order.ts`):
+    // este rail tenía el agujero NaN-qty exacto que el público ya cerró
+    // (`Number(i.qty ?? 1)` sin chequeo — `Number("x")` es `NaN`, y
+    // `NaN > MAX_ITEMS_POR_PEDIDO` es `false`), MÁS ningún tope de ítems en
+    // absoluto. `parseCheckoutBody` cierra ambos. `promotion_code` y
+    // `shipping_address` son específicos de este rail — no forman parte del
+    // hueco que el validador compartido cierra — así que se leen del body
+    // crudo por separado, después de la validación.
+    const rawBody = (req.body ?? {}) as OrderBody;
+    const parsed = parseCheckoutBody(req.body);
+    if (!parsed.ok) {
+      return sendError(res, parsed.status, parsed.message);
     }
-    if (!Array.isArray(body.items) || body.items.length === 0) {
-      return sendError(res, 400, 'items must be a non-empty array');
-    }
+    const body = parsed.value;
 
     // 'mercadopago' unless explicitly switched — deploying this file must not
     // change behavior on its own. A typo (e.g. "wompy") must never fall
@@ -68,20 +80,21 @@ export default withApiHandler(
     // pollute the mirror. So validate against the known allowlist and fall
     // back to 'mercadopago' for BOTH the branch selection and the value sent
     // to Convex on anything unrecognized.
-    const KNOWN_PAYMENT_PROVIDERS = ['mercadopago', 'wompi'] as const;
-    const rawProvider = (process.env.PAYMENT_PROVIDER ?? 'mercadopago')
-      .trim()
-      .toLowerCase();
-    let provider: (typeof KNOWN_PAYMENT_PROVIDERS)[number] = 'mercadopago';
-    if ((KNOWN_PAYMENT_PROVIDERS as readonly string[]).includes(rawProvider)) {
-      provider = rawProvider as (typeof KNOWN_PAYMENT_PROVIDERS)[number];
-    } else {
+    const provider = resolveProvider(process.env.PAYMENT_PROVIDER);
+    if (
+      provider !==
+      (process.env.PAYMENT_PROVIDER ?? 'mercadopago').trim().toLowerCase()
+    ) {
       console.error(
-        `[GhlCreateOrder] Unknown PAYMENT_PROVIDER="${rawProvider}" — falling back to "mercadopago" for both the branch and forma_pago.`,
+        `[GhlCreateOrder] PAYMENT_PROVIDER="${process.env.PAYMENT_PROVIDER}" no reconocido — usando "mercadopago" para el riel y para forma_pago.`,
       );
     }
 
-    let order: { saleId: string; totalCOP: number };
+    let order: {
+      saleId: string;
+      totalCOP: number;
+      reservedAt: number;
+    };
     try {
       order = await convexClient.mutation(api.ghl.createOrder, {
         contact: {
@@ -89,12 +102,9 @@ export default withApiHandler(
           full_name: body.contact.full_name,
           email: body.contact.email,
         },
-        items: body.items.map((i) => ({
-          sku: String(i.sku ?? ''),
-          qty: Number(i.qty ?? 1),
-        })),
-        promotion_code: body.promotion_code ?? undefined,
-        shipping_address: body.shipping_address ?? undefined,
+        items: body.items.map((i) => ({ sku: i.sku, qty: i.qty })),
+        promotion_code: rawBody.promotion_code ?? undefined,
+        shipping_address: rawBody.shipping_address ?? undefined,
         ambassador_slug: body.ambassador_slug ?? undefined,
         canal_origen: body.canal_origen ?? undefined,
         forma_pago: provider,
@@ -118,11 +128,34 @@ export default withApiHandler(
           .status(409)
           .json({ success: false, error: 'OVER_LIMIT_2M', handoff: true });
       }
+      if (msg.includes('PRECIO_NO_DISPONIBLE')) {
+        // Per-line price guard (convex/_lib/precioVitrina.ts's
+        // `precioBaseEsValido`) — this sku has no valid `precioCOP`. Bot
+        // orders only ever contain skus from `searchProducts`, which
+        // already excludes unpriced items, so this should be unreachable
+        // in the normal flow; mapped anyway so a malformed/manual call
+        // gets a clear 409 instead of an opaque 500.
+        const sku = msg.split('PRECIO_NO_DISPONIBLE:')[1] ?? '';
+        return sendError(res, 409, 'PRECIO_NO_DISPONIBLE', sku);
+      }
       if (msg.includes('PRODUCT_NOT_FOUND') || msg.includes('NOT_AVAILABLE')) {
         return sendError(res, 409, 'PRODUCT_UNAVAILABLE', msg);
       }
+      if (msg.includes('ITEM_RESERVED')) {
+        // Someone else is mid-checkout on this exact stone (30-min hold).
+        const sku = msg.split('ITEM_RESERVED:')[1] ?? '';
+        return sendError(res, 409, 'ITEM_RESERVED', sku);
+      }
       if (msg.includes('EMPTY_ITEMS')) {
         return sendError(res, 400, 'items must be a non-empty array');
+      }
+      if (msg.includes('ZERO_TOTAL')) {
+        // Belt-and-braces floor in createOrder — only reachable here via an
+        // all-unpriced order, which was previously a FREE order on this
+        // rail (no legitimate charge changes by mapping this). An opaque
+        // 500 on exactly this condition is the shape of failure that cost
+        // hours earlier in this project.
+        return sendError(res, 409, 'ZERO_TOTAL', msg);
       }
       throw err;
     }
@@ -131,129 +164,81 @@ export default withApiHandler(
       .trim()
       .replace(/\/$/, '');
 
-    if (provider === 'wompi') {
-      const publicKey = process.env.WOMPI_PUBLIC_KEY;
-      const integritySecret = process.env.WOMPI_INTEGRITY_SECRET;
+    // `now` es `order.reservedAt` — el instante en que arrancó la reserva
+    // (para una venta reusada, la ORIGINAL), no `Date.now()`: ver el mismo
+    // comentario en `checkout-create-order.ts`.
+    const link = await buildPaymentLink(
+      {
+        saleId: order.saleId,
+        totalCOP: order.totalCOP,
+        appUrl,
+        contact: {
+          celular: body.contact.celular,
+          full_name: body.contact.full_name,
+          email: body.contact.email,
+        },
+        now: order.reservedAt,
+      },
+      provider,
+    );
 
-      // Credentials not wired yet → return the order, no link, same graceful
-      // shape the MercadoPago branch uses below.
-      if (!publicKey || !integritySecret) {
-        return sendSuccess(res, {
-          order_id: order.saleId,
-          total_cop: order.totalCOP,
-          checkout_url: null,
-          mp_url: null,
-          mp_pending: true,
-        });
-      }
-
-      // The sale row already exists in Convex at this point, so a failure here
-      // must not surface as an opaque crash and lose the order.
+    if (link.preferenceId) {
+      // Bookkeeping only — persisting the MP preference id must never cost
+      // the customer the payment link they already have. A missing/mismatched
+      // ADMIN_SYNC_TOKEN throws here (`requireServerSecret`), and letting that
+      // escape uncaught would turn a perfectly good `init_point` into a 500.
       try {
-        const checkoutUrl = buildCheckoutUrl(
-          {
-            reference: order.saleId,
-            amountCOP: order.totalCOP,
-            redirectUrl: `${appUrl}/pedido-confirmado/${order.saleId}`,
-            customer: {
-              email: body.contact.email,
-              fullName: body.contact.full_name,
-              phoneNumber: body.contact.celular,
-            },
-          },
-          { publicKey, integritySecret },
-        );
-        return sendSuccess(res, {
-          order_id: order.saleId,
-          total_cop: order.totalCOP,
-          checkout_url: checkoutUrl,
-          // `mp_url` is the field the live GHL workflow already reads and
-          // sends to the customer. It carries whatever link this order should
-          // be paid with, whoever the provider is — the name is legacy, the
-          // meaning is "the pay link". Kept so the workflow needs no edit.
-          mp_url: checkoutUrl,
+        await convexClient.mutation(api.ghl.setMpPreference, {
+          saleId: order.saleId,
+          mpPreferenceId: link.preferenceId,
+          secret: process.env.ADMIN_SYNC_TOKEN ?? '',
         });
       } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.error('[GhlCreateOrder] Wompi checkout URL failed:', msg);
-        return sendSuccess(
-          res,
-          {
-            order_id: order.saleId,
-            total_cop: order.totalCOP,
-            checkout_url: null,
-            mp_url: null,
-            mp_pending: true,
-            mp_error: msg,
-          },
-          201,
+        console.error(
+          '[GhlCreateOrder] setMpPreference failed (continuing with the link the customer already has):',
+          err instanceof Error ? err.message : String(err),
         );
       }
     }
 
-    const accessToken = process.env.MP_ACCESS_TOKEN;
-
-    // Build-and-mock scope: no live MP token yet → return the order, no link.
-    if (!accessToken) {
-      return sendSuccess(res, {
-        order_id: order.saleId,
-        total_cop: order.totalCOP,
-        checkout_url: null,
-        mp_url: null,
-        mp_pending: true,
-      });
-    }
-
-    const pref = buildPreference({
-      items: [
-        {
-          title: `Pedido ${order.saleId} · Tierra Madre`,
-          quantity: 1,
-          unit_price: order.totalCOP,
-        },
-      ],
-      payer: {
-        name: body.contact.full_name,
-        email: body.contact.email,
-        phone: { number: body.contact.celular },
-      },
-      orderId: order.saleId,
-      notificationUrl: `${appUrl}/api/mp-webhook`,
-      backUrls: { success: `${appUrl}/pedido-confirmado/${order.saleId}` },
-    });
-    // The order (sale) row already exists in Convex at this point — a failure
-    // here must NOT surface as an opaque crash. Return the order with
-    // mp_pending so the caller (GHL workflow) can react gracefully and the
-    // sale can be retried/linked to a preference later, instead of losing it.
-    try {
-      const created = await createPreference(pref, accessToken);
-      await convexClient.mutation(api.ghl.setMpPreference, {
-        saleId: order.saleId,
-        mpPreferenceId: created.id,
-        secret: process.env.ADMIN_SYNC_TOKEN ?? '',
-      });
-
-      return sendSuccess(res, {
-        order_id: order.saleId,
-        total_cop: order.totalCOP,
-        checkout_url: created.init_point,
-        mp_url: created.init_point,
-      });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error('[GhlCreateOrder] Mercado Pago preference failed:', msg);
+    // `mp_url` es el campo que el workflow vivo de GHL ya lee y le manda al
+    // cliente. Lleva el link de pago sea cual sea el proveedor — el nombre es
+    // legado, el significado es «el link». Se conserva para no tocar el workflow.
+    if (!link.checkoutUrl) {
+      // Credenciales no configuradas todavía (build-and-mock) es un estado
+      // distinto de que el proveedor haya fallado a media llamada: el primero
+      // conserva el 200 "todo bien, sin link aún" que ya devolvía este
+      // endpoint; el segundo es el 201 "el pedido quedó creado pero el link
+      // reventó" con `mp_error` para diagnóstico. Perder esa distinción
+      // cambiaría el código de estado que ve el bot en el caso más común
+      // (variables de entorno aún no cargadas).
+      const notConfigured =
+        link.error === WOMPI_NOT_CONFIGURED || link.error === MP_NOT_CONFIGURED;
+      if (!notConfigured) {
+        console.error(
+          `[GhlCreateOrder] ${provider} checkout link failed:`,
+          link.error,
+        );
+      }
       return sendSuccess(
         res,
         {
           order_id: order.saleId,
           total_cop: order.totalCOP,
+          checkout_url: null,
           mp_url: null,
           mp_pending: true,
-          mp_error: msg,
+          ...(notConfigured ? {} : { mp_error: link.error }),
         },
-        201,
+        notConfigured ? 200 : 201,
       );
     }
+    return sendSuccess(res, {
+      order_id: order.saleId,
+      total_cop: order.totalCOP,
+      checkout_url: link.checkoutUrl,
+      mp_url: link.checkoutUrl,
+    });
   },
   {
     methods: ['POST', 'OPTIONS'],

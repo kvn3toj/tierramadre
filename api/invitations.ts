@@ -27,6 +27,7 @@ import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
 import { isSessionToken, verifySessionToken } from './_lib/sessionToken.js';
 import { extractBearer } from './_lib/bearer.js';
 import { api } from '../convex/_generated/api.js';
+import { puedeFijarMultiplicador } from '../src/utils/permisosMultiplicador.js';
 
 /**
  * Verifies a `tms1` app session token from the `Authorization: Bearer …`
@@ -263,6 +264,16 @@ interface VerifiedInvitationCaller {
   role: string;
   /** true when the roster access level is admin — allows editing others' invites. */
   isAdmin: boolean;
+  /**
+   * Raw roster `accessLevel` (admin/embajador/asesor/invitado_especial), or
+   * `''` for a provider / an ADMIN_EMAILS-only admin with no roster row.
+   * Feeds `puedeFijarMultiplicador` — the SAME predicate `api/vitrina.ts`
+   * uses to decide who may set a markup. `isAdmin` already covers the admin
+   * case (including the ADMIN_EMAILS fallback that doesn't map cleanly onto
+   * a roster accessLevel), so callers checking "may set multiplier" should
+   * test `caller.isAdmin || puedeFijarMultiplicador(caller.accessLevel)`.
+   */
+  accessLevel: string;
 }
 
 /** Fully-resolved invitation, ready to persist identically to Sheets + Convex. */
@@ -342,6 +353,7 @@ async function resolveInvitationCaller(
             name: email.split('@')[0],
             role: 'Admin',
             isAdmin: true,
+            accessLevel: 'admin',
           },
         };
       }
@@ -362,6 +374,7 @@ async function resolveInvitationCaller(
           name: data.user?.name || email.split('@')[0],
           role: data.user?.role || 'Asesor',
           isAdmin: data.user?.accessLevel === 'admin' || envAdmin,
+          accessLevel: envAdmin ? 'admin' : (data.user?.accessLevel ?? ''),
         },
       };
     }
@@ -373,6 +386,10 @@ async function resolveInvitationCaller(
           name: data.provider?.name || email.split('@')[0],
           role: 'Proveedor',
           isAdmin: envAdmin,
+          // Providers aren't a roster accessLevel and aren't in
+          // `puedeFijarMultiplicador`'s allowlist — same exclusion as
+          // asesor, only an ADMIN_EMAILS admin bypasses it.
+          accessLevel: envAdmin ? 'admin' : '',
         },
       };
     }
@@ -385,6 +402,7 @@ async function resolveInvitationCaller(
           name: email.split('@')[0],
           role: 'Admin',
           isAdmin: true,
+          accessLevel: 'admin',
         },
       };
     }
@@ -398,6 +416,7 @@ async function resolveInvitationCaller(
           name: email.split('@')[0],
           role: 'Admin',
           isAdmin: true,
+          accessLevel: 'admin',
         },
       };
     }
@@ -1094,6 +1113,23 @@ export default withApiHandler(
       if (!resolution.ok) return sendCallerError(res, resolution.reason);
       const caller = resolution.caller;
       const multiplier = Number(fields.guestMultiplier);
+
+      // Role gate (final whole-branch review, checkout-in-app): the check
+      // below this comment used to be ownership + admin ONLY — any invite
+      // owner, asesor included, could fix a `guestMultiplier` on their own
+      // invitation, and `createOrder` charges that multiplier. `vitrinas`
+      // (the sibling price-authority record) is gated by
+      // `puedeFijarMultiplicador`, which deliberately excludes asesor; this
+      // path answered the identical question ("who may set a markup?") with
+      // a different, more permissive rule. Same predicate here, ADDED to —
+      // not replacing — the ownership check Convex still enforces below.
+      if (!caller.isAdmin && !puedeFijarMultiplicador(caller.accessLevel)) {
+        return sendError(
+          res,
+          403,
+          'No autorizado para fijar un multiplicador.',
+        );
+      }
 
       // Convex — authoritative read/validation path; ownership + admin bypass
       // enforced inside against the VERIFIED caller (never a client email).

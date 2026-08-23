@@ -25,7 +25,7 @@ import {
   type MutationCtx,
 } from './_generated/server';
 import { v, ConvexError } from 'convex/values';
-import { internal } from './_generated/api';
+import { api, internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
 import { allocateNext, formatSaleId } from './sequences';
 import {
@@ -40,11 +40,22 @@ import {
   amountsMatch,
 } from './_lib/applyPayment';
 import {
+  RESERVA_TTL_MS,
+  reservedItemIds,
+  findReusableSale,
+} from './_lib/reservas';
+import {
+  resolverMultiplicador,
+  precioConMarkup,
+  precioBaseEsValido,
+} from './_lib/precioVitrina';
+import {
   isContactInactive,
   addContactTags,
   type GhlConvConfig,
 } from './_lib/ghlConversations';
 import { signContactId } from './_lib/cidSigning';
+import { bumpCatalogVersion } from './_lib/catalogVersion';
 
 /** Sequence + sede code for online (bot/web) orders → ids like `VO-0001`. */
 const ONLINE_SEDE = 'O';
@@ -291,14 +302,62 @@ export const createOrder = mutation({
     ambassador_slug: v.optional(v.string()),
     canal_origen: v.optional(v.string()),
     forma_pago: v.optional(v.string()),
+    /**
+     * El checkout in-app no lleva techo de 2M (decisión de producto). Opt-in y
+     * opcional, así que el rail del bot conserva su compuerta sin tocarse.
+     */
+    skip_limit: v.optional(v.boolean()),
+    /**
+     * De qué registro viene esta compra. NO lleva precio ni multiplicador:
+     * el servidor los resuelve. Ausente = riel del bot = sin markup.
+     */
+    origen: v.optional(
+      v.object({
+        tipo: v.union(v.literal('vitrina'), v.literal('invitacion')),
+        token: v.string(),
+      }),
+    ),
     secret: v.string(),
   },
   handler: async (ctx, args) => {
     requireServerSecret(args.secret);
     if (!args.items.length) throw new ConvexError('EMPTY_ITEMS');
 
+    // Resolver el markup ANTES de sumar, porque decide cada precio.
+    let registroOrigen: { multiplicador?: number } | null = null;
+    if (args.origen?.tipo === 'vitrina') {
+      // vitrinas.getByToken uppercasea antes de buscar (convex/vitrinas.ts) —
+      // los tokens se guardan en mayúsculas, así que resolver sin foldear el
+      // case rechaza links válidos que el cliente abrió en minúscula.
+      const v0 = await ctx.db
+        .query('vitrinas')
+        .withIndex('by_token', (q) =>
+          q.eq('token', args.origen!.token.toUpperCase()),
+        )
+        .first();
+      registroOrigen = v0 ? { multiplicador: v0.multiplier } : null;
+    } else if (args.origen?.tipo === 'invitacion') {
+      // La clave que el invitado guarda como TOKEN contiene el shortCode
+      // (InvitationPage.tsx). `invitations` NO tiene índice por boundToken,
+      // así que resolver «por token» literalmente sería un full-scan.
+      // invitations.getByShortCode también uppercasea antes de buscar
+      // (convex/invitations.ts) — mismo motivo que arriba.
+      const inv = await ctx.db
+        .query('invitations')
+        .withIndex('by_shortCode', (q) =>
+          q.eq('shortCode', args.origen!.token.toUpperCase()),
+        )
+        .first();
+      registroOrigen = inv ? { multiplicador: inv.guestMultiplier } : null;
+    }
+
+    const resolucion = resolverMultiplicador(args.origen, registroOrigen);
+    if (!resolucion.ok) throw new ConvexError('ORIGEN_INVALIDO');
+    const multiplicador = resolucion.multiplicador;
+
     // 1. Reload prices/stock from the DB — never trust client-supplied amounts.
     let totalCOP = 0;
+    let precioBaseCOP = 0;
     const itemIds: string[] = [];
     for (const line of args.items) {
       const product = await ctx.db
@@ -308,13 +367,32 @@ export const createOrder = mutation({
       if (!product) throw new ConvexError(`PRODUCT_NOT_FOUND:${line.sku}`);
       if (product.estado !== 'DISPONIBLE')
         throw new ConvexError(`NOT_AVAILABLE:${line.sku}`);
+      const base = product.precioCOP ?? 0;
+      // Per-LINE guard, not just the sum below: a cart mixing a priced stone
+      // with an unpriced ("Consultar precio") one sums to > 0, so the
+      // `totalCOP <= 0` check alone lets the unpriced piece ride along for
+      // free. Reject the offending line right here, where the sku is still
+      // in scope, so the endpoint can tell the customer WHICH piece failed
+      // instead of failing the whole order anonymously.
+      if (!precioBaseEsValido(base))
+        throw new ConvexError(`PRECIO_NO_DISPONIBLE:${line.sku}`);
       const qty = Math.max(1, Math.floor(line.qty));
-      totalCOP += (product.precioCOP ?? 0) * qty;
+      precioBaseCOP += base * qty;
+      totalCOP += precioConMarkup(base, multiplicador) * qty;
       for (let i = 0; i < qty; i++) itemIds.push(line.sku);
     }
 
+    // 1.5 Belt-and-braces: the per-line `precioBaseEsValido` guard above is
+    // what actually protects a MIXED cart (one priced piece + one unpriced
+    // one still sums to > 0, so this check alone would miss it — see its
+    // comment). This one is cheap insurance for any future path that
+    // reaches a zero-or-less total another way. Checked BEFORE the 2M gate
+    // and regardless of `skip_limit` — this isn't a limit, it's a floor.
+    if (totalCOP <= 0) throw new ConvexError('ZERO_TOTAL');
+
     // 2. ≤2M COP server-side gate (golden rule #3). The handler maps this to 409.
-    if (isOverLimit(totalCOP)) throw new ConvexError('OVER_LIMIT_2M');
+    if (!args.skip_limit && isOverLimit(totalCOP))
+      throw new ConvexError('OVER_LIMIT_2M');
 
     // 3. Resolve the ambassador (first-touch) from the referral slug.
     let ambassadorId: Id<'ambassadors'> | undefined;
@@ -334,33 +412,111 @@ export const createOrder = mutation({
       ambassadorId,
     );
 
+    // 4.5 Reserva derivada. Una sola lectura por rango de índice trae solo las
+    // ventas `reservada` de los últimos 30 min — el histórico de carritos
+    // abandonados no encarece esto. La ventana se ancla en `_creationTime`
+    // (propiedad de Convex, nunca pull-eada), NO en `fechaVenta`: ese campo
+    // está en el allowlist de pull de Sheets y un pull a mitad de un pago
+    // podría reescribirlo en un formato que saque la fila del rango antes de
+    // que llegue a memoria. Leer aquí e insertar abajo es atómico: las
+    // mutations de Convex son serializables, así que dos createOrder
+    // concurrentes chocan y la que reintenta ya ve la venta de la otra.
+    const now = Date.now();
+    const pendientes = await ctx.db
+      .query('sales')
+      .withIndex('by_estado', (q) =>
+        q.eq('estado', 'reservada').gte('_creationTime', now - RESERVA_TTL_MS),
+      )
+      .collect();
+
+    // Doble clic en «Pagar»: devolver la reserva que este cliente ya tiene por
+    // estos mismos ítems, en vez de chocar contra su propia reserva.
+    const reusable = findReusableSale(
+      pendientes.map((s) => ({
+        clientId: s.clientId as string,
+        itemIds: s.itemIds,
+        creationTime: s._creationTime,
+        estado: s.estado,
+        saleId: s.saleId,
+        totalCOP: s.totalCOP,
+        multiplicador: s.multiplicador,
+      })),
+      clientId as string,
+      itemIds,
+      now,
+      RESERVA_TTL_MS,
+      multiplicador,
+    );
+    if (reusable) {
+      // El link de pago vence CON LA RESERVA (`RESERVA_TTL_MS` desde este
+      // instante), no desde el clic que lo pidió — un doble clic a T+29 no
+      // puede devolver un link válido hasta T+59 mientras la reserva muere a
+      // T+30 (ver `api/_lib/checkoutLink.ts`). `_creationTime` es la fuente
+      // de verdad, la misma que ancla la ventana de reserva arriba.
+      return {
+        saleId: reusable.saleId,
+        totalCOP: reusable.totalCOP,
+        reused: true as const,
+        reservedAt: reusable.creationTime,
+      };
+    }
+
+    // Otra persona la tiene apartada.
+    const apartados = reservedItemIds(
+      pendientes.map((s) => ({
+        clientId: s.clientId as string,
+        itemIds: s.itemIds,
+        creationTime: s._creationTime,
+        estado: s.estado,
+      })),
+      now,
+      RESERVA_TTL_MS,
+    );
+    for (const itemId of itemIds) {
+      if (apartados.has(itemId)) {
+        throw new ConvexError(`ITEM_RESERVED:${itemId}`);
+      }
+    }
+
     // 5. Allocate a race-safe online saleId in the same transaction.
     const seqValue = await allocateNext(ctx, ONLINE_SALE_SEQUENCE);
     const saleId = formatSaleId(seqValue, ONLINE_SEDE);
 
     // 6. Insert the pending sale.
-    const now = new Date().toISOString();
-    const allSales = await ctx.db.query('sales').collect();
-    const rowIndex = allSales.reduce((m, s) => Math.max(m, s.rowIndex), 1) + 1;
+    const nowIso = new Date(now).toISOString();
+    // Índice `by_rowIndex` en vez de `collect()` de la tabla entera: el
+    // endpoint público de checkout es anónimo, así que el costo de este
+    // escaneo lo fija quien llame, no el negocio.
+    const ultimaFila = await ctx.db
+      .query('sales')
+      .withIndex('by_rowIndex')
+      .order('desc')
+      .first();
+    const rowIndex = Math.max(ultimaFila?.rowIndex ?? 1, 1) + 1;
     await ctx.db.insert('sales', {
       saleId,
       sede: ONLINE_SEDE,
-      fechaVenta: now,
+      fechaVenta: nowIso,
       itemIds,
       clientId,
       precioAcordadoCOP: totalCOP,
       totalCOP,
+      precioBaseCOP,
+      multiplicador,
       formaPago: args.forma_pago ?? 'mercadopago',
       estado: 'reservada' as const,
       ambassadorId,
       promotionCode: args.promotion_code ?? undefined,
       shippingAddress: args.shipping_address,
       rowIndex,
-      lastPulledAt: now,
+      lastPulledAt: nowIso,
       syncStatus: 'pending' as const,
     });
 
-    return { saleId, totalCOP };
+    // `now` is the instant this sale was created — same source the fresh
+    // insert's `_creationTime` will resolve to — so a fresh order's link
+    // expires exactly `RESERVA_TTL_MS` from here too.
+    return { saleId, totalCOP, reused: false as const, reservedAt: now };
   },
 });
 
@@ -464,6 +620,70 @@ export const markOrderPaid = mutation({
 
     // Flip the sale to confirmada (paid).
     await ctx.db.patch(sale._id, decision.patch);
+
+    // Marcar cada piedra como vendida. Sin esto una venta online PAGADA deja
+    // la esmeralda en DISPONIBLE y se puede volver a vender — sin carrera de
+    // por medio, simplemente porque nadie la marcó.
+    //
+    // `syncStatus: 'pending'` es lo que impide que el siguiente pull de la
+    // hoja lo pise: `_upsertFromSheet` devuelve temprano sin tocar el
+    // contenido de una fila `pending` o `error` (convex/products.ts). Es el
+    // mecanismo que el repo ya usa para toda edición nacida en Convex.
+    //
+    // Y además se PROGRAMA el push a la hoja, igual que hace el riel del
+    // mostrador (`sales._create`). Hasta hoy no se hacía y el comentario
+    // declaraba la reconciliación como manual: la hoja seguía mostrando
+    // DISPONIBLE una piedra pagada en línea, y la hoja es lo que mira el
+    // equipo. «Convex bloquea el segundo pedido» sólo cubre los pedidos que
+    // pasan por Convex — una venta anotada mirando la hoja no pasa. Es el
+    // mismo par audit-row + `products.pushToSheet` que ya usa el POS, así que
+    // hereda su reintento (`retryPush`) y su registro de fallos.
+    //
+    // itemIds repite el sku cuando qty > 1 — de ahí el Set.
+    let touchedPublished = false;
+    for (const itemId of new Set(sale.itemIds)) {
+      const product = await ctx.db
+        .query('productInventory')
+        .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+        .first();
+      if (!product) {
+        console.warn(
+          `[markOrderPaid] ${saleId}: itemId ${itemId} no está en productInventory`,
+        );
+        continue;
+      }
+      if (product.estado === 'VENDIDA') {
+        // Un pago confirmado sobre una piedra que YA estaba VENDIDA es una
+        // doble venta silenciosa si esto no grita: la venta se queda
+        // committed (no tocar el control flow — ya es dinero cobrado), pero
+        // alguien tiene que enterarse de que dos ventas apuntan a un mismo
+        // ítem.
+        console.error(
+          `[markOrderPaid] COLISIÓN: pago confirmado sobre stone ya VENDIDA — saleId=${saleId} itemId=${itemId}`,
+        );
+        continue;
+      }
+      if (product.mostrarEnCatalogo === true) touchedPublished = true;
+      await ctx.db.patch(product._id, {
+        estado: 'VENDIDA' as const,
+        syncStatus: 'pending' as const,
+      });
+      const auditId = await ctx.db.insert('productEdits', {
+        itemId: product.itemId,
+        editorEmail: 'venta-online',
+        editedAt: new Date().toISOString(),
+        changes: [
+          { field: 'estado', before: product.estado, after: 'VENDIDA' },
+        ],
+        status: 'pending' as const,
+      });
+      await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
+        itemId: product.itemId,
+        auditId,
+        mode: 'patch',
+      });
+    }
+    if (touchedPublished) await bumpCatalogVersion(ctx);
 
     // Increment the client's lifetime total (Convex-owned; lead_score is GHL-owned).
     let ghlContactId: string | null = null;
