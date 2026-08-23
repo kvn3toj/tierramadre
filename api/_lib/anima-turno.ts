@@ -10,6 +10,11 @@
  */
 import crypto from 'node:crypto';
 import { bearerMatches } from './bearer.js';
+import {
+  getConversationMessages,
+  searchConversations,
+  type GhlReadConfig,
+} from './ghl-read.js';
 
 /**
  * `Authorization` con o sin el esquema `Bearer`.
@@ -83,6 +88,56 @@ export function normalizaAdjunto(v: unknown): string | undefined {
     return s.split(/[\s,]+/).filter((u) => /^https?:\/\//i.test(u));
   };
   return urls(v)[0];
+}
+
+/**
+ * El adjunto se pierde por defecto: `{{message.attachments}}` llega VACÍO para medios de
+ * WhatsApp en el trigger «Customer Replied» (verificado en vivo 2026-08-20, tres fotos reales,
+ * versión nueva del workflow confirmada en el registro de ejecución). El pill se queda en el
+ * body por si GHL algún día lo llena — es más barato — pero el camino que funciona es este:
+ * preguntar por la API qué mandó el contacto.
+ *
+ * Solo cuenta el mensaje entrante MÁS RECIENTE y solo si es de hace segundos (`maxEdadMs`):
+ * el webhook dispara justo tras el mensaje, así que un adjunto viejo NO es «de este turno» —
+ * sin esa ventana, cada turno sin foto heredaría la última foto que el cliente mandó en su
+ * vida. Best-effort de punta a punta: cualquier fallo o timeout devuelve `undefined`, que es
+ * exactamente el comportamiento sin este código.
+ */
+export async function adjuntoDesdeApi(
+  cfg: GhlReadConfig,
+  contactId: string,
+  opts: { timeoutMs?: number; maxEdadMs?: number; nowMs?: number } = {},
+): Promise<string | undefined> {
+  const timeoutMs = opts.timeoutMs ?? 3_000;
+  const maxEdadMs = opts.maxEdadMs ?? 10 * 60 * 1000;
+  const ahora = opts.nowMs ?? Date.now();
+
+  const busca = async (): Promise<string | undefined> => {
+    const convos = await searchConversations(cfg, { contactId, limit: 20 });
+    const convo = convos[0];
+    if (!convo) return undefined;
+    const mensajes = await getConversationMessages(cfg, convo.id, { max: 25 });
+    const entrantes = mensajes
+      .filter((m) => m.direction === 'inbound')
+      .map((m) => ({
+        adjuntos: (m as { attachments?: unknown }).attachments,
+        ts: Date.parse(m.dateAdded),
+      }))
+      .filter((m) => Number.isFinite(m.ts))
+      .sort((a, b) => b.ts - a.ts);
+    const ultimo = entrantes[0];
+    if (!ultimo || ahora - ultimo.ts > maxEdadMs) return undefined;
+    return normalizaAdjunto(ultimo.adjuntos);
+  };
+
+  try {
+    return await Promise.race([
+      busca(),
+      new Promise<undefined>((r) => setTimeout(() => r(undefined), timeoutMs)),
+    ]);
+  } catch {
+    return undefined;
+  }
 }
 
 /**

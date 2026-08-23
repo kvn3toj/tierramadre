@@ -27,14 +27,19 @@
  * Todo —comisión, IVA y el margen deseado— se paga SOBRE EL PRECIO DE VENTA, no
  * sobre el costo. Lo que se quiere conservar va restando dentro del paréntesis:
  *
- * | Escalón         | Gema   | Joya   | Qué significa                       |
- * | --------------- | ------ | ------ | ----------------------------------- |
- * | K               | K      | K      | Costos. **Vender acá es perder.**   |
- * | Equilibrio real | K/0,90 | K/0,71 | Supervivencia exacta, utilidad cero |
- * | Precio objetivo | K/0,60 | K/0,41 | Supervivencia + 30% de margen neto  |
+ * | Escalón         | Sin IVA | Con IVA | Qué significa                       |
+ * | --------------- | ------- | ------- | ----------------------------------- |
+ * | K               | K       | K       | Costos. **Vender acá es perder.**   |
+ * | Equilibrio real | K/0,90  | K/0,71  | Supervivencia exacta, utilidad cero |
+ * | Precio objetivo | K/0,60  | K/0,41  | Supervivencia + 30% de margen neto  |
  *
  * (0,90 − 0,30 = 0,60 · 0,71 − 0,30 = 0,41 — por eso el margen del modelo es
  * «sobre precio» y no «sobre costo».)
+ *
+ * Qué columna usa cada categoría lo decide la CONFIG vigente, no la categoría
+ * sola: bajo la regla de julio la gema iba sin IVA y la joya con; desde la de
+ * agosto 2026 (`ivaGemaPct: 0.19` — TM es responsable de IVA y el art. 424 ET
+ * no excluye las gemas) ambas van por la columna con IVA.
  *
  * La hoja **nunca calculó el escalón del medio**: saltaba de K al objetivo, y por
  * eso nadie veía el piso real. El lote 14 se ofrecía a $1.922.677 con su
@@ -53,6 +58,7 @@
 import {
   divisorObjetivo,
   exigeCategoriaFiscal,
+  impuestosDe,
   type CategoriaFiscal,
   type ConfigPrecios,
 } from './motorPrecios';
@@ -163,7 +169,7 @@ export function repartirPorPeso(input: RepartirPorPesoInput): PrecioUnidad[] {
   });
 
   const retenido = (cat: CategoriaFiscal): number =>
-    1 - config.comisionPct - (cat === 'joya' ? config.ivaJoyaPct : 0);
+    1 - config.comisionPct - impuestosDe(cat, config);
 
   /**
    * Redondea una columna dejando el residuo en la ÚLTIMA casilla de cada grupo

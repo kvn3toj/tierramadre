@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { readFreshSessionToken } from '../utils/sessionToken';
 
 export interface TopProduct {
   itemNumber: number;
@@ -71,7 +72,14 @@ export function useCotizacionStats(): UseCotizacionStatsReturn {
     setError(null);
 
     try {
-      const response = await fetch('/api/cotizacion-save?action=stats');
+      // Candado del 2026-08-21 (hallazgo #2): `?action=stats` ya no contesta
+      // sin sesión. Se lee fresco en cada llamada, nunca a nivel de módulo.
+      const sessionToken = readFreshSessionToken();
+      const response = await fetch('/api/cotizacion-save?action=stats', {
+        headers: sessionToken
+          ? { Authorization: `Bearer ${sessionToken}` }
+          : undefined,
+      });
 
       if (!response.ok) {
         throw new Error(`Server error: ${response.status}`);
@@ -85,7 +93,8 @@ export function useCotizacionStats(): UseCotizacionStatsReturn {
         throw new Error(data.error || 'Failed to fetch cotización stats');
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error fetching cotización stats';
+      const message =
+        err instanceof Error ? err.message : 'Error fetching cotización stats';
       console.error('[useCotizacionStats]', message);
       setError(message);
       setStats(defaultStats);
