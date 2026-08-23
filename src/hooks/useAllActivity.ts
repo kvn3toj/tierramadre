@@ -100,7 +100,15 @@ export function useAllActivity(): UseAllActivityReturn {
             ? { Authorization: `Bearer ${sessionToken}` }
             : undefined,
         }),
-        fetch('/api/cotizacion-save?action=stats'),
+        // `?action=stats` quedó con candado el 2026-08-21 (hallazgo #2): un
+        // GET anónimo devolvía 35 cotizaciones con correo del asesor y nombre
+        // del cliente. Misma sesión que la línea de arriba — este panel ya
+        // vive detrás de AdminRoute.
+        fetch('/api/cotizacion-save?action=stats', {
+          headers: sessionToken
+            ? { Authorization: `Bearer ${sessionToken}` }
+            : undefined,
+        }),
       ]);
 
       const combined: Activity[] = [];
