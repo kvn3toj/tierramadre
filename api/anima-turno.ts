@@ -26,6 +26,7 @@ import { addTags } from './_lib/ghl-client.js';
 import { sendConversationMessage, tipoDeCanal } from './_lib/ghl-send.js';
 import {
   FALLBACK_TURNO,
+  adjuntoDesdeApi,
   autorizacionValida,
   parseTurno,
   reenviarTurno,
@@ -61,13 +62,27 @@ export default withApiHandler(
     const upstream = (process.env.ANIMA_TURNO_UPSTREAM ?? '').trim();
     const secret = (process.env.ANIMA_COTIZADOR_SECRET ?? '').trim();
 
+    const token = process.env.GHL_TOKEN;
+    const locationId = process.env.GHL_LOCATION_ID;
+
+    // El pill {{message.attachments}} llega vacío para medios de WhatsApp (verificado en vivo):
+    // si el body no trajo adjunto, se le pregunta a la API por el último mensaje entrante del
+    // contacto. Best-effort con timeout — su modo de fallo es el turno sin foto de siempre.
+    if (!turno.adjunto && token && locationId) {
+      turno.adjunto = await adjuntoDesdeApi(
+        { token, locationId },
+        turno.externalId,
+      );
+      // Diagnóstico en runtime logs; solo el booleano — la URL es un medio del cliente.
+      console.log(
+        `[AnimaTurno] adjunto via API: ${turno.adjunto ? 'sí' : 'no'}`,
+      );
+    }
+
     const respuesta =
       upstream && secret
         ? await reenviarTurno({ upstream, secret }, turno)
         : null;
-
-    const token = process.env.GHL_TOKEN;
-    const locationId = process.env.GHL_LOCATION_ID;
 
     if (!respuesta && token && locationId) {
       // anima-bot no contestó: el tag deja al lead recuperable en una smart list. Best-effort —

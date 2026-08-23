@@ -20,10 +20,55 @@ import {
   findColumnIndex,
   formatDisplayName,
 } from './_lib/index.js';
+import { extractBearer } from './_lib/bearer.js';
+import { isSessionToken, verifySessionToken } from './_lib/sessionToken.js';
 
 // Sheet names for cotización data
 const COTIZACIONES_SHEET = 'CotizacionesAsesores';
 const PRODUCTS_SHEET = 'CotizacionProducts';
+
+/**
+ * Columna M — la lápida de un borrado.
+ *
+ * El borrado viejo hacía `values.clear` sobre A:L: la fila desaparecía sin
+ * dejar nada, y el PDF se iba de Drive con `files.delete` (permanente, ni
+ * siquiera a la papelera). Un borrado accidental o malicioso no tenía vuelta
+ * atrás ni forma de auditarse.
+ *
+ * Ahora la fila se queda y se marca acá. Los lectores la saltan, así que la
+ * asesora ve exactamente lo mismo que antes, pero el dato sigue existiendo.
+ */
+const COL_ESTADO = 'M';
+const ESTADO_ANULADA = 'anulada';
+const IDX_ESTADO = 12; // columna M, 0-based
+
+/** Una fila anulada no se sirve a nadie, pero tampoco se pierde. */
+function estaAnulada(row: unknown[]): boolean {
+  return (
+    String(row[IDX_ESTADO] ?? '')
+      .trim()
+      .toLowerCase() === ESTADO_ANULADA
+  );
+}
+
+/**
+ * Verifica el token de sesión `tms1` de `Authorization: Bearer …` y devuelve
+ * su correo, o null.
+ *
+ * Mismo helper que `api/cotizacion-reports.ts`, `api/invitations.ts` y
+ * `api/product-views.ts`. Sólo cuentan los `tms1`: un token de Google crudo
+ * prueba "alguna cuenta de Gmail", no membresía del roster, y el client ID de
+ * OAuth es público y viaja en este bundle.
+ *
+ * Exportado para tests/cotizacionSaveCandado.test.ts.
+ */
+export function verifiedSessionEmail(
+  authHeader?: string | string[],
+): string | null {
+  const token = extractBearer(authHeader);
+  if (!token || !isSessionToken(token)) return null;
+  return verifySessionToken(token)?.email ?? null;
+}
 
 function firstQueryParam(v: string | string[] | undefined): string | undefined {
   if (v == null) return undefined;
@@ -318,7 +363,7 @@ async function ensureCotizacionesSheet(
       // Add headers
       await sheets.spreadsheets.values.update({
         spreadsheetId: APP_SPREADSHEET_ID,
-        range: `${COTIZACIONES_SHEET}!A1:L1`,
+        range: `${COTIZACIONES_SHEET}!A1:M1`,
         valueInputOption: 'RAW',
         requestBody: {
           values: [
@@ -335,6 +380,7 @@ async function ensureCotizacionesSheet(
               'DriveFileId',
               'CreatedAt',
               'ExpiryDate',
+              'Estado',
             ],
           ],
         },
@@ -437,11 +483,12 @@ async function saveCotizacionToSheet(
     data.driveFileId,
     new Date().toISOString(),
     data.expiryDate || '',
+    '', // M · Estado — vacía = viva; ver COL_ESTADO
   ];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: APP_SPREADSHEET_ID,
-    range: `${COTIZACIONES_SHEET}!A:L`,
+    range: `${COTIZACIONES_SHEET}!A:M`,
     valueInputOption: 'RAW',
     insertDataOption: 'INSERT_ROWS',
     requestBody: {
@@ -520,7 +567,7 @@ async function getCotizacionesByAsesor(
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: APP_SPREADSHEET_ID,
-      range: `${COTIZACIONES_SHEET}!A:L`,
+      range: `${COTIZACIONES_SHEET}!A:M`,
     });
 
     const rows = response.data.values || [];
@@ -532,6 +579,9 @@ async function getCotizacionesByAsesor(
     const cotizaciones = rows
       .slice(1)
       .filter((row) => row[2]?.toLowerCase().trim() === normalizedEmail)
+      // Una anulada sigue en la hoja para que el borrado sea auditable, pero
+      // no vuelve a aparecer en la lista de la asesora.
+      .filter((row) => !estaAnulada(row))
       .map((row) => ({
         id: row[0],
         quotationNumber: row[1],
@@ -576,7 +626,7 @@ async function getCotizacionByQuotationNumber(
 
   const metaResp = await sheets.spreadsheets.values.get({
     spreadsheetId: APP_SPREADSHEET_ID,
-    range: `${COTIZACIONES_SHEET}!A:L`,
+    range: `${COTIZACIONES_SHEET}!A:M`,
   });
   const metaRows = metaResp.data.values || [];
   const row = metaRows.slice(1).find(
@@ -892,7 +942,7 @@ async function getCotizacionStats(sheets: sheets_v4.Sheets) {
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: APP_SPREADSHEET_ID,
-      range: `${COTIZACIONES_SHEET}!A:L`,
+      range: `${COTIZACIONES_SHEET}!A:M`,
     });
 
     const rows = response.data.values || [];
@@ -911,7 +961,10 @@ async function getCotizacionStats(sheets: sheets_v4.Sheets) {
       };
     }
 
-    const dataRows = rows.slice(1).filter((row) => row[0]); // Skip header, filter empty rows
+    const dataRows = rows
+      .slice(1)
+      .filter((row) => row[0]) // Skip header, filter empty rows
+      .filter((row) => !estaAnulada(row)); // y las anuladas no cuentan
     const now = new Date();
     const todayStart = new Date(
       now.getFullYear(),
@@ -1023,6 +1076,21 @@ async function getCotizacionStats(sheets: sheets_v4.Sheets) {
 /**
  * Delete a cotización
  */
+/**
+ * Anula una cotización: el PDF a la papelera de Drive, la fila marcada.
+ *
+ * Antes esto era destructivo de verdad — `files.delete` (permanente, sin
+ * papelera) más `values.clear` sobre la fila. Un DELETE anónimo, que es lo que
+ * este endpoint aceptaba hasta el 2026-08-21, borraba el PDF de un cliente sin
+ * bitácora, sin respaldo y sin forma de recuperarlo. Ahora las dos mitades son
+ * reversibles: la papelera de Drive se puede vaciar a mano y la fila sigue ahí.
+ *
+ * `asesorEmail` YA NO viene del parámetro de la URL: lo pone el handler desde
+ * el token verificado. Por eso este chequeo de propiedad ahora significa algo.
+ *
+ * Devuelve false cuando no hay fila propia con ese id — el handler lo traduce
+ * a 404, en vez de reventar con una excepción como hacía antes.
+ */
 async function deleteCotizacion(
   drive: drive_v3.Drive,
   sheets: sheets_v4.Sheets,
@@ -1032,7 +1100,7 @@ async function deleteCotizacion(
   // Get all rows to find the one to delete
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: APP_SPREADSHEET_ID,
-    range: `${COTIZACIONES_SHEET}!A:L`,
+    range: `${COTIZACIONES_SHEET}!A:M`,
   });
 
   const rows = response.data.values || [];
@@ -1045,7 +1113,8 @@ async function deleteCotizacion(
   for (let i = 1; i < rows.length; i++) {
     if (
       rows[i][0] === cotizacionId &&
-      rows[i][2]?.toLowerCase().trim() === normalizedEmail
+      rows[i][2]?.toLowerCase().trim() === normalizedEmail &&
+      !estaAnulada(rows[i])
     ) {
       rowIndex = i + 1; // 1-based
       driveFileId = rows[i][9];
@@ -1053,29 +1122,42 @@ async function deleteCotizacion(
     }
   }
 
-  if (rowIndex === -1) {
-    throw new Error('Cotización not found or not owned by this asesor');
-  }
+  if (rowIndex === -1) return false;
 
-  // Delete from Drive
+  // Drive: A LA PAPELERA, no `files.delete`. `files.delete` en un shared drive
+  // es permanente y no pasa por la papelera, así que un borrado por error era
+  // irrecuperable.
   if (driveFileId) {
     try {
-      await drive.files.delete({
+      await drive.files.update({
         fileId: driveFileId,
+        requestBody: { trashed: true },
         supportsAllDrives: true,
       });
     } catch (error: unknown) {
       console.warn(
-        '[CotizacionSave] Could not delete Drive file:',
+        '[CotizacionSave] Could not trash Drive file:',
         error instanceof Error ? error.message : error,
       );
     }
   }
 
-  // Delete from Sheet (clear the row)
-  await sheets.spreadsheets.values.clear({
+  // La hoja de producción nació con 12 columnas, así que M no tiene cabecera.
+  // Se escribe acá —operación rara, idempotente— para que la columna quede
+  // rotulada la primera vez que alguien anula algo.
+  await sheets.spreadsheets.values.update({
     spreadsheetId: APP_SPREADSHEET_ID,
-    range: `${COTIZACIONES_SHEET}!A${rowIndex}:L${rowIndex}`,
+    range: `${COTIZACIONES_SHEET}!${COL_ESTADO}1`,
+    valueInputOption: 'RAW',
+    requestBody: { values: [['Estado']] },
+  });
+
+  // La lápida. La fila NO se limpia: se marca.
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: APP_SPREADSHEET_ID,
+    range: `${COTIZACIONES_SHEET}!${COL_ESTADO}${rowIndex}`,
+    valueInputOption: 'RAW',
+    requestBody: { values: [[ESTADO_ANULADA]] },
   });
 
   return true;
@@ -1085,182 +1167,228 @@ async function deleteCotizacion(
 // MAIN HANDLER
 // =============================================================================
 
-export default withApiHandler(
-  async (
-    req: VercelRequest,
-    res: VercelResponse,
-    ctx: Record<string, unknown>,
-  ) => {
-    const { sheets, oauthDrive, sharedDriveId } = ctx as {
-      sheets: sheets_v4.Sheets;
-      oauthDrive: drive_v3.Drive | null;
-      sharedDriveId: string | undefined;
-    };
-    const drive = oauthDrive;
+/**
+ * SESSION-GATED (2026-08-21) — hallazgo #2 de la auditoría de rieles.
+ *
+ * Este endpoint no pedía credencial en NINGÚN método. Medido contra
+ * producción el día del arreglo, sin ninguna credencial:
+ *
+ *   1. `GET ?action=stats` → 200 con las 35 cotizaciones agregadas
+ *      ($240.512.535 de valor total), las 20 más recientes con correo del
+ *      asesor y nombre del cliente, y el ranking de asesores con 11 correos.
+ *   2. `GET ?email=<uno de esos correos>` → 200 con 10 cotizaciones, cada una
+ *      con nombre y teléfono del cliente, el `id` y el `driveFileId`.
+ *   3. `DELETE ?id=…&email=…` → con el par que el paso 2 acaba de entregar,
+ *      borraba el PDF de Drive de forma permanente y limpiaba la fila.
+ *
+ * Es una cadena, no tres agujeros sueltos: cada paso entrega exactamente lo
+ * que el siguiente necesita, empezando desde cero conocimiento previo.
+ *
+ * El hermano `cotizacion-reports.ts` tuvo este mismo incidente y lo cerró el
+ * 2026-08-09 (su cabecera cuenta que un GET anónimo respondió 200 con 19
+ * registros, 7 teléfonos y 3 correos). La misma información vive en
+ * `CotizacionesAsesores` y acá la puerta nunca se escribió. El PR de aquel
+ * arreglo candó al hermano y dejó a este abierto.
+ *
+ * Dos cambios, no uno:
+ *
+ *   · LA PUERTA — sesión `tms1` verificada antes de tocar Sheets o Drive.
+ *   · EL DUEÑO SALE DEL TOKEN — `?email=` / `body.asesorEmail` dejan de ser la
+ *     autorización Y dejan de ser la entrada. Sin esto el candado no serviría
+ *     de nada: cualquier asesor con sesión podría seguir leyendo y borrando
+ *     las cotizaciones de cualquier otro con sólo cambiar el parámetro.
+ *     Ningún llamador pierde nada — los tres (AsesorProfilePage y
+ *     CotizacionGenerator) ya pasaban su propio `googleUser.email`.
+ *
+ * Exportado por nombre para tests/cotizacionSaveCandado.test.ts.
+ */
+export async function handleCotizacionSave(
+  req: VercelRequest,
+  res: VercelResponse,
+  ctx: Record<string, unknown>,
+) {
+  const { sheets, oauthDrive, sharedDriveId } = ctx as {
+    sheets: sheets_v4.Sheets;
+    oauthDrive: drive_v3.Drive | null;
+    sharedDriveId: string | undefined;
+  };
+  const drive = oauthDrive;
 
-    // ==========================================================================
-    // GET - Fetch cotizaciones for an asesor or aggregate stats
-    // ==========================================================================
-    if (req.method === 'GET') {
-      const email = firstQueryParam(
-        req.query?.email as string | string[] | undefined,
-      );
-      const action = firstQueryParam(
-        req.query?.action as string | string[] | undefined,
-      );
-      const itemId = firstQueryParam(
-        req.query?.itemId as string | string[] | undefined,
-      );
-      const quotationNumber = firstQueryParam(
-        req.query?.quotationNumber as string | string[] | undefined,
-      );
+  const action = firstQueryParam(
+    req.query?.action as string | string[] | undefined,
+  );
 
-      // Public view DESACTIVADO por seguridad (IDOR): devolvía cualquier
-      // cotización — nombre y teléfono del cliente + precios — por su número,
-      // que es enumerable (TM-AAAA-NNNN), sin token ni auth. Cualquiera podía
-      // recorrer los números y cosechar los datos de todos los clientes.
-      // No se reactiva hasta ligar un token de alta entropía al registro y
-      // exigirlo aquí (comparación timing-safe) + en la URL del QR y en /c/.
-      if (action === 'public' && quotationNumber) {
-        return sendError(res, 404, 'Cotización no encontrada');
-      }
+  // Public view DESACTIVADO por seguridad (IDOR): devolvía cualquier
+  // cotización — nombre y teléfono del cliente + precios — por su número,
+  // que es enumerable (TM-AAAA-NNNN), sin token ni auth. Cualquiera podía
+  // recorrer los números y cosechar los datos de todos los clientes.
+  // No se reactiva hasta ligar un token de alta entropía al registro y
+  // exigirlo aquí (comparación timing-safe) + en la URL del QR y en /c/.
+  //
+  // Va ANTES del candado A PROPÓSITO: no lee ni una celda, así que no filtra
+  // nada, y le deja al visitante que escanea un QR la pantalla honesta de
+  // «no encontrada» (CotizacionPublicPage distingue 404 de error) en vez de
+  // un 401 que le pediría iniciar sesión en una página pública.
+  if (
+    req.method === 'GET' &&
+    action === 'public' &&
+    firstQueryParam(req.query?.quotationNumber as string | string[] | undefined)
+  ) {
+    return sendError(res, 404, 'Cotización no encontrada');
+  }
 
-      // Stats endpoint for analytics dashboard
-      if (action === 'stats') {
-        const stats = await getCotizacionStats(sheets);
-        return sendSuccess(res, stats);
-      }
+  // EL CANDADO. Antes de `ensureCotizacionesSheet` y de cualquier llamada a
+  // Sheets o Drive: un no autorizado no debe costar ni cuota.
+  const sessionEmail = verifiedSessionEmail(req.headers['authorization']);
+  if (!sessionEmail) {
+    return sendError(res, 401, 'Inicia sesión para ver esta información.');
+  }
 
-      // Product cotizaciones endpoint - who quoted a specific product
-      if (action === 'productCotizaciones' && itemId) {
-        const productData = await getProductCotizaciones(sheets, itemId);
-        return sendSuccess(res, productData);
-      }
+  // ==========================================================================
+  // GET - Fetch cotizaciones for an asesor or aggregate stats
+  // ==========================================================================
+  if (req.method === 'GET') {
+    const itemId = firstQueryParam(
+      req.query?.itemId as string | string[] | undefined,
+    );
 
-      // Asesor-specific cotizaciones
-      if (!email) {
-        return sendError(res, 400, 'Email parameter required');
-      }
-
-      const cotizaciones = await getCotizacionesByAsesor(sheets, email);
-
-      return sendSuccess(res, {
-        cotizaciones,
-        count: cotizaciones.length,
-      });
+    // Stats endpoint for analytics dashboard
+    if (action === 'stats') {
+      const stats = await getCotizacionStats(sheets);
+      return sendSuccess(res, stats);
     }
 
-    // ==========================================================================
-    // POST - Save a new cotización
-    // ==========================================================================
-    if (req.method === 'POST') {
-      if (!drive || !sharedDriveId) {
-        return sendError(res, 500, 'Google Drive not available');
-      }
+    // Product cotizaciones endpoint - who quoted a specific product
+    if (action === 'productCotizaciones' && itemId) {
+      const productData = await getProductCotizaciones(sheets, itemId);
+      return sendSuccess(res, productData);
+    }
 
-      const {
-        quotationNumber,
-        asesorEmail,
-        asesorName,
-        clientName,
-        clientPhone,
-        productsCount,
-        total,
-        expiryDate,
-        imageBase64,
-        products, // Array of { itemNumber, name, precioCOP }
-      } = req.body as CotizacionPostBody;
+    // Cotizaciones del asesor. El `?email=` de la URL se IGNORA — era el
+    // IDOR: bastaba cambiarlo por el correo de otra persona (que el paso de
+    // `?action=stats` acababa de entregar) para leer sus clientes. El dueño
+    // es siempre el del token verificado.
+    const cotizaciones = await getCotizacionesByAsesor(sheets, sessionEmail);
 
-      // Validate required fields
-      if (!quotationNumber || !asesorEmail || !asesorName || !imageBase64) {
-        return sendError(
-          res,
-          400,
-          'Missing required fields: quotationNumber, asesorEmail, asesorName, imageBase64',
-        );
-      }
+    return sendSuccess(res, {
+      cotizaciones,
+      count: cotizaciones.length,
+    });
+  }
 
-      // Get or create asesor's folder
-      const asesorFolderId = await getAsesorCotizacionesFolder(
-        drive,
-        sharedDriveId,
-        asesorEmail,
+  // ==========================================================================
+  // POST - Save a new cotización
+  // ==========================================================================
+  if (req.method === 'POST') {
+    if (!drive || !sharedDriveId) {
+      return sendError(res, 500, 'Google Drive not available');
+    }
+
+    const {
+      quotationNumber,
+      asesorName,
+      clientName,
+      clientPhone,
+      productsCount,
+      total,
+      expiryDate,
+      imageBase64,
+      products, // Array of { itemNumber, name, precioCOP }
+    } = req.body as CotizacionPostBody;
+
+    // El dueño sale del token, NO del cuerpo. Con la puerta abierta,
+    // `asesorEmail` en el body dejaba insertar cotizaciones falsas —con
+    // datos de cliente— a nombre de cualquier asesora. Su único llamador
+    // real (CotizacionGenerator) ya mandaba `googleUser.email`, así que
+    // nadie pierde nada.
+    const asesorEmail = sessionEmail;
+
+    // Validate required fields
+    if (!quotationNumber || !asesorName || !imageBase64) {
+      return sendError(
+        res,
+        400,
+        'Missing required fields: quotationNumber, asesorName, imageBase64',
       );
+    }
 
-      // Upload image
-      const uploadResult = await uploadImageToDrive(
-        drive,
-        asesorFolderId,
-        imageBase64,
-        quotationNumber,
-      );
+    // Get or create asesor's folder
+    const asesorFolderId = await getAsesorCotizacionesFolder(
+      drive,
+      sharedDriveId,
+      asesorEmail,
+    );
 
-      // Save metadata to sheet
-      const cotizacionId = await saveCotizacionToSheet(sheets, {
+    // Upload image
+    const uploadResult = await uploadImageToDrive(
+      drive,
+      asesorFolderId,
+      imageBase64,
+      quotationNumber,
+    );
+
+    // Save metadata to sheet
+    const cotizacionId = await saveCotizacionToSheet(sheets, {
+      quotationNumber,
+      asesorEmail,
+      asesorName,
+      clientName: clientName || '',
+      clientPhone: clientPhone || '',
+      productsCount: productsCount || products?.length || 0,
+      total: total || 0,
+      expiryDate: expiryDate || '',
+      imageUrl: uploadResult.proxyUrl,
+      driveFileId: uploadResult.fileId,
+    });
+
+    // Save products to separate sheet for analytics
+    if (products && Array.isArray(products) && products.length > 0) {
+      await saveCotizacionProducts(sheets, cotizacionId, products, asesorEmail);
+    }
+
+    return sendSuccess(
+      res,
+      {
+        id: cotizacionId,
         quotationNumber,
-        asesorEmail,
-        asesorName,
-        clientName: clientName || '',
-        clientPhone: clientPhone || '',
-        productsCount: productsCount || products?.length || 0,
-        total: total || 0,
-        expiryDate: expiryDate || '',
         imageUrl: uploadResult.proxyUrl,
         driveFileId: uploadResult.fileId,
-      });
+      },
+      201,
+    );
+  }
 
-      // Save products to separate sheet for analytics
-      if (products && Array.isArray(products) && products.length > 0) {
-        await saveCotizacionProducts(
-          sheets,
-          cotizacionId,
-          products,
-          asesorEmail,
-        );
-      }
-
-      return sendSuccess(
-        res,
-        {
-          id: cotizacionId,
-          quotationNumber,
-          imageUrl: uploadResult.proxyUrl,
-          driveFileId: uploadResult.fileId,
-        },
-        201,
-      );
+  // ==========================================================================
+  // DELETE - Delete a cotización
+  // ==========================================================================
+  if (req.method === 'DELETE') {
+    if (!drive) {
+      return sendError(res, 500, 'Google Drive not available');
     }
 
-    // ==========================================================================
-    // DELETE - Delete a cotización
-    // ==========================================================================
-    if (req.method === 'DELETE') {
-      if (!drive) {
-        return sendError(res, 500, 'Google Drive not available');
-      }
+    const id = firstQueryParam(req.query?.id as string | string[] | undefined);
 
-      const id = firstQueryParam(
-        req.query?.id as string | string[] | undefined,
-      );
-      const email = firstQueryParam(
-        req.query?.email as string | string[] | undefined,
-      );
-
-      if (!id || !email) {
-        return sendError(res, 400, 'ID and email parameters required');
-      }
-
-      await deleteCotizacion(drive, sheets, id, email);
-
-      return sendSuccess(res, { deleted: true });
+    if (!id) {
+      return sendError(res, 400, 'ID parameter required');
     }
 
-    return sendError(res, 405, 'Method not allowed');
-  },
-  {
-    methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-    provideSheets: true,
-    provideOAuthDrive: true,
-    errorPrefix: 'CotizacionSave',
-  },
-);
+    // Igual que en el GET: el `?email=` de la URL se ignora. Era la mitad
+    // del par que convertía la fuga de lectura en un borrado permanente de
+    // cotizaciones ajenas.
+    const anulada = await deleteCotizacion(drive, sheets, id, sessionEmail);
+    if (!anulada) {
+      return sendError(res, 404, 'Cotización no encontrada');
+    }
+
+    return sendSuccess(res, { deleted: true });
+  }
+
+  return sendError(res, 405, 'Method not allowed');
+}
+
+export default withApiHandler(handleCotizacionSave, {
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  provideSheets: true,
+  provideOAuthDrive: true,
+  errorPrefix: 'CotizacionSave',
+});

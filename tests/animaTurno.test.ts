@@ -223,3 +223,128 @@ describe('el fallback que oye María', () => {
     expect(FALLBACK_TURNO.mensaje.length).toBeGreaterThan(0);
   });
 });
+
+describe('adjuntoDesdeApi — el pill de GHL viene vacío y el proxy pregunta él mismo', () => {
+  const U = 'https://services.leadconnectorhq.com/media/real.jpg';
+  const AHORA = 1_755_720_000_000;
+
+  function fetchDeGhl(mensajes: unknown[]) {
+    return async (url: string) => ({
+      ok: true,
+      status: 200,
+      json: async () =>
+        url.includes('/conversations/search')
+          ? { conversations: [{ id: 'c1', contactId: 'k1' }] }
+          : { messages: { messages: mensajes, nextPage: false } },
+    });
+  }
+
+  it('el último mensaje ENTRANTE trae attachments → primera URL', async () => {
+    const { adjuntoDesdeApi } = await import('../api/_lib/anima-turno.js');
+    const r = await adjuntoDesdeApi(
+      {
+        token: 't',
+        locationId: 'l',
+        fetchImpl: fetchDeGhl([
+          {
+            id: 'm3',
+            direction: 'outbound',
+            body: 'hola',
+            dateAdded: new Date(AHORA).toISOString(),
+          },
+          {
+            id: 'm2',
+            direction: 'inbound',
+            body: '',
+            attachments: [U, 'https://x/otro.jpg'],
+            dateAdded: new Date(AHORA - 5_000).toISOString(),
+          },
+        ]),
+      },
+      'k1',
+      { nowMs: AHORA },
+    );
+    expect(r).toBe(U);
+  });
+
+  it('el último entrante NO trae attachments → undefined (nada de fotos viejas)', async () => {
+    const { adjuntoDesdeApi } = await import('../api/_lib/anima-turno.js');
+    const r = await adjuntoDesdeApi(
+      {
+        token: 't',
+        locationId: 'l',
+        fetchImpl: fetchDeGhl([
+          {
+            id: 'm2',
+            direction: 'inbound',
+            body: 'sin foto',
+            dateAdded: new Date(AHORA - 5_000).toISOString(),
+          },
+          {
+            id: 'm1',
+            direction: 'inbound',
+            body: '',
+            attachments: [U],
+            dateAdded: new Date(AHORA - 3 * 24 * 3600 * 1000).toISOString(),
+          },
+        ]),
+      },
+      'k1',
+      { nowMs: AHORA },
+    );
+    expect(r).toBeUndefined();
+  });
+
+  it('un adjunto más viejo que la ventana no cuenta como "de este turno"', async () => {
+    const { adjuntoDesdeApi } = await import('../api/_lib/anima-turno.js');
+    const r = await adjuntoDesdeApi(
+      {
+        token: 't',
+        locationId: 'l',
+        fetchImpl: fetchDeGhl([
+          {
+            id: 'm1',
+            direction: 'inbound',
+            body: '',
+            attachments: [U],
+            dateAdded: new Date(AHORA - 60 * 60 * 1000).toISOString(),
+          },
+        ]),
+      },
+      'k1',
+      { nowMs: AHORA },
+    );
+    expect(r).toBeUndefined();
+  });
+
+  it('sin conversaciones, o con la API caída, devuelve undefined sin tirar', async () => {
+    const { adjuntoDesdeApi } = await import('../api/_lib/anima-turno.js');
+    const sinConvos = await adjuntoDesdeApi(
+      {
+        token: 't',
+        locationId: 'l',
+        fetchImpl: async () => ({
+          ok: true,
+          status: 200,
+          json: async () => ({ conversations: [] }),
+        }),
+      },
+      'k1',
+      { nowMs: AHORA },
+    );
+    expect(sinConvos).toBeUndefined();
+
+    const caida = await adjuntoDesdeApi(
+      {
+        token: 't',
+        locationId: 'l',
+        fetchImpl: async () => {
+          throw new Error('boom');
+        },
+      },
+      'k1',
+      { nowMs: AHORA },
+    );
+    expect(caida).toBeUndefined();
+  });
+});

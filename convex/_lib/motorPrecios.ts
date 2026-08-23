@@ -28,9 +28,18 @@
  */
 
 /**
- * El régimen fiscal de una pieza. Las gemas no llevan IVA; las joyas sí, y esa
- * única asimetría parte el modelo en dos: cotizar con el divisor equivocado
- * mueve el precio un 46%.
+ * El régimen fiscal de una pieza. Históricamente el modelo asumió que las gemas
+ * sueltas no llevaban IVA y las joyas sí — esa asimetría partía el modelo en
+ * dos y cotizar con el divisor equivocado movía el precio un 46%.
+ *
+ * CORRECCIÓN LEGAL (2026-08-20): el art. 424 ET no excluye las piedras
+ * preciosas (la única partida del capítulo 71 ahí es 71.18, monedas), así que
+ * para un responsable de IVA la venta NACIONAL de una gema suelta paga la
+ * tarifa general del 19% (art. 468 ET; doctrina DIAN, p.ej. Concepto
+ * 974(008564)/2024). La exención real es por CANAL —exportación / venta a CI,
+ * art. 481— no por categoría. Por eso la tasa de gema vive en la config
+ * versionada (`ivaGemaPct`, ausente = 0 en las reglas viejas) y no en un
+ * booleano de categoría: las cotizaciones históricas conservan sus números.
  *
  * `mixta` NO existe aquí a propósito: es un estado del LOTE («todavía no se
  * sabe, se resuelve casilla por casilla»), nunca una categoría cotizable.
@@ -52,8 +61,15 @@ export interface ConfigPrecios {
   gastosFijosMensualesCOP: number;
   /** Comisión comercial promedio, pagada en toda venta (`B8`). */
   comisionPct: number;
-  /** IVA de joyería (`B9`). Las gemas sueltas no lo pagan. */
+  /** IVA de joyería (`B9`). */
   ivaJoyaPct: number;
+  /**
+   * IVA de gema suelta en venta nacional. AUSENTE = 0 — así las reglas
+   * anteriores al 2026-08-20 (cuando el modelo asumía gema exenta) siguen
+   * reproduciendo exactamente lo que cotizaron. Ver la nota legal en
+   * `CategoriaFiscal`.
+   */
+  ivaGemaPct?: number;
   /** Margen neto deseado SOBRE EL PRECIO, no markup sobre costo (`B10`). */
   margenNetoDeseadoPct: number;
   /** Último día del remate, ISO. Después vuelve a regir el objetivo. */
@@ -92,6 +108,23 @@ export const CONFIG_PRECIOS_2026_07: ConfigPrecios = {
   remateHasta: '2026-08-31',
   multRemateGema: 1.3,
   multRemateJoya: 1.6,
+};
+
+/**
+ * Vigente desde el 2026-08-20: Tierra Madre es RESPONSABLE DE IVA, así que la
+ * gema suelta vendida en Colombia también paga el 19% (ver la nota legal en
+ * `CategoriaFiscal`). Con esto gema y joya comparten divisor (0,41 al objetivo,
+ * 0,71 al equilibrio); lo único que sigue distinguiéndolas es el multiplicador
+ * de remate. Es una regla NUEVA, no una edición de la de julio: editar la vieja
+ * repreciaría retroactivamente todo lo cotizado bajo ella.
+ *
+ * Pendiente de diseño (a propósito fuera de esta regla): el canal exento —
+ * exportación / venta a CI (art. 481 ET) — que hoy el motor no modela.
+ */
+export const CONFIG_PRECIOS_2026_08: ConfigPrecios = {
+  ...CONFIG_PRECIOS_2026_07,
+  vigenteDesde: '2026-08-20',
+  ivaGemaPct: 0.19,
 };
 
 const FECHA_ISO = /^\d{4}-\d{2}-\d{2}$/;
@@ -177,16 +210,24 @@ export function configVigenteEn(
   );
 }
 
-/** Lo que el régimen paga del precio de venta, más allá de la comisión. */
-function impuestosDe(
+/**
+ * Lo que el régimen paga del precio de venta, más allá de la comisión.
+ *
+ * Exportada para que `motorUnidad` y `motorLote` no repitan la expresión: la
+ * asimetría gema/joya vivía copiada en tres lados y corregir el IVA de gema
+ * habría dejado dos copias mintiendo.
+ */
+export function impuestosDe(
   categoria: CategoriaFiscal,
   config: ConfigPrecios,
 ): number {
-  return categoria === 'joya' ? config.ivaJoyaPct : 0;
+  return categoria === 'joya' ? config.ivaJoyaPct : (config.ivaGemaPct ?? 0);
 }
 
 /**
- * `1 − comisión − impuestos − margen deseado` → 0,60 gema · 0,41 joya.
+ * `1 − comisión − impuestos − margen deseado` → 0,41 con IVA · 0,60 sin él
+ * (bajo la regla de julio eso era 0,60 gema · 0,41 joya; desde la de agosto
+ * ambas categorías cargan IVA y comparten el 0,41).
  *
  * Se deriva de la config en vez de escribirse como literal, para que cambiar el
  * margen objetivo no pueda dejar atrás un divisor viejo.
@@ -222,8 +263,8 @@ export interface CalcularKInput {
  * `K` = costo de compra + costos variables + la parte del gasto fijo.
  *
  * OJO: `K` **no es el punto de equilibrio**. Vender en `K` pierde plata, porque
- * la comisión (y el IVA en joyas) salen del precio de venta y no están dentro de
- * `K`. Para el piso de verdad, `pisoReal`.
+ * la comisión (y el IVA que aplique según la config) salen del precio de venta
+ * y no están dentro de `K`. Para el piso de verdad, `pisoReal`.
  *
  * El costo entra tal cual y el motor no tiene forma de re-derivarlo desde el
  * lote: ese es el candado anti-prorrateo de la regla §4.2 (el prorrateo cotizó
@@ -253,7 +294,8 @@ export function calcularK(input: CalcularKInput): number {
 
 /**
  * El piso real de margen cero: lo que hay que cobrar apenas para no perder
- * plata, ya pagando comisión y —en joya— IVA. `gema: K/0,90 · joya: K/0,71`.
+ * plata, ya pagando comisión y el IVA que la config le asigne a la categoría
+ * (`K/0,71` con IVA · `K/0,90` sin él; bajo la regla de julio la gema iba sin).
  *
  * La hoja no calcula este número, y es el que deja ver por qué 60 de 63 lotes
  * quedaron cotizados con ~1% de margen real mientras declaraban 30%.
@@ -346,7 +388,8 @@ export function multiplicadorInformativo(
  * El precio de venta de una pieza, bajo el régimen que gobierne `fecha`.
  *
  * · hasta `config.remateHasta` — `gema K × 1,3` · `joya K × 1,6`
- * · desde el día siguiente   — `gema K / 0,60` · `joya K / 0,41`
+ * · desde el día siguiente   — `K / divisorObjetivo` (0,41 con IVA · 0,60 sin;
+ *   bajo la regla de agosto ambas categorías quedan en 0,41)
  *
  * El remate ancla en `K` con un multiplicador corto para que el asesor tenga UNA
  * cifra defendible que decir de frente, en vez de negociar a la baja desde una

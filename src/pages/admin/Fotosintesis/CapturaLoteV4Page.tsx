@@ -111,7 +111,8 @@ export default function CapturaLoteV4Page() {
   const [error, setError] = useState<string | null>(null);
 
   const providers = useConvexQuery(convexApi.providers.list, {}) as
-    ProviderRow[] | undefined;
+    | ProviderRow[]
+    | undefined;
   const crearLote = useAuthedConvexAction(convexApi.lotsV4.create);
 
   const costosVariablesCOP = useMemo(
@@ -341,9 +342,10 @@ export default function CapturaLoteV4Page() {
           onChange={(next) => setCategoriaFiscal(next as CategoriaFiscal)}
         />
         <Box sx={{ fontSize: 11, color: foto.ink.tertiary, lineHeight: 1.5 }}>
-          Decide el divisor: gema paga comisión (÷0,60), joya paga comisión más
-          IVA (÷0,41). Elegir mal mueve el precio un 46%. «Mixta» es válido — el
-          régimen se resuelve casilla por casilla.
+          Desde ago-2026 gema y joya pagan comisión más IVA (÷0,41 al objetivo):
+          la categoría ya no mueve el precio, pero sí el multiplicador de remate
+          y el reporte fiscal. «Mixta» es válido — el régimen se resuelve
+          casilla por casilla.
         </Box>
       </Box>
 

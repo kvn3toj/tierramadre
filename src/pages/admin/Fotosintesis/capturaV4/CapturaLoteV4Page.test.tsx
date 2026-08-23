@@ -86,9 +86,12 @@ describe('la categoría fiscal es el gate', () => {
     expect(screen.getByTestId('guardar-lote')).toBeTruthy();
   });
 
-  it('explica que elegir mal mueve el precio 46%', () => {
+  it('explica el régimen fiscal vigente: gema y joya pagan IVA (÷0,41)', () => {
+    // Desde la regla de agosto 2026 (ivaGemaPct: 0.19) la categoría ya no
+    // mueve el divisor — el viejo aviso del «46%» describía la asimetría
+    // gema-sin-IVA que la corrección legal del 2026-08-20 eliminó.
     renderPage();
-    expect(screen.getByTestId('paso-categoria').textContent).toContain('46%');
+    expect(screen.getByTestId('paso-categoria').textContent).toContain('÷0,41');
   });
 });
 
