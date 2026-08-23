@@ -18,8 +18,19 @@ import {
   alpha,
   useTheme,
 } from '@mui/material';
-import { Gem, MessageCircle, Play, ShieldCheck, Clock } from 'lucide-react';
+import {
+  Gem,
+  MessageCircle,
+  Play,
+  ShieldCheck,
+  Clock,
+  Plus,
+  Check,
+} from 'lucide-react';
 import { useAsesorCollection } from '../../hooks/useAsesorCollection';
+import { useCart } from '../../hooks/useCart';
+import { isPurchasable } from '../../utils/productOffer';
+import CarritoFlotante from '../../components/checkout/CarritoFlotante';
 import { CollectionProductDialog } from '../ambassadors/profile/components/CollectionProductDialog';
 import CollectionSplashScreen from '../../components/shared/CollectionSplashScreen';
 import { TreasureItem } from '../../types';
@@ -242,13 +253,24 @@ function ProductCard({
   item,
   onClick,
   isLight,
+  onAddToCart,
+  isInCart,
 }: {
   item: TreasureItem;
   onClick: () => void;
   isLight: boolean;
+  onAddToCart?: (item: TreasureItem) => void;
+  isInCart?: boolean;
 }) {
   const isVideo = item.mediaType === 'video';
   const posterSrc = item.posterUrl || item.imagen;
+
+  // Las piezas estáticas de la colección CEO llevan `precioCOP: 0` y sólo
+  // `precioInternacional` en USD: no se pueden cobrar (el servidor las rechaza
+  // con `PRECIO_NO_DISPONIBLE`), así que no muestran botón. Ofrecer uno que va
+  // a fallar es peor que no ofrecerlo.
+  const puedeAgregarse =
+    Boolean(onAddToCart) && item.precioCOP > 0 && isPurchasable(item);
   return (
     <Box
       onClick={onClick}
@@ -318,6 +340,54 @@ function ProductCard({
             }}
           >
             <Gem size={40} style={{ color: brand.emerald[300] }} />
+          </Box>
+        )}
+        {puedeAgregarse && (
+          <Box
+            component="button"
+            type="button"
+            aria-label={
+              isInCart
+                ? `${item.nombre} ya está en tu selección`
+                : `Agregar ${item.nombre} a tu selección`
+            }
+            onClick={(e: React.MouseEvent) => {
+              // La tarjeta entera abre el diálogo de la pieza; sin esto,
+              // agregar al carrito también lo abriría.
+              e.stopPropagation();
+              e.preventDefault();
+              onAddToCart?.(item);
+            }}
+            sx={{
+              position: 'absolute',
+              bottom: 8,
+              // A la IZQUIERDA a propósito: el badge de video vive abajo a la
+              // derecha y se pisarían.
+              left: 8,
+              zIndex: 2,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.5,
+              px: 0.9,
+              height: 28,
+              border: 'none',
+              borderRadius: 999,
+              cursor: 'pointer',
+              font: 'inherit',
+              fontSize: 11.5,
+              fontWeight: 600,
+              color: '#fff',
+              bgcolor: isInCart
+                ? 'rgba(0,0,0,0.6)'
+                : brand.emerald[600],
+              backdropFilter: 'blur(6px)',
+              transition: cssTransition.default,
+              '&:hover': { filter: 'brightness(1.1)' },
+              '&:active': { transform: 'scale(0.95)' },
+            }}
+          >
+            {isInCart ? <Check size={13} /> : <Plus size={13} />}
+            {isInCart ? 'Agregada' : 'Agregar'}
           </Box>
         )}
         {isVideo && (
@@ -504,6 +574,12 @@ export default function CollectionPage() {
 
   // CEO collection uses static data; others use API
   const products = isCeoCollection ? CEO_STATIC_PRODUCTS : apiProducts;
+
+  // Dueño ÚNICO del carrito en esta superficie: `useCart` no es un contexto,
+  // así que las tarjetas y el indicador flotante comparten esta instancia. Si
+  // el indicador llamara a `useCart()` por su cuenta, su contador se quedaría
+  // en 0 mientras el cliente agrega piezas.
+  const { addToCart, isInCart, cartCount } = useCart();
 
   // URL-driven product selection: resolve itemId param to a product
   const selectedProduct = useMemo(() => {
@@ -705,6 +781,8 @@ export default function CollectionPage() {
                   item={item}
                   onClick={() => handleProductClick(item)}
                   isLight={isLight}
+                  onAddToCart={addToCart}
+                  isInCart={isInCart(item.item)}
                 />
               </Grid>
             ))}
@@ -756,6 +834,7 @@ export default function CollectionPage() {
         showUSD
         onShare={handleProductShare}
       />
+      <CarritoFlotante count={cartCount} />
     </Box>
   );
 }

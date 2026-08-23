@@ -38,6 +38,9 @@ import { useTRM } from '../../hooks/useTRM';
 import { useConvexQuery, convexApi, convexReady } from '../../lib/convex-safe';
 import { TreasureItem } from '../../types';
 import GridCard from '../../components/treasure/GridCard';
+import { useCart } from '../../hooks/useCart';
+import CarritoFlotante from '../../components/checkout/CarritoFlotante';
+import { guardarOrigenVitrina } from '../../utils/origenCheckout';
 import { PublicProductView } from './PublicProductView';
 import {
   VitrinaPricing,
@@ -224,6 +227,25 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
       ? { multiplier: tokenDoc.multiplier, currency: tokenDoc.currency }
       : DEFAULT_VITRINA_PRICING;
 
+  // El dueño ÚNICO del carrito en esta superficie. `useCart` no es un
+  // contexto: dos instancias no se enteran de los cambios de la otra, así que
+  // la grilla, la vista de pieza y el indicador flotante comparten ésta.
+  const { addToCart, isInCart, cartCount } = useCart();
+
+  // El origen de la compra, para que el carrito cobre el precio que esta
+  // persona vio. Se guarda SÓLO cuando el `:code` resolvió a un registro real
+  // de `vitrinas` — la misma condición que produce el prop `vitrinaToken` de
+  // `PublicProductView`. Una lista de ids (`/v/324-323-370`) no tiene registro
+  // ni markup elegido, y su carrito debe cobrar el precio base.
+  //
+  // El multiplicador viaja sólo para MOSTRAR el mismo número que el servidor
+  // va a cobrar; el servidor lo re-resuelve desde el registro y jamás confía
+  // en éste (ver `resolverMultiplicador`).
+  useEffect(() => {
+    if (isIdList || !tokenDoc) return;
+    guardarOrigenVitrina(code, tokenDoc.multiplier);
+  }, [isIdList, tokenDoc, code]);
+
   const senderPhoneRaw = useSenderPhone(
     !isIdList && tokenDoc ? tokenDoc.senderSlug : undefined,
   );
@@ -301,7 +323,10 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
           contactId={contactId}
           onBack={onBack}
           vitrinaToken={isIdList ? undefined : code}
+          onAddToCart={addToCart}
+          isInCart={isInCart(selected.item)}
         />
+        <CarritoFlotante count={cartCount} />
       </VitrinaShell>
     );
   }
@@ -371,6 +396,8 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
                   formatVitrinaPrice(item.precioCOP, pricing, trmRate) || null
                 }
                 isMobile={isMobile}
+                onAddToCart={addToCart}
+                isInCart={isInCart(item.item)}
                 onItemClick={() =>
                   navigate(`/v/${code}/${item.item}${location.search}`)
                 }
@@ -379,6 +406,7 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
           ))}
         </Box>
       </Box>
+      <CarritoFlotante count={cartCount} />
     </VitrinaShell>
   );
 }

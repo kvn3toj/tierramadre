@@ -16,7 +16,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import type { ResaleOffer } from '../../utils/productOffer';
+import { isPurchasable, type ResaleOffer } from '../../utils/productOffer';
 import ResaleBadge from '../../components/treasure/ResaleBadge';
 import {
   Box,
@@ -29,7 +29,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import { ArrowLeft, CreditCard, MessageCircle } from 'lucide-react';
+import { ArrowLeft, CreditCard, MessageCircle, Plus, Check } from 'lucide-react';
 import MediaGallery from '../../components/media/MediaGallery';
 import { MediaItem } from '../../components/media/types';
 import { TreasureItem } from '../../types';
@@ -92,6 +92,14 @@ interface PublicProductViewProps {
    * places can't drift.
    */
   vitrinaToken?: string;
+  /**
+   * Agrega la pieza al carrito. Opcional: sin esto la vista se comporta como
+   * siempre. Lo pasa `VitrinaContent`, que es el dueño único del `useCart()`
+   * de esta superficie — ver la nota de `CarritoFlotante`.
+   */
+  onAddToCart?: (item: TreasureItem) => void;
+  /** Si esta pieza ya está en el carrito. */
+  isInCart?: boolean;
 }
 
 export function PublicProductView({
@@ -102,6 +110,8 @@ export function PublicProductView({
   onBack,
   resale,
   vitrinaToken,
+  onAddToCart,
+  isInCart,
 }: PublicProductViewProps) {
   const { mode } = useThemeMode();
   const qe = getQuietEmerald(mode);
@@ -415,6 +425,42 @@ export function PublicProductView({
     </Button>
   ) : null;
 
+  // "Agregar" existe donde la pieza se puede cobrar, tenga o no vitrina: es
+  // el camino del catálogo público, donde el carrito cobra el precio base.
+  // `isPurchasable` en vez de comparar `estado` a mano — un `estado` ausente
+  // significa desconocido, no vendido (ver `productOffer.ts`).
+  const puedeAgregarse =
+    Boolean(onAddToCart) &&
+    priceLabel !== '' &&
+    product.precioCOP > 0 &&
+    isPurchasable(product, resale);
+
+  const agregarButton = puedeAgregarse ? (
+    <Button
+      fullWidth
+      variant={isInCart ? 'text' : 'outlined'}
+      disabled={isInCart}
+      startIcon={isInCart ? <Check size={18} /> : <Plus size={18} />}
+      onClick={() => onAddToCart?.(product)}
+      sx={{
+        borderColor: alpha(qe.accent, 0.45),
+        color: isInCart ? qe.subtle : qe.accent,
+        textTransform: 'none',
+        py: 1.1,
+        fontWeight: 600,
+        fontSize: '0.9rem',
+        borderRadius: '10px',
+        '&.Mui-disabled': { color: qe.subtle },
+        '&:hover': {
+          borderColor: qe.accentStrong,
+          bgcolor: alpha(qe.accent, 0.06),
+        },
+      }}
+    >
+      {isInCart ? 'En tu selección' : 'Agregar a mi selección'}
+    </Button>
+  ) : null;
+
   const consultTagline = (
     <Typography
       sx={{
@@ -431,9 +477,23 @@ export function PublicProductView({
 
   // Both CTAs side by side when "Pagar" is available; WhatsApp alone (as
   // before) when it isn't.
+  // Tres afordancias como máximo, y nunca tres en la misma fila:
+  //  · con vitrina → [Pagar | Consultar] y "Agregar" debajo, secundario:
+  //    quien llegó por una vitrina puede cerrar esa pieza sin pasar por el
+  //    carrito, que es el flujo que ya existía y funciona.
+  //  · sin vitrina → [Agregar | Consultar]: acá el carrito ES el camino al
+  //    pago, así que "Agregar" sube a primario.
   const ctaButtons = pagarButton ? (
+    <>
+      <Box sx={{ display: 'flex', gap: 1.25 }}>
+        <Box sx={{ flex: 1 }}>{pagarButton}</Box>
+        <Box sx={{ flex: 1 }}>{consultButton}</Box>
+      </Box>
+      {agregarButton ? <Box sx={{ mt: 1 }}>{agregarButton}</Box> : null}
+    </>
+  ) : agregarButton ? (
     <Box sx={{ display: 'flex', gap: 1.25 }}>
-      <Box sx={{ flex: 1 }}>{pagarButton}</Box>
+      <Box sx={{ flex: 1 }}>{agregarButton}</Box>
       <Box sx={{ flex: 1 }}>{consultButton}</Box>
     </Box>
   ) : (

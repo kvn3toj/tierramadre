@@ -1118,6 +1118,24 @@ function AuthenticatedApp() {
             </Suspense>
           }
         />
+        {/* El carrito del visitante anónimo. La MISMA CartPage que usa el
+            staff — la de arriba, dentro del shell — no una copia: el carrito
+            vive en `sessionStorage` (`useCart`) y no toca AuthContext, y sin
+            sesión `AuthContext` ya devuelve `accessLevel: 'guest'`, que es
+            justo la audiencia que ve "Pagar". Duplicar la pantalla sería
+            garantizar que las dos se desincronicen.
+
+            Va acá y no en el bloque público de InvitationRouter a propósito:
+            una ruta pública allá GANARÍA sobre la autenticada y le sacaría el
+            shell de la app al staff en su propio carrito. */}
+        <Route
+          path="/cart"
+          element={
+            <Suspense fallback={<LocalizedLoading messageKey="selection" />}>
+              <CartPage />
+            </Suspense>
+          }
+        />
         <Route path="*" element={<WelcomeScreen />} />
       </Routes>
     );
@@ -1152,6 +1170,7 @@ function shouldShowSplash(): boolean {
     path.startsWith('/p/') ||
     path.startsWith('/invite/') ||
     path.startsWith('/g/') ||
+    path === '/cart' ||
     path.startsWith('/pedido-confirmado/')
   ) {
     return false;

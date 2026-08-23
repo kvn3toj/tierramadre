@@ -48,7 +48,8 @@ import { fontWeights } from '../design-system';
 import CheckoutSheet, {
   CheckoutPieza,
 } from '../components/checkout/CheckoutSheet';
-import { INVITATION_STORAGE_KEYS } from '../types/invitation';
+import { hayPiezaSinPrecio } from '../components/checkout/checkoutGuards';
+import { leerOrigen } from '../utils/origenCheckout';
 
 export default function CartPage() {
   const { t } = useLanguage();
@@ -83,22 +84,13 @@ export default function CartPage() {
 
   const totals = getCartTotal();
 
-  // "Pagar" only for a guest whose session carries an invitation — that's
-  // the server-provable record of which price they were shown. A guest
-  // without one (or staff, who aren't the buyer — their multiplier is only
-  // ever in localStorage, with no server record) keeps WhatsApp only. Also
-  // gated on `canSeePrices`: a `no_prices` guest was never shown a figure,
-  // and CheckoutSheet's whole UI is built around showing one.
-  let invitationToken: string | null = null;
-  if (isGuest) {
-    try {
-      invitationToken = sessionStorage.getItem(INVITATION_STORAGE_KEYS.TOKEN);
-    } catch {
-      invitationToken = null;
-    }
-  }
-  const canPagar =
-    isGuest && canSeePrices && Boolean(invitationToken) && cartCount > 0;
+  // De dónde viene esta compra. `undefined` es legítimo y frecuente: el
+  // visitante anónimo del catálogo público no tiene vitrina ni invitación, y
+  // el servidor le cobra el precio base (x1), dejando `precioBaseCOP` y
+  // `multiplicador` en la venta para poder auditarla. Ver `origenCheckout.ts`
+  // para la precedencia (invitación > vitrina) y por qué un origen inválido
+  // se manda igual en vez de "limpiarse".
+  const origen = useMemo(() => leerOrigen(), []);
 
   const piezas: CheckoutPieza[] = useMemo(
     () =>
@@ -110,6 +102,32 @@ export default function CartPage() {
       })),
     [cartItems, formatCurrency],
   );
+
+  // Quién ve "Pagar": el comprador, y nadie más. `isGuest` cubre tanto al
+  // anónimo (AuthContext devuelve `accessLevel: 'guest'` sin sesión) como al
+  // invitado con invitación. Quedan fuera staff, embajador, asesor,
+  // invitado_especial y provider: no son el comprador y ya cierran por
+  // WhatsApp o por el mostrador.
+  //
+  // `canSeePrices` sigue en la condición: a un invitado `no_prices` nunca se
+  // le mostró una cifra, y toda la UI del CheckoutSheet gira alrededor de
+  // mostrar una.
+  const canPagar =
+    isGuest && canSeePrices && cartCount > 0 && !hayPiezaSinPrecio(piezas);
+
+  // Sólo para mostrar — el servidor re-resuelve el multiplicador desde el
+  // registro y nunca confía en éste (ver la nota de seguridad en el header
+  // de `CheckoutSheet.tsx`).
+  //  · vitrina    → el que quedó guardado al resolver la vitrina
+  //  · invitación → `CurrencyContext`, que ya lo sincroniza en vivo desde
+  //                 Convex cuando el asesor cambia `guestMultiplier`
+  //  · sin origen → 1, que es exactamente lo que va a cobrar el servidor
+  const multiplicadorMostrado =
+    origen?.tipo === 'vitrina'
+      ? (origen.multiplicador ?? 1)
+      : origen?.tipo === 'invitacion'
+        ? multiplier
+        : 1;
 
   const handleSendInquiry = async () => {
     setSendError(null);
@@ -489,15 +507,13 @@ export default function CartPage() {
       />
 
       {/* Guest checkout — only mounted when the invitation token resolved */}
-      {invitationToken && (
-        <CheckoutSheet
-          open={checkoutOpen}
-          piezas={piezas}
-          multiplicador={multiplier}
-          origen={{ tipo: 'invitacion', token: invitationToken }}
-          onClose={() => setCheckoutOpen(false)}
-        />
-      )}
+      <CheckoutSheet
+        open={checkoutOpen}
+        piezas={piezas}
+        multiplicador={multiplicadorMostrado}
+        origen={origen}
+        onClose={() => setCheckoutOpen(false)}
+      />
     </Box>
   );
 }

@@ -138,13 +138,27 @@ describe('parseCheckoutBody', () => {
       });
   });
 
-  it('acepta la ausencia de origen — es el riel del bot', () => {
+  it('acepta la ausencia de origen — el riel del bot y el catálogo público', () => {
     const r = parseCheckoutBody({
       contact: { celular: '3001234567' },
       items: [{ sku: 'C-090', qty: 1 }],
     });
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.value.origen).toBeUndefined();
+  });
+
+  it('rechaza `origen: null` — por eso el cliente OMITE la clave en vez de mandarla vacía', () => {
+    // `CheckoutSheet` construye el cuerpo con `...(origen ? { origen } : {})`
+    // justamente por esto. Si algún día alguien lo "simplificara" a
+    // `origen: origen ?? null`, el catálogo público entero empezaría a
+    // devolver 400 — este test es el que lo atrapa.
+    const r = parseCheckoutBody({
+      contact: { celular: '3001234567' },
+      items: [{ sku: 'C-090', qty: 1 }],
+      origen: null,
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.status).toBe(400);
   });
 
   it('rechaza un tipo de origen desconocido', () => {

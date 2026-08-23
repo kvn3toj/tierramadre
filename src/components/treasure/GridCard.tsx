@@ -14,7 +14,7 @@
  */
 import React, { useCallback } from 'react';
 import { Box, Typography, Chip, Skeleton } from '@mui/material';
-import { Images, Eye } from 'lucide-react';
+import { Images, Eye, Plus, Check } from 'lucide-react';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { usePriceShare } from '../../contexts/PriceShareContext';
 import { useRedesignVariant } from '../../hooks/useRedesignVariant';
@@ -25,6 +25,7 @@ import { EmeraldCutIcon } from './EmeraldCutIcon';
 import PrecioEspecialBadge from './PrecioEspecialBadge';
 import ResaleBadge from './ResaleBadge';
 import { useResaleOffers } from '../../hooks/useResaleOffers';
+import { isPurchasable } from '../../utils/productOffer';
 import { PriceDisplay } from '../price-simulator/PriceDisplay';
 import ProgressiveImage from '../shared/ProgressiveImage';
 import { getQuietEmerald, PieceCard } from '../../design-system';
@@ -60,6 +61,15 @@ interface GridCardProps {
    * to show the per-share price (precioCOP × chosen multiplier).
    */
   priceOverride?: string | null;
+  /**
+   * Agrega la pieza al carrito. **Opcional a propósito**: sin este prop la
+   * tarjeta se renderiza exactamente como siempre, sin ningún botón — así el
+   * catálogo autenticado y los perfiles de embajador no cambian. Sólo lo pasan
+   * las superficies públicas de venta.
+   */
+  onAddToCart?: (item: TreasureItem) => void;
+  /** Si la pieza ya está en el carrito (cambia el rótulo del botón). */
+  isInCart?: boolean;
 }
 
 /** Builds the DM Mono spec line: abbreviated quality + weight/metal + mine
@@ -117,6 +127,8 @@ function GridCard({
   isAdmin,
   variantOverride,
   priceOverride,
+  onAddToCart,
+  isInCart,
 }: GridCardProps) {
   const { mode } = useThemeMode();
   const { shouldShowPrices } = usePriceShare();
@@ -365,6 +377,68 @@ function GridCard({
     </>
   ) : null;
 
+  // ---- "Agregar" (sólo superficies públicas de venta) ---------------------
+  // Se reusa `isPurchasable` en vez de comparar `estado === 'DISPONIBLE'` a
+  // mano: ese helper existe justamente porque cinco lugares hacían esa
+  // comparación por su cuenta, y porque un `estado` AUSENTE significa
+  // «desconocido», no «no disponible» — las filas de un invitado no traen ese
+  // campo, así que compararlo acá escondería el botón a todo el público, que
+  // es exactamente a quien está dirigido.
+  //
+  // El precio > 0 es condición aparte: una pieza «Consultar precio» no se
+  // puede cobrar (el servidor la rechaza con `PRECIO_NO_DISPONIBLE` y
+  // `hayPiezaSinPrecio` bloquea la hoja entera). Ofrecer un botón que va a
+  // fallar es peor que no ofrecerlo.
+  const esVendible = item.precioCOP > 0 && isPurchasable(item, resale);
+  const addButton =
+    onAddToCart && esVendible ? (
+      <Box
+        component="button"
+        type="button"
+        aria-label={
+          isInCart ? `${displayName} ya está en tu selección` : `Agregar ${displayName} a tu selección`
+        }
+        onClick={(e: React.MouseEvent) => {
+          // La tarjeta entera es clickeable (navega a la pieza). Sin esto,
+          // agregar al carrito también navegaría.
+          e.stopPropagation();
+          e.preventDefault();
+          onAddToCart(item);
+        }}
+        sx={{
+          position: 'absolute',
+          right: 6,
+          bottom: 6,
+          zIndex: 2,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 0.5,
+          px: isInCart ? 0.75 : 0.85,
+          height: 26,
+          border: 'none',
+          borderRadius: 999,
+          cursor: 'pointer',
+          font: 'inherit',
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: '0.01em',
+          color: isInCart ? 'rgba(255,255,255,0.86)' : '#fff',
+          bgcolor: isInCart ? 'rgba(0,0,0,0.52)' : 'var(--tm-accent)',
+          backdropFilter: 'blur(6px)',
+          transition: 'transform 120ms ease, filter 120ms ease',
+          '&:hover': { filter: 'brightness(1.08)' },
+          '&:active': { transform: 'scale(0.96)' },
+          '&:focus-visible': {
+            outline: '2px solid var(--tm-accent)',
+            outlineOffset: 2,
+          },
+        }}
+      >
+        {isInCart ? <Check size={13} /> : <Plus size={13} />}
+        {isInCart ? 'Agregada' : 'Agregar'}
+      </Box>
+    ) : null;
+
   // ---- Price (shared) -----------------------------------------------------
   const priceEl =
     priceOverride !== undefined ? (
@@ -395,7 +469,12 @@ function GridCard({
     <PieceCard
       variant={isLiteral ? 'frameless' : 'well'}
       media={imageWell}
-      overlays={isLiteral ? precioEspecialOverlay : overlays}
+      overlays={
+        <>
+          {isLiteral ? precioEspecialOverlay : overlays}
+          {addButton}
+        </>
+      }
       name={displayName}
       specLine={isLiteral ? specLine : ''}
       grade={isLiteral ? undefined : gradeNode}
@@ -437,6 +516,11 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.viewCount === nextProps.viewCount &&
     prevProps.isAdmin === nextProps.isAdmin &&
     prevProps.variantOverride === nextProps.variantOverride &&
-    prevProps.priceOverride === nextProps.priceOverride
+    prevProps.priceOverride === nextProps.priceOverride &&
+    prevProps.isInCart === nextProps.isInCart &&
+    // A diferencia del resto de callbacks, la PRESENCIA de ésta decide si la
+    // tarjeta muestra un botón. Se compara si existe, no su identidad, para
+    // no perder memoización con un wrapper inestable.
+    Boolean(prevProps.onAddToCart) === Boolean(nextProps.onAddToCart)
   );
 });

@@ -72,16 +72,29 @@ interface CheckoutSheetProps {
   piezas: CheckoutPieza[];
   /** El multiplicador de la vitrina/invitación de origen (x1–x4). Sólo para
    * mostrar el mismo número que el servidor va a cobrar — ver la nota de
-   * seguridad en el header de este archivo. */
-  multiplicador: number;
-  origen: CheckoutOrigen;
+   * seguridad en el header de este archivo. Por defecto 1, que es lo que
+   * cobra el servidor cuando no hay origen. */
+  multiplicador?: number;
+  /**
+   * De qué registro viene la compra. **Opcional a propósito**: el catálogo
+   * público no tiene vitrina ni invitación, y sin origen el servidor cobra
+   * el precio base (`MULTIPLICADOR_POR_DEFECTO = 1` en
+   * `convex/_lib/precioVitrina.ts`), dejando `precioBaseCOP` y
+   * `multiplicador: 1` en la venta para poder auditarla después.
+   *
+   * Ausente y ausente-pero-inválido NO son lo mismo: un token que no
+   * resuelve hace que el servidor RECHACE la orden con `ORIGEN_INVALIDO`,
+   * nunca que la cobre a x1. Por eso nunca hay que "limpiar" un origen roto
+   * antes de mandarlo — eso convertiría un error en un descuento.
+   */
+  origen?: CheckoutOrigen;
   onClose: () => void;
 }
 
 export default function CheckoutSheet({
   open,
   piezas,
-  multiplicador,
+  multiplicador = 1,
   origen,
   onClose,
 }: CheckoutSheetProps) {
@@ -143,7 +156,12 @@ export default function CheckoutSheet({
         body: JSON.stringify({
           contact,
           items: piezas.map((p) => ({ sku: p.sku, qty: 1 })),
-          origen,
+          // La clave se OMITE cuando no hay origen; nunca viaja como `null`.
+          // `parseCheckoutBody` rechaza un `origen` que no sea objeto con un
+          // 400, así que mandar null rompería el catálogo público entero —
+          // la misma trampa que ya está documentada arriba para
+          // `full_name`/`email`.
+          ...(origen ? { origen } : {}),
         }),
       });
       const body = await res.json().catch(() => null);
