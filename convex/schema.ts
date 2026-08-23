@@ -107,6 +107,16 @@ export default defineSchema({
     multiplier: v.float64(),
     senderSlug: v.optional(v.string()),
     createdAt: v.string(),
+    /**
+     * Vencimiento explícito, ISO. **Opcional a propósito**: cuando falta, el
+     * vencimiento se deriva de `createdAt + VITRINA_TTL_MS`
+     * (`convex/_lib/vencimientoVitrina.ts`). Eso es lo que hace que las
+     * vitrinas YA acuñadas venzan sin migrar una sola fila, y que el reloj
+     * corra desde que se compartió el link y no desde que se desplegó la
+     * regla. Existe para que algún día se pueda elegir la duración al
+     * compartir.
+     */
+    expiraEn: v.optional(v.string()),
     // Verified Google email of the staff member who minted the link (audit).
     // Set by the /api/vitrina proxy after it verifies the caller's Google token.
     createdByEmail: v.optional(v.string()),

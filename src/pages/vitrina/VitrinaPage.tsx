@@ -40,7 +40,11 @@ import { TreasureItem } from '../../types';
 import GridCard from '../../components/treasure/GridCard';
 import { useCart } from '../../hooks/useCart';
 import CarritoFlotante from '../../components/checkout/CarritoFlotante';
-import { guardarOrigenVitrina } from '../../utils/origenCheckout';
+import {
+  guardarOrigenVitrina,
+  limpiarOrigen,
+} from '../../utils/origenCheckout';
+import { enlaceCotizacionVencida } from '../../components/vitrina/mensajeCotizacionVencida';
 import { PublicProductView } from './PublicProductView';
 import {
   VitrinaPricing,
@@ -155,6 +159,135 @@ function LoadingState() {
   );
 }
 
+/**
+ * Cotización vencida — el link sigue vivo, el precio no.
+ *
+ * Una vitrina ES una cotización, y una cotización vence. Pero un link vencido
+ * que devuelve 404 pierde al cliente justo cuando volvió por su cuenta, que es
+ * el momento más barato de recuperarlo. Así que muestra QUÉ estaba mirando y
+ * ofrece pedirla de nuevo.
+ *
+ * **Sin precios.** El registro vencido ya no los entrega (`getByToken` los
+ * omite y el grant del catálogo cae a `anon`), y aunque los entregara no
+ * habría que mostrarlos: obligaría a honrar un precio que ya no queremos, o a
+ * explicarlo antes de saludar.
+ */
+function VencidaState({
+  productos,
+  telefono,
+}: {
+  productos: TreasureItem[];
+  telefono: string;
+}) {
+  const href = enlaceCotizacionVencida(
+    telefono,
+    productos.map((p) => ({ item: p.item, nombre: p.nombre })),
+  );
+  return (
+    <VitrinaShell>
+      <Box
+        sx={{
+          minHeight: '100dvh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          px: 3,
+          py: 6,
+          textAlign: 'center',
+        }}
+      >
+        <Gem size={44} style={{ color: brand.emerald[300], marginBottom: 14 }} />
+        <Typography variant="h6" sx={{ mb: 0.5 }}>
+          Esta cotización ya venció
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{ color: 'text.secondary', maxWidth: 420, mb: 3 }}
+        >
+          Los precios de nuestras piezas cambian. Pedinos una cotización
+          actualizada y te respondemos con los valores de hoy.
+        </Typography>
+
+        {productos.length > 0 && (
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 1.5,
+              justifyContent: 'center',
+              maxWidth: 560,
+              mb: 3.5,
+            }}
+          >
+            {productos.map((p) => (
+              <Box key={p.item} sx={{ width: 92, textAlign: 'center' }}>
+                <Box
+                  sx={{
+                    width: 92,
+                    height: 92,
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    bgcolor: 'rgba(255,255,255,0.04)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {p.imagen ? (
+                    <Box
+                      component="img"
+                      src={p.imagen}
+                      alt={p.nombre}
+                      loading="lazy"
+                      sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <Gem size={22} style={{ color: brand.emerald[300] }} />
+                  )}
+                </Box>
+                <Typography
+                  sx={{
+                    mt: 0.75,
+                    fontSize: 11.5,
+                    color: 'text.secondary',
+                    lineHeight: 1.25,
+                  }}
+                >
+                  {p.nombre}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        )}
+
+        <Box
+          component="a"
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 1,
+            px: 2.5,
+            height: 46,
+            borderRadius: 999,
+            textDecoration: 'none',
+            fontWeight: 700,
+            fontSize: 15,
+            color: '#0b0f0d',
+            bgcolor: brand.emerald[300],
+            '&:hover': { filter: 'brightness(1.06)' },
+          }}
+        >
+          Pedir cotización actualizada
+        </Box>
+      </Box>
+    </VitrinaShell>
+  );
+}
+
 function NotFoundState() {
   return (
     <VitrinaShell>
@@ -209,9 +342,17 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
   ) as
     | {
         itemIds: number[];
-        currency: 'COP' | 'USD';
-        multiplier: number;
         senderSlug?: string;
+        /** `true` cuando pasó su TTL — ver `convex/_lib/vencimientoVitrina.ts`. */
+        vencida?: boolean;
+        /**
+         * Precio: **ausentes cuando la vitrina venció.** `getByToken` los
+         * omite a propósito, así que son opcionales acá y el código que los
+         * usa tiene que tolerar su ausencia — es lo que impide mostrar por
+         * accidente un precio que ya no honramos.
+         */
+        currency?: 'COP' | 'USD';
+        multiplier?: number;
       }
     | null
     | undefined;
@@ -222,9 +363,16 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
     return tokenDoc ? tokenDoc.itemIds.map(Number) : [];
   }, [isIdList, code, tokenDoc]);
 
+  // Una vitrina VENCIDA no trae `multiplier` ni `currency` — `getByToken` los
+  // omite. Cae al default (x1, COP), que es exactamente lo que significa «no
+  // hay markup elegido». No es una precaución de tipos: es la razón por la que
+  // la pantalla de vencida no puede mostrar el precio viejo ni por accidente.
   const pricing: VitrinaPricing =
-    !isIdList && tokenDoc
-      ? { multiplier: tokenDoc.multiplier, currency: tokenDoc.currency }
+    !isIdList && tokenDoc && tokenDoc.multiplier !== undefined
+      ? {
+          multiplier: tokenDoc.multiplier,
+          currency: tokenDoc.currency ?? 'COP',
+        }
       : DEFAULT_VITRINA_PRICING;
 
   // El dueño ÚNICO del carrito en esta superficie. `useCart` no es un
@@ -243,6 +391,15 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
   // en éste (ver `resolverMultiplicador`).
   useEffect(() => {
     if (isIdList || !tokenDoc) return;
+    // Una vitrina VENCIDA no deja origen. Si lo dejara, el carrito lo mandaría
+    // y el servidor rechazaría la orden con `ORIGEN_INVALIDO` — que es la
+    // respuesta correcta del servidor, pero deja al cliente sin poder comprar
+    // nada en toda la sesión por haber abierto un link viejo. Se limpia, y
+    // compra al precio público como cualquiera.
+    if (tokenDoc.vencida) {
+      limpiarOrigen();
+      return;
+    }
     guardarOrigenVitrina(code, tokenDoc.multiplier);
   }, [isIdList, tokenDoc, code]);
 
@@ -297,6 +454,12 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
   if (!isIdList && tokenDoc === undefined) return <LoadingState />;
   if (!isIdList && tokenDoc === null) return <NotFoundState />;
   if (isLoadingSheets && products.length === 0) return <LoadingState />;
+  // Vencida: se espera al catálogo para poder MOSTRAR las piezas. Sin ellas la
+  // pantalla no cumple su función —que el cliente reconozca qué estaba
+  // mirando— y sería un 404 con mejor copy.
+  if (!isIdList && tokenDoc?.vencida) {
+    return <VencidaState productos={products} telefono={senderPhoneRaw || HOUSE_WHATSAPP} />;
+  }
   if (products.length === 0) return <NotFoundState />;
 
   const selected = itemId

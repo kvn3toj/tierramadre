@@ -13,6 +13,7 @@
 
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { estaVencida, venceEn } from "./_lib/vencimientoVitrina";
 
 // Unambiguous alphabet (no I/O/0/1), matching api/_lib generateShortCode.
 const TOKEN_LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -96,13 +97,52 @@ export const create = mutation({
   },
 });
 
+/**
+ * Resuelve un token de vitrina, diciendo además si ya venció.
+ *
+ * **Devuelve el registro aunque esté vencido.** Borrarlo de la respuesta
+ * convertiría el link vencido en el 404 que la pantalla de «cotización
+ * vencida» existe para evitar: sin `itemIds` no hay con qué armar el mensaje
+ * que pide cotización nueva, y el cliente queda sin saber qué estaba mirando.
+ *
+ * Pero cuando está vencida **no devuelve el precio** — `multiplier` y
+ * `currency` quedan fuera de la respuesta. Mostrar el precio viejo obliga a
+ * una de dos cosas malas: honrarlo, o explicarle al cliente por qué no.
+ *
+ * Ojo: esta query es una de TRES vías por las que una vitrina entrega precio.
+ * Las otras dos son el grant del catálogo (`api/_lib/vitrinaLookup.ts`, que
+ * desbloquea `precioCOP` en la proyección) y `ghl.createOrder` (que cobra).
+ * Las tres consultan `estaVencida`; si alguna se olvidara, un link vencido
+ * seguiría vendiendo por esa puerta.
+ */
 export const getByToken = query({
   args: { token: v.string() },
-  handler: async (ctx, { token }) =>
-    await ctx.db
+  handler: async (ctx, { token }) => {
+    const doc = await ctx.db
       .query("vitrinas")
       .withIndex("by_token", (q) => q.eq("token", token.toUpperCase()))
-      .first(),
+      .first();
+    if (!doc) return null;
+
+    const vencida = estaVencida(doc, Date.now());
+    const base = {
+      _id: doc._id,
+      token: doc.token,
+      itemIds: doc.itemIds,
+      senderSlug: doc.senderSlug,
+      createdAt: doc.createdAt,
+      // Va en las DOS ramas: no es precio, es el dueño. `api/vitrina.ts` lo
+      // usa para impedir que alguien repricie la vitrina de otro, y esa
+      // comprobación tiene que seguir funcionando sobre una vitrina vencida
+      // (si no, vencer un link abriría el agujero que ese chequeo cerró).
+      createdByEmail: doc.createdByEmail,
+      vencida,
+      venceEn: venceEn(doc),
+    };
+    return vencida
+      ? base
+      : { ...base, multiplier: doc.multiplier, currency: doc.currency };
+  },
 });
 
 /**

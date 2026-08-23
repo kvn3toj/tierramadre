@@ -44,6 +44,7 @@ import {
   reservedItemIds,
   findReusableSale,
 } from './_lib/reservas';
+import { estaVencida } from './_lib/vencimientoVitrina';
 import {
   resolverMultiplicador,
   precioConMarkup,
@@ -335,7 +336,15 @@ export const createOrder = mutation({
           q.eq('token', args.origen!.token.toUpperCase()),
         )
         .first();
-      registroOrigen = v0 ? { multiplicador: v0.multiplier } : null;
+      // Una vitrina vencida NO cobra. Se resuelve a `null`, que
+      // `resolverMultiplicador` convierte en `ORIGEN_INVALIDO` — la orden se
+      // RECHAZA, nunca cae al precio base. Cobrar a x1 un link vencido sería
+      // regalar el markup justamente en el caso que este vencimiento existe
+      // para cerrar.
+      registroOrigen =
+        v0 && !estaVencida(v0, Date.now())
+          ? { multiplicador: v0.multiplier }
+          : null;
     } else if (args.origen?.tipo === 'invitacion') {
       // La clave que el invitado guarda como TOKEN contiene el shortCode
       // (InvitationPage.tsx). `invitations` NO tiene índice por boundToken,
