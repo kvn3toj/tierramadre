@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { aplicarFiltroPublicado } from '../api/_lib/catalogoPublicado.js';
 import type { TreasureItem } from '../src/types/index.ts';
 
-const item = (n: number, nombre: string): TreasureItem =>
-  ({ item: n, nombre }) as TreasureItem;
+const item = (n: number, nombre: string, itemId?: string): TreasureItem =>
+  ({ item: n, itemId: itemId ?? String(n), nombre }) as TreasureItem;
 
 describe('aplicarFiltroPublicado', () => {
   it('saca los ítems que Convex no tiene publicados', () => {
@@ -25,6 +25,25 @@ describe('aplicarFiltroPublicado', () => {
       new Set(['1']),
     );
     expect(visible).toHaveLength(1);
+  });
+
+  it('distingue 93A de 93B aunque parseInt los aplaste a 93', () => {
+    // El padre #93 está retirado y NO publicado; las dos hijas sí lo están.
+    // Comparar por `item` (parseInt) daría "93" para las tres y borraría a
+    // Romeo y a Julieta del catálogo. Ver Anima →
+    // decisions/2026-07-31-romeo-julieta-93a-93b-venta-conjunta-o-individual.
+    const items = [
+      item(93, 'Dos Luciérnagas', '93'),
+      item(93, 'Romeo', '93A'),
+      item(93, 'Julieta', '93B'),
+    ];
+    const visible = aplicarFiltroPublicado(items, new Set(['93A', '93B']));
+    expect(visible.map((i) => i.nombre)).toEqual(['Romeo', 'Julieta']);
+  });
+
+  it('cae a `item` cuando la fila no trae itemId', () => {
+    const sinId = { item: 542, nombre: 'Caja de Sueños' } as TreasureItem;
+    expect(aplicarFiltroPublicado([sinId], new Set(['542']))).toHaveLength(1);
   });
 
   it('no filtra nada si el conjunto viene vacío', () => {

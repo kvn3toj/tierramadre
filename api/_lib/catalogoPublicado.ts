@@ -38,7 +38,13 @@ export function aplicarFiltroPublicado(
   // catálogo vivo, así que un cero es una falla de lectura, no un catálogo
   // vacío — y vaciar la vitrina por eso sería peor que servirla de más.
   if (publicados.size === 0) return items;
-  return items.filter((item) => publicados.has(String(item.item)));
+  // Por `itemId` (la celda cruda), NUNCA por `item`: éste es un parseInt y
+  // "93A" y "93B" colapsan los dos en 93. Como el padre #93 está retirado y no
+  // publicado, comparar por número habría sacado del catálogo a Romeo y a
+  // Julieta, que sí lo están. El fallback cubre filas viejas sin `itemId`.
+  return items.filter((item) =>
+    publicados.has(item.itemId || String(item.item)),
+  );
 }
 
 /**

@@ -301,6 +301,27 @@ export interface PrecioEspecial {
 }
 
 export interface TreasureItem {
+  /**
+   * El itemId TAL CUAL está en la columna A — texto, no número.
+   *
+   * Existe porque `item` es un `parseInt` y hay ítems alfanuméricos: una
+   * subdivisión numera las hijas `93A` / `93B` colgando del padre `93`
+   * (Romeo y Julieta, del lote "Dos Luciérnagas" partido el 12-ago-2026;
+   * ver Anima → decisions/2026-07-31-romeo-julieta-93a-93b…). `parseInt("93A")`
+   * da 93, así que las dos hijas y el padre retirado salían del endpoint como
+   * el MISMO `item: 93` — indistinguibles, y con el enlace apuntando al padre.
+   *
+   * Usar `itemId` para todo lo que sea IDENTIDAD (enlace, lookup, filtro de
+   * publicación). `item` sigue siendo el número, y sirve para ordenar.
+   *
+   * OPCIONAL a propósito: los fixtures estáticos (`src/data/treasure.ts`,
+   * `CollectionPage`) construyen el objeto a mano y todos tienen id numérico,
+   * así que exigirlo serían veinte literales tocados sin arreglar nada. Los
+   * dos productores que sí ven ids reales —`get-treasure-sheets` y
+   * `useFotosintesisCatalog`— lo pueblan siempre. Quien lo consuma cae a
+   * `String(item)`.
+   */
+  itemId?: string;
   item: number;
   fechaIngreso: string;
   nombre: string;

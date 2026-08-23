@@ -25,6 +25,10 @@ import type { TreasureItem } from '../../src/types/index.ts';
  */
 export const PUBLIC_KEYS = [
   'item',
+  // El mismo dato que `item` pero sin pasar por parseInt, que aplasta los ids
+  // alfanuméricos de las subdivisiones ("93A"/"93B" → 93). Público por la
+  // misma razón que `item`: ya viaja en la URL de la ficha y en el QR.
+  'itemId',
   'nombre',
   'peso',
   'color',
@@ -121,6 +125,7 @@ export type Grant =
 export function toPublicItem(item: TreasureItem): PublicItem {
   return {
     item: item.item,
+    itemId: item.itemId,
     nombre: item.nombre,
     peso: item.peso,
     color: item.color,

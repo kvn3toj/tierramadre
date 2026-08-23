@@ -181,11 +181,15 @@ export function mapRowToTreasureItem(
   const peso = getValue(INVENTARIO_HEADERS.PESO) || getByIndex(3);
   const pesoData = parsePeso(peso);
 
+  // La celda cruda de la columna A. `item` de abajo la pasa por parseInt y eso
+  // aplasta los ids alfanuméricos ("93A" → 93), así que la identidad viaja acá.
+  const itemIdCrudo = String(
+    getValue(INVENTARIO_HEADERS.ITEM) || getByIndex(0) || '',
+  ).trim();
+
   const item: TreasureItem = {
-    item: parseInt(
-      String(getValue(INVENTARIO_HEADERS.ITEM) || getByIndex(0) || '0'),
-      10,
-    ),
+    itemId: itemIdCrudo,
+    item: parseInt(itemIdCrudo || '0', 10),
     fechaIngreso:
       getValue(INVENTARIO_HEADERS.FECHA_INGRESO) || getByIndex(1) || '',
     nombre: getValue(INVENTARIO_HEADERS.NOMBRE) || getByIndex(2) || '',

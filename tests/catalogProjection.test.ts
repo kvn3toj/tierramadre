@@ -9,6 +9,7 @@ import type { TreasureItem } from '../src/types/index.ts';
 // A row shaped like what get-treasure-sheets actually emits today (23 keys).
 const ROW = {
   item: 1,
+  itemId: '1',
   fechaIngreso: '31-oct-2025',
   nombre: 'Rey Midas',
   peso: 1.47,

@@ -30,7 +30,7 @@ describe('PUBLIC_KEYS', () => {
     }
   });
 
-  it('is exactly the 19 fields the spec approved (12 catalog + 7 media)', () => {
+  it('is exactly the 20 fields the spec approved (13 catalog + 7 media)', () => {
     // The 7 media fields (imagen, mediaType, thumbnailUrl, videoUrl,
     // posterUrl, galleryCount, tinyThumb) were deliberately promoted from
     // WITHHELD_KEYS in the Task 7 fix round: they're images/video already
@@ -46,6 +46,9 @@ describe('PUBLIC_KEYS', () => {
         'color',
         'isJewelry',
         'item',
+        // Añadido 2026-08-23: el id crudo, sin el parseInt que aplasta "93A"
+        // y "93B" a 93. Público por la misma razón que `item`.
+        'itemId',
         'medidas',
         'medidasValores',
         'nombre',

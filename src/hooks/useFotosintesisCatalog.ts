@@ -136,6 +136,9 @@ export function mapRowToTreasureItem(row: PublishedRow): TreasureItem {
   const precioCOP = row.precioFinalCOP ?? 0;
 
   return {
+    // `item` es un parseInt y aplasta los ids alfanuméricos ("93A" → 93);
+    // `itemId` conserva el de verdad, que es el que da identidad.
+    itemId: row.itemId,
     item: parseInt(row.itemId, 10),
     fechaIngreso: '',
     nombre: row.nombre ?? '',
