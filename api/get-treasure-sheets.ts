@@ -24,6 +24,7 @@ import { resolveGrant, bearerWasRejected } from './_lib/catalogGrant.js';
 import { lookupVitrina } from './_lib/vitrinaLookup.js';
 import { projectForGrant } from './_lib/catalogProjection.js';
 import { overlayConvexFotoUrls } from './_lib/convex-foto-overlay.js';
+import { filtrarNoPublicados } from './_lib/catalogoPublicado.js';
 
 type PesoParsed =
   | { value: number | string; isJewelry: true; metalType: 'Plata' | 'Oro 18k' }
@@ -407,6 +408,17 @@ export default withApiHandler(
     // vivo. Best-effort — sin Convex se sirve la hoja tal cual, como siempre.
     const treasureConFotos = await overlayConvexFotoUrls(treasure);
 
+    // `mostrarEnCatalogo` no se miraba acá NUNCA: este endpoint servía las 576
+    // filas de la hoja, así que despublicar un ítem lo sacaba del catálogo de
+    // Convex y NO del Treasure Browser. La bandera sale de Convex, que es
+    // quien la posee — la columna Y de la hoja va 279 filas atrasada. Sólo
+    // para no-staff; el personal sigue viendo el inventario entero.
+    // Ver api/_lib/catalogoPublicado.ts.
+    const treasureVisible =
+      grant.kind === 'staff'
+        ? treasureConFotos
+        : await filtrarNoPublicados(treasureConFotos);
+
     const sampleRow = dataRows[0] || [];
     const pricingCount = Object.keys(pricingMap).length;
 
@@ -418,8 +430,8 @@ export default withApiHandler(
       Boolean(req.query.debug) && process.env.NODE_ENV !== 'production';
 
     return sendSuccess(res, {
-      treasure: projectForGrant(treasureConFotos, grant),
-      count: treasureConFotos.length,
+      treasure: projectForGrant(treasureVisible, grant),
+      count: treasureVisible.length,
       // sheetName + _debug describe the internal spreadsheet layout — staff
       // only. Non-staff (anon/vitrina) never had a reason to receive it.
       ...(grant.kind === 'staff' ? { sheetName: targetSheet } : {}),
