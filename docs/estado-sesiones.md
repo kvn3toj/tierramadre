@@ -39,6 +39,52 @@ cuenta — y su ausencia ya costó caro: ver la entrada del 2026-08-23 16:10.
 
 ## Historial
 
+### 2026-08-24 17:05 — `docs/estado-sesiones` (sin commits) — corrección quirúrgica al SOT: duplicados 7/8 y despublicación de Shou
+
+- **Qué:** la auditoría detectó que #487 y #491 (retiradas por duplicado de #542/#543) seguían
+  con `ESTADO = DISPONIBLE` — la retirada vivía en el nombre, no en el campo que gobierna los
+  conteos. Se escribió `ESTADO → ''` (vacío) en Q482 y Q484, y `mostrarEnCatalogo → false`
+  (booleano) en Y383 para **Shou #383**, que estaba en 0 unidades desde la fusión C-019 del
+  20-ago pero seguía publicado. NO se usó "RETIRADA": el enum de `convex/schema.ts` y
+  `PRODUCT_ESTADOS` son listas cerradas donde no existe — escribirla habría roto la validación
+  del sync.
+- Tocó: hoja SOT v3 (3 celdas, payloads en `scripts/.data/correcciones-{487,491}-estado.json` y
+  `correcciones-383-despublicar.json`, respaldos en `scripts/.backups/`); en el repo,
+  `scripts/aplicar-correcciones-sot.mjs` (**sin commitear**: guardia nueva que rechaza payloads
+  con ítems mezclados — el script localiza UNA fila con el itemId del primer update y aplicaba
+  todo contra ella; la comparación de `valorActual` fue lo único que evitó escribir la fila
+  equivocada).
+- Vercel: no.
+- Convex: deploy no. **El pull Hoja → Convex corrió y NO ingirió nada** (`patched: 0`,
+  `skipped: 576`) — y no puede: `sheetPullMaps.ts:335` normaliza `'' → DISPONIBLE` («legacy
+  default», el mismo patrón del incidente del candado), y `mostrarEnCatalogo` está **excluida
+  del pull a propósito** desde el 2026-07-30 («es de CONVEX, no de la hoja»). Verificado contra
+  Convex prod: los tres ítems siguen `DISPONIBLE` y Shou sigue entre los 127 de
+  `publishedCatalog`.
+- Verificación: relectura por cabecera nombrada tras cada escritura (el propio
+  `aplicar-correcciones-sot.mjs`): `ESTADO = ""` en ambas filas, `mostrarEnCatalogo = "false"`
+  en la 383. No por syncStatus.
+- Pendiente / riesgo:
+  - **Convex quedó desalineado de la hoja en estos tres ítems, y ningún riel existente lo
+    corrige.** Se verificó que no hay mutación que sirva: `products:_saveEdit` y `_saveEditMany`
+    no aceptan `mostrarEnCatalogo`; `lotItems:_updateGemaFields` sí, pero exige fila en
+    `lotItems` y Shou #383 es legacy sin ella (`lotItems:getByItemId → null`);
+    `api/admin-product-update` escribe hacia la hoja, no hacia Convex. El arreglo durable es
+    doble y requiere deploy de Convex, hoy roto (`sales.multiplicador`, entrada 2026-08-23):
+    (1) agregar `RETIRADA` al vocabulario (schema + `PRODUCT_ESTADOS` + `INV_ESTADOS` +
+    `normalizeEstado`) y escribirla en Q482/Q484; (2) una mutación mínima para despublicar
+    ítems legacy sin `lotItems` (o backfillear la fila de Shou). **Matiz posterior:** la
+    entrada 14:20 reporta que `origin/main` @ `6828e1e` ya desciende del merge de la pila de
+    checkout — si es así, el blocker del `sales.multiplicador` puede estar resuelto en
+    `origin/main` y este arreglo vuelve a ser desplegable; verificar contra `origin/main`
+    fresco antes de asumir el deploy roto (mi lectura era del `main` local, desactualizado).
+  - Mientras tanto: el riel de Sheets (`get-treasure-sheets`) ya respeta los cambios (la hoja
+    manda ahí); el riel de Convex sigue contando #487/#491 como DISPONIBLE y publicando a Shou.
+  - La guardia nueva de `aplicar-correcciones-sot.mjs` está solo en el working tree — commitearla
+    o se pierde.
+  - Esta sesión también dejó la bóveda Anima en cobertura 576/576 y fundió el #381
+    (kairos → partículas-de-luz); detalle en `Anima/Wings/Diary/2026-08-24.md`.
+
 ### 2026-08-24 14:20 — Performer (solo lectura, sin worktree) — recorrido de UI del checkout público, de punta a punta
 
 - **Qué:** validación del flujo de UI del checkout público en `tierramadre.app` (producción), como
@@ -71,12 +117,18 @@ cuenta — y su ausencia ya costó caro: ver la entrada del 2026-08-23 16:10.
   #544 sólo tiene 2 diapositivas, sin certificado.** Lo que sí hay ahí es un link «Ver» aparte
   (sección «Trazabilidad ADN de Paz») que abre la imagen del certificado en una pestaña nueva —
   funciona, pero no es «la diapositiva del carrusel» que pedía verificar el hand-off.
-- **D — móvil: mismo comportamiento del 403, más un bug nuevo — el precio es invisible en la
-  vitrina a 390px.** En `/v/<token>` a 390px, el bloque «PRECIO / $186.030.176» SÍ está en el DOM
-  (confirmado con extracción de texto) entre el nombre del producto y los botones, pero no se
-  renderiza — cero altura visual, verificado con zoom tras 4s de espera (no es una carrera de
-  carga). El cliente no ve cuánto va a pagar hasta que abre el modal «Pagar» (que sí muestra el
-  total correctamente). No pasa en desktop.
+- **D — móvil: mismo comportamiento del 403, más un hallazgo de layout — el precio queda
+  enterrado al final de la vitrina a 390px.** [CORREGIDO ~17:40, misma sesión: el diagnóstico
+  original decía «invisible / cero altura», y era interpretación equivocada del síntoma. Leído el
+  fuente: no hay bug de render.] `PublicProductView.tsx` ordena distinto por layout: en desktop
+  (md+, línea 542) es nombre → **precio** → botones → ficha técnica; en el layout compacto
+  (línea 579) es nombre → ficha técnica COMPLETA (FormulaPanel, SpecGroups, GemStats, GemPills,
+  RelatoBlock, TrustCard) → precio al final. O sea que en móvil el precio sí se renderiza, pero
+  el cliente tiene que scrollear toda la ficha para verlo — mientras el botón «Pagar» le queda
+  fijo (sticky) y visible todo el tiempo. El `get_page_text` que mostraba PRECIO «entre el nombre
+  y los botones» era el orden del DOM linealizado, que coincide con este código. El fix, si se
+  decide, es mover `{priceBlock}` arriba de `{specSheet}` en el layout compacto (una línea) —
+  pero puede ser deliberado, así que es decisión de UX, no un arreglo obvio.
 - **E — copy: el genérico del 403 es el problema real** (ver A). El resto de los 5 mensajes
   conocidos (`ITEM_RESERVED`, `PRODUCT_UNAVAILABLE`, `PRECIO_NO_DISPONIBLE`, `ZERO_TOTAL`,
   `ORIGEN_INVALIDO`) se verificaron leyendo `mensajesCheckout.ts`, no en vivo — dispararlos de
@@ -106,17 +158,21 @@ cuenta — y su ausencia ya costó caro: ver la entrada del 2026-08-23 16:10.
 - **Recomendación: NO, todavía no, para llaves `prod_`.** Tres bloqueadores antes del cutover: (1)
   el copy del 403 genérico induce a reintentar un bloqueo permanente — hay que arreglarlo antes de
   que el mismo path absorba cualquier fallo real de Wompi; (2) el certificado no llega al carrusel
-  que el cliente realmente ve (`/v/<token>`), sólo a la ficha interna; (3) el precio es invisible en
-  móvil en esa misma vitrina, así que el cliente abre «Pagar» sin haber visto antes cuánto le van a
-  cobrar. Lo que SÍ está listo: la guarda de pieza-sin-precio (B) y la degradación sin crash del 403
+  que el cliente realmente ve (`/v/<token>`), sólo a la ficha interna; (3) el precio queda al final
+  del scroll en móvil en esa misma vitrina (ver la corrección en D), así que el cliente puede abrir
+  «Pagar» sin haber visto antes cuánto le van a cobrar. Lo que SÍ está listo: la guarda de pieza-sin-precio (B) y la degradación sin crash del 403
   (A), en desktop y móvil.
 - Pendiente / riesgo para la próxima sesión:
-  - Arreglar el copy del 403 genérico (o mejor: detectarlo específicamente y dar un mensaje que no
-    invite a reintentar).
+  - ~~Arreglar el copy del 403 genérico~~ **HECHO (~17:00, misma sesión):** rama
+    `fix/checkout-copy-403` @ `c1929cf` (desde `origin/main`), pusheada SIN mergear. Un 403 con
+    cuerpo no-JSON (el edge nunca manda JSON, el endpoint siempre) ahora dice «Los pagos en línea
+    no están disponibles por el momento. Escríbenos por WhatsApp…». TDD (los 2 tests nuevos
+    fallaron primero con el copy viejo), suite 1974/1974. **El merge a `main` queda pendiente:
+    dispara el deploy de prod completo (Vercel + Convex desde `main`).**
   - Decidir si el certificado debe entrar al carrusel de `/v/<token>` (hoy sólo está en `/p/N`) o
     si el link «Ver» aparte es la UX querida — no quedó claro cuál era la intención original.
-  - El bug de precio invisible en móvil en `/v/<token>` — no investigado a nivel de CSS/DOM, sólo
-    confirmado el síntoma.
+  - Decisión de UX pendiente sobre el precio al final del scroll en móvil (ver la corrección en
+    D) — el fix es una línea si se decide.
   - `get-batch-thumbnails` 504 — bug de backend independiente del checkout, visible al cliente.
   - La fuga de `Ubicación` en `/p/N`/`/product/N` — sin confirmar el endpoint exacto, sin fix.
   - Sigue sin resolver el `skip_limit: true` de `api/checkout-create-order.ts:112` (ya anotado en
