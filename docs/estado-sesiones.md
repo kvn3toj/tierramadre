@@ -39,6 +39,42 @@ cuenta — y su ausencia ya costó caro: ver la entrada del 2026-08-23 16:10.
 
 ## Historial
 
+### 2026-08-24 11:30 — WAF + `feat/certificado-en-carrusel` → `main` — canal de pago bloqueado, certificados en el carrusel
+
+- **🔒 El checkout público quedó BLOQUEADO en el edge.** Regla de Vercel WAF
+  `checkout-publico-llaves-test`: `path equals /api/checkout-create-order → Deny`, publicada a
+  producción. Verificado: el endpoint pasó de `400` (atendía) a **`403` desde el edge**.
+  Control negativo en la misma medición: `get-treasure-sheets` 200, la app 200, y
+  `ghl-create-order` 401 (su auth normal, no el WAF) — el riel del bot no se tocó.
+- **Por qué el WAF y no quitar las llaves de Wompi.** Se leyó el orden de operaciones:
+  `createOrder` corre en `checkout-create-order.ts:101` y **reserva inventario**; el link de pago se
+  arma después, en la 247. Sin llaves, el endpoint devuelve `200 {pending:true}` y **no libera la
+  reserva** (`RESERVA_TTL_MS = 30 min`). O sea que quitar las llaves cambiaba «regala piedras» por
+  «bloquea piedras en silencio» — y como la reserva de `createOrder` es incondicional, también le
+  devolvía `ITEM_RESERVED` al bot de GHL. El WAF corta ANTES de crear la orden.
+- **Para levantarlo** cuando estén las llaves `prod_`:
+  `npx vercel firewall rules remove checkout-publico-llaves-test && npx vercel firewall publish`.
+  Segundos, sin build. La descripción de la regla dice por qué existe.
+- **Certificados: los 8 del Lote Origen escritos** en `certificadoUrl` (col AM) — #483, #484, #544,
+  #545, #546, #550, #551, #552. URLs verificadas con lectura anónima: **8/8 `200 image/jpeg`**.
+  Se usó el JPG, no el PDF: `ProductDetailPage.tsx:325` descarta los `.pdf` del carrusel.
+- **Y el arreglo que faltaba, que no era el filtro de PDFs.** `api/get-treasure-sheets` NO leía la
+  columna AM, y `ProductDetailPage` resuelve su `product` desde ese riel (sólo cae al doc de Convex
+  si el ítem no está en la lista, que para un publicado nunca pasa). `certificateUrl` llegaba
+  `undefined` y la diapositiva nunca se armaba. Commit `6828e1e` → `main`: el mapper lee AM y el
+  campo entra en `PUBLIC_KEYS`. **Efecto real medido: 373 ítems con certificado servido, no 8** —
+  los 365 que ya lo tenían tampoco llegaban al cliente.
+- Vercel: sí (`2026.08.24.982` en vivo). Convex: no.
+- Verificación: `curl` al endpoint de producción — `certificateUrl` aparece en la respuesta y los 8
+  llegan. La diapositiva en sí no se verificó en el navegador.
+- Pendiente / riesgo:
+  - **`skip_limit: true` sigue** en `api/checkout-create-order.ts:112`. Mientras el WAF esté puesto
+    da igual; **al levantar la regla vuelve a no haber techo de 2M**.
+  - **Falta validar el flujo de UI de punta a punta** antes del cutover a llaves `prod_`. Hoy nadie
+    lo recorrió como cliente: se probó el riel (un pago sandbox por API) pero no la experiencia.
+  - `certificadoUrl` es **campo único**, y ya se sabe cuándo va a estorbar: #544, #545 y #550 tienen
+    GIA y esperan el certificado propio de Tierra Mädre. Ahí no caben los dos.
+
 ### 2026-08-24 00:10 — `main` / SOT — correcciones del Lote Origen, sync completo y cutover de pago
 
 - **Qué:** se aplicó `PROMPT-correcciones-lote-origen.md` (pasos 0, 1 y 2), se corrió el sync
