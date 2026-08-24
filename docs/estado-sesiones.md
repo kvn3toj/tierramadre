@@ -38,6 +38,53 @@ cuenta — y su ausencia ya costó caro: ver la entrada del 2026-08-23 16:10.
 ```
 
 ## Historial
+
+### 2026-08-24 00:10 — `main` / SOT — correcciones del Lote Origen, sync completo y cutover de pago
+
+- **Qué:** se aplicó `PROMPT-correcciones-lote-origen.md` (pasos 0, 1 y 2), se corrió el sync
+  completo Hoja→Convex, y se puso `PAYMENT_PROVIDER=wompi` en Production.
+- **SOT — 20 celdas escritas, 4 omitidas.** `NO OIL` en #549, #551, #552, #553 · `F2` en #554 ·
+  medidas de 3 ejes en #551, #552 y #483 · peso de #553 `0.86 → 0.84` · color de #483.
+  `Lotes!C-090.pesoTotalQuilates` **21,21 → 21,22** — SUMADO de los 11, no copiado: el payload decía
+  21,25 y el prompt esperaba 21,23; la suma real da 21,22.
+- **Paso 0 — la frase del piso eliminada de los 9** (482, 544, 545, 546, 549, 550, 551, 553, 554).
+- **Convex: sí**, `fotoSync:runFull {tables:["inventory"]}` → `patched: 12 · inserted: 0 ·
+  flagged: 0 · skipped: 564`. Hoja↔Convex pasó de 23 diferencias a 1.
+- Verificación: relectura por cabecera nombrada + `scripts/verificar-sot-vs-convex.mjs`. #546
+  confirmado en `NO OIL` en Convex (estaba publicado mostrando `F1`), #553 en `0.84`, y **0 ítems
+  conservan la frase del piso en Convex**.
+- **Lo omitido a propósito:**
+  - **#484 `Extra Fina F2` → `Fine F2`**: `Fine F2` NO está en `CALIDADES`, y
+    `CALIDAD_FACTORS[calidad] ?? 1` manda toda calidad desconocida a **factor 1.0** — el cambio
+    dejaba la pieza fuera de vocabulario igual que antes. El valor que el certificado respalda es
+    `F2` (factor 0.85). Pendiente de decisión.
+  - **#552, bloque de plata**: el payload esperaba `precioFinalCOP` vacío y la hoja tiene 9.000.000.
+    Se omitieron costo Y precio juntos — escribir sólo el costo dejaba la razón en 1,60 cuando todo
+    C-090 va a ×4,5. **También se omitió su append**, que dice «Costeado y corregido… $5.632.706…
+    Precio $25.347.177»: escribirlo sin las celdas dejaba la fila afirmando un costeo que no tiene.
+- **⚠️ La verificación del paso 0 que pedía el prompt ya no mide lo que cree medir.** Pedía llamar
+  `getPublicByItem` sin credenciales. Esa prueba **pasa siempre** desde el 2026-08-23 16:10, porque
+  `observacion` salió de la proyección pública: el campo no viaja, esté sucio o limpio. La
+  verificación real es leer el campo crudo.
+- Pendiente / riesgo — **🔴 lo más urgente del repo ahora mismo:**
+  - **El checkout público puede regalar inventario.** Se puso `PAYMENT_PROVIDER=wompi` (Production +
+    redeploy `6odqb0jy3`), pero **las llaves de Wompi en Production son de TEST** (confirmado por el
+    dueño). Con una `pub_test_` el cliente aterriza en el sandbox, donde una tarjeta de prueba
+    aprueba — y esa cadena ya se probó end-to-end: marca la pieza `VENDIDA` y la empuja a la hoja.
+    **Cualquiera con un link de vitrina puede marcar una esmeralda como vendida sin pagar.** Y
+    `skip_limit: true` sigue en `api/checkout-create-order.ts:112`, así que tampoco hay techo.
+    Salidas: bajar el punto de entrada público, quitar las llaves (`WOMPI_NOT_CONFIGURED`), o
+    completar el cutover a llaves `prod_`. **Sin resolver.**
+  - **La sesión `checkout-wompi-public-surfaces` se cerró**; el riel de Wompi quedó sin dueño.
+  - Los certificados **no están donde el service account los vea**: `certificadoUrl` sigue vacío en
+    los 12 ítems con certificado leído, y `GOOGLE_SHARED_DRIVE_ID` (`1KfDhH…`) devuelve «Shared
+    drive not found» para `tierra-madre-inventory@winged-scout-480001-a9`.
+  - **38 ítems dicen color `Verde Muzo`, 35 publicados**, y ningún reporte del ICG ni del GIA
+    menciona Muzo. Decisión de política pendiente.
+  - **Dato nuevo del 24-ago:** la diapositiva 11 de la presentación «LOTE ORIGEN» rotula el reporte
+    `028298` (2,88 ct, Fine) como **«Lote: 170-2»** — primera evidencia dentro del material fuente
+    de que el Lote 170 existe como agrupación propia. Toca la pregunta abierta que bloquea el
+    recosteo de $29,98 M.
 ### 2026-08-23 16:10 — `deploy/fuga-observacion` (base `chore/wompi-sandbox`) — cierre de la fuga de `observacion` en el catálogo público
 
 - **Qué:** `products:getPublicByItem` devolvía `observacion` **sin autenticación**. Medido sobre
