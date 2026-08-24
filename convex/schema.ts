@@ -239,6 +239,12 @@ export default defineSchema({
       v.literal('ESMERO'),
       v.literal('DISPONIBLE ADOPTADA'),
       v.literal('LOTE X CT'),
+      // RETIRADA (2026-08-24): fila retirada del inventario por duplicado
+      // (p. ej. #487/#491, duplicados de #542/#543). Hasta hoy la retirada
+      // vivía solo en el NOMBRE de la fila y el estado seguía DISPONIBLE,
+      // así que todo conteo por estado la sumaba. El vacío no sirve como
+      // señal: el pull lo normaliza a DISPONIBLE (legacy default).
+      v.literal('RETIRADA'),
       v.literal(''),
     ),
     qr: v.optional(v.string()),

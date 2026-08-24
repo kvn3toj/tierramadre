@@ -104,6 +104,7 @@ export const PRODUCT_ESTADOS = [
   'ESMERO',
   'DISPONIBLE ADOPTADA',
   'LOTE X CT',
+  'RETIRADA',
   '',
 ] as const;
 

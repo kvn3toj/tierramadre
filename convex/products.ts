@@ -68,6 +68,7 @@ export const list = query({
         v.literal('ESMERO'),
         v.literal('DISPONIBLE ADOPTADA'),
         v.literal('LOTE X CT'),
+        v.literal('RETIRADA'),
         v.literal(''),
       ),
     ),
@@ -1037,6 +1038,7 @@ const saveEditPatchArgs = v.object({
       v.literal('ESMERO'),
       v.literal('DISPONIBLE ADOPTADA'),
       v.literal('LOTE X CT'),
+      v.literal('RETIRADA'),
       v.literal(''),
     ),
   ),
@@ -1996,6 +1998,7 @@ export const _upsertManyFromSheet = internalMutation({
             v.literal('ESMERO'),
             v.literal('DISPONIBLE ADOPTADA'),
             v.literal('LOTE X CT'),
+            v.literal('RETIRADA'),
             v.literal(''),
           ),
           qr: v.union(v.string(), v.null()),
@@ -2150,6 +2153,7 @@ export const _upsertFromSheet = internalMutation({
         v.literal('ESMERO'),
         v.literal('DISPONIBLE ADOPTADA'),
         v.literal('LOTE X CT'),
+        v.literal('RETIRADA'),
         v.literal(''),
       ),
       qr: v.union(v.string(), v.null()),
@@ -2356,6 +2360,7 @@ function normalizeEstado(
   | 'ESMERO'
   | 'DISPONIBLE ADOPTADA'
   | 'LOTE X CT'
+  | 'RETIRADA'
   | '' {
   const raw = String(v ?? '').trim();
   const upper = raw.toUpperCase();
@@ -2372,6 +2377,7 @@ function normalizeEstado(
   if (upper === 'ESMERO') return 'ESMERO';
   if (upper === 'DISPONIBLE ADOPTADA') return 'DISPONIBLE ADOPTADA';
   if (upper === 'LOTE X CT') return 'LOTE X CT';
+  if (upper === 'RETIRADA') return 'RETIRADA';
   if (raw === '') return 'DISPONIBLE'; // mirror the legacy default in get-treasure-sheets
   return '';
 }
