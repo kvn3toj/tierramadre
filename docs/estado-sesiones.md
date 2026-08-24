@@ -39,6 +39,89 @@ cuenta — y su ausencia ya costó caro: ver la entrada del 2026-08-23 16:10.
 
 ## Historial
 
+### 2026-08-24 14:20 — Performer (solo lectura, sin worktree) — recorrido de UI del checkout público, de punta a punta
+
+- **Qué:** validación del flujo de UI del checkout público en `tierramadre.app` (producción), como
+  cliente, con Chrome — desktop y móvil (390px) — antes del cutover a llaves `prod_`. Sin tocar
+  código ni desplegar. Un `git fetch` mostró que `origin/main` (local estaba desactualizado) **ya
+  es la rama con más avance**: `origin/main` @ `6828e1e` desciende del merge de
+  `integracion/checkout-a-main` (pila completa de checkout, 59 commits sobre el `main` viejo) más
+  `feat/vitrinas-vencen` y el commit del certificado — o sea que el checkout público, hoy, YA vive
+  en `main`, no en una rama aparte.
+- **A — el 403 del WAF (el punto que decide el cutover): se degrada con gracia, pero el copy
+  miente.** `res.json().catch(() => null)` en `CheckoutSheet.tsx` absorbe el cuerpo no-JSON del
+  bloqueo de WAF sin explotar; `mensajeDeRespuesta(403, null)` cae al genérico. Confirmado en vivo
+  (desktop y 390px): sin spinner infinito, sin pantalla en blanco, sin stack trace. El botón
+  vuelve a habilitarse y el formulario conserva lo tipeado. **Pero el texto que ve el cliente es
+  «No pudimos completar el pedido. Intenta de nuevo en un momento.»** — suena a fallo transitorio
+  cuando en realidad es un bloqueo permanente hasta que alguien levante la regla. No ofrece una
+  salida (a diferencia de `PRECIO_NO_DISPONIBLE`/`ZERO_TOTAL`, que sí dicen «Escríbenos»). El botón
+  de WhatsApp sigue visible afuera del modal, así que el cliente no queda sin salida, pero el
+  mensaje no se la señala.
+- **B — pieza sin precio: funciona.** Con un ítem `precioCOP` vacío (#483 «Gratitud», confirmado
+  por API pública que `precioFinalCOP` es `null`) en la vitrina compartida (`/v/<token>`, la
+  superficie real que ve un cliente), no aparece NINGÚN botón «Pagar» ni sección «PRECIO» — sólo
+  «Consultar por WhatsApp». Probado solo y mezclado con una pieza con precio en el carrito interno
+  (ahí el ítem sin precio muestra «$ 0», ver hallazgo de diseño más abajo). En la vitrina pública
+  del cliente, `hayPiezaSinPrecio()` cumple lo que promete.
+- **C — el certificado: aparece en la ficha, NO en la vitrina del checkout.** En `/p/546` y
+  `/p/544` (la ficha, ruta interna) el certificado es la 3ª de 3 diapositivas, legible en el
+  lightbox (reporte ICG #025893 y GIA #2231093419 respectivamente, texto nítido). **Pero en
+  `/v/<token>` — la vitrina que un cliente real recibe por el link compartido — el carrusel de
+  #544 sólo tiene 2 diapositivas, sin certificado.** Lo que sí hay ahí es un link «Ver» aparte
+  (sección «Trazabilidad ADN de Paz») que abre la imagen del certificado en una pestaña nueva —
+  funciona, pero no es «la diapositiva del carrusel» que pedía verificar el hand-off.
+- **D — móvil: mismo comportamiento del 403, más un bug nuevo — el precio es invisible en la
+  vitrina a 390px.** En `/v/<token>` a 390px, el bloque «PRECIO / $186.030.176» SÍ está en el DOM
+  (confirmado con extracción de texto) entre el nombre del producto y los botones, pero no se
+  renderiza — cero altura visual, verificado con zoom tras 4s de espera (no es una carrera de
+  carga). El cliente no ve cuánto va a pagar hasta que abre el modal «Pagar» (que sí muestra el
+  total correctamente). No pasa en desktop.
+- **E — copy: el genérico del 403 es el problema real** (ver A). El resto de los 5 mensajes
+  conocidos (`ITEM_RESERVED`, `PRODUCT_UNAVAILABLE`, `PRECIO_NO_DISPONIBLE`, `ZERO_TOTAL`,
+  `ORIGEN_INVALIDO`) se verificaron leyendo `mensajesCheckout.ts`, no en vivo — dispararlos de
+  verdad requeriría crear una orden real (fuera de alcance) y hoy el WAF corta antes de llegar a
+  Convex de cualquier forma.
+- **Bug no pedido, reproducido 5 veces (desktop y móvil, ficha y vitrina):**
+  `/api/get-batch-thumbnails` devuelve **504** de forma consistente y dispara un toast rojo «No se
+  pudieron cargar las miniaturas. Intenta de nuevo.» visible al cliente en la propia pantalla de
+  pago. Es independiente del WAF — va a seguir pasando con llaves `prod_`.
+- **Hallazgo fuera de alcance, sin confirmar mecanismo:** la ficha interna (`/p/N`, `/product/N`)
+  le muestra «Ubicación: OFI.CALI» a un visitante anónimo sin sesión (visto en #544 y #483, 3
+  veces). El fix del 21-ago (`5c4fcb4`) blindó `products.publishedCatalog`/`getPublicByItem` en
+  Convex; esta pantalla parece alimentarse de un camino de datos distinto
+  (`api/get-treasure-sheets`, el riel viejo de Sheets, per `CLAUDE.md`) que no se auditó ese día.
+  Es sólo el síntoma visual — no leí el endpoint para confirmarlo. **La vitrina pública `/v/<token>`
+  no muestra esta información.**
+- **Se generaron 2 links de vitrina reales** (`/v/EFK8K33QM27W` con #544, `/v/TZ2MKY83XFCZ` con
+  #483) para poder ver la superficie del cliente — quedan vivos en Convex, sin más efecto que eso
+  (no se creó ninguna orden; el 403 del WAF lo impidió en los dos intentos de pago).
+- **Fuera de alcance, a pedido del usuario en vivo (no del hand-off):** se generó una propuesta de
+  rediseño del carrito interno (`/cart`, «Mi Selección») con `/ui-ux-pro-max`, publicada como
+  artifact — sólo mockup, sin tocar `src/pages/CartPage` ni ningún componente de producción.
+- Vercel: no. Convex: no. Sin tocar `main` ni desplegar.
+- Verificación: Chrome real contra `tierramadre.app` (desktop 1316px y 390px), `read_network_requests`
+  confirmando `POST /api/checkout-create-order → 403` y `GET /api/get-batch-thumbnails → 504`, y
+  `get_page_text`/DOM contra el screenshot para el bug de precio invisible en móvil.
+- **Recomendación: NO, todavía no, para llaves `prod_`.** Tres bloqueadores antes del cutover: (1)
+  el copy del 403 genérico induce a reintentar un bloqueo permanente — hay que arreglarlo antes de
+  que el mismo path absorba cualquier fallo real de Wompi; (2) el certificado no llega al carrusel
+  que el cliente realmente ve (`/v/<token>`), sólo a la ficha interna; (3) el precio es invisible en
+  móvil en esa misma vitrina, así que el cliente abre «Pagar» sin haber visto antes cuánto le van a
+  cobrar. Lo que SÍ está listo: la guarda de pieza-sin-precio (B) y la degradación sin crash del 403
+  (A), en desktop y móvil.
+- Pendiente / riesgo para la próxima sesión:
+  - Arreglar el copy del 403 genérico (o mejor: detectarlo específicamente y dar un mensaje que no
+    invite a reintentar).
+  - Decidir si el certificado debe entrar al carrusel de `/v/<token>` (hoy sólo está en `/p/N`) o
+    si el link «Ver» aparte es la UX querida — no quedó claro cuál era la intención original.
+  - El bug de precio invisible en móvil en `/v/<token>` — no investigado a nivel de CSS/DOM, sólo
+    confirmado el síntoma.
+  - `get-batch-thumbnails` 504 — bug de backend independiente del checkout, visible al cliente.
+  - La fuga de `Ubicación` en `/p/N`/`/product/N` — sin confirmar el endpoint exacto, sin fix.
+  - Sigue sin resolver el `skip_limit: true` de `api/checkout-create-order.ts:112` (ya anotado en
+    la entrada de las 11:30).
+
 ### 2026-08-24 11:30 — WAF + `feat/certificado-en-carrusel` → `main` — canal de pago bloqueado, certificados en el carrusel
 
 - **🔒 El checkout público quedó BLOQUEADO en el edge.** Regla de Vercel WAF
@@ -85,7 +168,7 @@ cuenta — y su ausencia ya costó caro: ver la entrada del 2026-08-23 16:10.
   21,25 y el prompt esperaba 21,23; la suma real da 21,22.
 - **Paso 0 — la frase del piso eliminada de los 9** (482, 544, 545, 546, 549, 550, 551, 553, 554).
 - **Convex: sí**, `fotoSync:runFull {tables:["inventory"]}` → `patched: 12 · inserted: 0 ·
-  flagged: 0 · skipped: 564`. Hoja↔Convex pasó de 23 diferencias a 1.
+flagged: 0 · skipped: 564`. Hoja↔Convex pasó de 23 diferencias a 1.
 - Verificación: relectura por cabecera nombrada + `scripts/verificar-sot-vs-convex.mjs`. #546
   confirmado en `NO OIL` en Convex (estaba publicado mostrando `F1`), #553 en `0.84`, y **0 ítems
   conservan la frase del piso en Convex**.
@@ -121,6 +204,7 @@ cuenta — y su ausencia ya costó caro: ver la entrada del 2026-08-23 16:10.
     `028298` (2,88 ct, Fine) como **«Lote: 170-2»** — primera evidencia dentro del material fuente
     de que el Lote 170 existe como agrupación propia. Toca la pregunta abierta que bloquea el
     recosteo de $29,98 M.
+
 ### 2026-08-23 16:10 — `deploy/fuga-observacion` (base `chore/wompi-sandbox`) — cierre de la fuga de `observacion` en el catálogo público
 
 - **Qué:** `products:getPublicByItem` devolvía `observacion` **sin autenticación**. Medido sobre
@@ -206,10 +290,10 @@ cuenta — y su ausencia ya costó caro: ver la entrada del 2026-08-23 16:10.
   `ITEM_RESERVED` en vez de crear una segunda venta. **Es el cierre del bug de doble venta**, y es
   deseado — pero si alguien ve un pedido del bot fallando con ese error, no es una regresión.
   `markOrderPaid` además marca la piedra `VENDIDA` y **la empuja a la hoja** (era manual antes).
-- Verificado end-to-end el mismo día, con pago sandbox real por el navegador (VISA ****4242):
+- Verificado end-to-end el mismo día, con pago sandbox real por el navegador (VISA \*_\*\*4242):
   venta `VO-0004` → `confirmada · wompi · APPROVED`, `providerTxId` idéntico al comprobante, sin
-  columnas `mp*`, `totalCOP = precioBaseCOP × multiplicador 1`. Las piedras 416 y 397 se marcaron
-  `VENDIDA` y llegaron a la hoja (`productEdits.status: 'saved'`).
+  columnas `mp_`, `totalCOP = precioBaseCOP × multiplicador 1`. Las piedras 416 y 397 se marcaron
+`VENDIDA` y llegaron a la hoja (`productEdits.status: 'saved'`).
 - **Datos de prueba en prod: creados y REVERTIDOS.** Cuatro ventas (`VO-0001`…`VO-0004`)
   canceladas vía `sales:_cancel` — la reversión canónica, la que nombra el propio `_saveEdit` al
   negarse a sacar una pieza de `VENDIDA` mientras una venta viva la posea. `VO-0004` devolvió
