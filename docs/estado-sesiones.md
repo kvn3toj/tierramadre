@@ -39,6 +39,53 @@ cuenta — y su ausencia ya costó caro: ver la entrada del 2026-08-23 16:10.
 
 ## Historial
 
+### 2026-08-24 18:20 — `fix/checkout-copy-403` → `main` — copy honesto del 403 + precio arriba en móvil, DESPLEGADO — y `main` volvió a ser desplegable
+
+- **Qué:** merge (ff limpio) de `fix/checkout-copy-403` a `main` y push: `6828e1e..e7f1bae`.
+  Dos fixes, ambos TDD (test en rojo primero), suite **1976/1976** antes del merge:
+  - `c1929cf` — un 403 con cuerpo no-JSON (el edge nunca manda JSON; el endpoint siempre) deja
+    de decir «Intenta de nuevo en un momento» y pasa a «Los pagos en línea no están disponibles
+    por el momento. Escríbenos por WhatsApp y completamos tu compra.» Un 403 CON JSON y código
+    conocido conserva su mensaje específico (`tests/mensajesCheckout.test.ts`).
+  - `17d7e65` — en el layout compacto de `PublicProductView` el precio sube ARRIBA de la ficha
+    técnica (antes vivía al final del scroll con el botón «Pagar» sticky siempre visible). El
+    test fija orden del DOM con `compareDocumentPosition`
+    (`tests/publicProductViewOrdenPrecio.test.tsx`).
+- Tocó: `src/components/checkout/mensajesCheckout.ts`, `src/pages/vitrina/PublicProductView.tsx`,
+  2 archivos de test, `index.html` + `public/version.json` (bump).
+- **Vercel: sí** — deployment `pgcvb9xca`, `● Ready` en 3m, creado 18:14. Producción sirve
+  `2026.08.24.1394` (el build de Vercel re-genera la versión; el bump local fue `.1092`).
+- Convex: no directamente — pero `build:vercel` envuelve `convex deploy` desde `main`, y el build
+  pasó. **Eso confirma que `main` volvió a ser desplegable**: el blocker del
+  `sales.multiplicador` (entrada 2026-08-23 15:45) murió cuando la pila de checkout se mergeó a
+  `main`. El aviso rojo de cabecera de este archivo quedó obsoleto — se deja como historia, pero
+  ya no aplica: prod SÍ corre desde `main` desde el deploy de las 11:30 de hoy.
+- Verificación (no «el push salió»):
+  - `version.json` de producción responde `2026.08.24.1394` con `buildTime` 23:14Z (2 min después
+    del push).
+  - **El copy nuevo está en el bundle servido**: `assets/origenCheckout-Cp5C5Avr.js` (resuelto
+    desde el `index-*.js` remoto) contiene el string «no están disponibles por el momento» —
+    prueba a nivel de contenido de que el deployment corre `≥ c1929cf`.
+  - El orden del precio no se verificó en navegador móvil (el resize de la ventana no aplicó dos
+    veces; con viewport ancho MUI no monta el layout compacto) — la evidencia es el test de orden
+    del DOM en verde y que `17d7e65` viaja en el mismo deployment ya probado por el punto
+    anterior.
+  - El WAF sigue puesto: `POST /api/checkout-create-order` → 403 desde el edge (control con curl
+    tras el deploy). El canal de pago sigue bloqueado a propósito.
+- Coordinación: la sesión `tierramadre-ed` avisada (esperaba este veredicto para **proponerle a
+  Kevin** — no ejecutar — retomar el vocabulario RETIRADA + la despublicación legacy de Shou,
+  ahora que un deploy de Convex desde `main` es viable).
+- Pendiente / riesgo para la próxima sesión:
+  - **Bloqueadores del cutover a llaves `prod_`, estado tras esta entrada:** (1) copy del 403 —
+    RESUELTO y en vivo; (2) precio en móvil — RESUELTO (test verde, en el deployment); (3)
+    certificado en el carrusel de `/v/<token>` — se decidió NO bloquear el cutover: el link «Ver»
+    de Trazabilidad funciona y muestra el documento; la diapositiva queda como mejora de backlog.
+    **El cutover ya no tiene bloqueadores de UI** — quedan `skip_limit: true`
+    (`api/checkout-create-order.ts:112`, vuelve a regir al levantar el WAF) y los pendientes de
+    la entrada 14:20 (504 de `get-batch-thumbnails`, fuga de `Ubicación` en `/p/N`).
+  - Para el cutover: llaves `prod_` en Vercel → `npx vercel firewall rules remove
+checkout-publico-llaves-test && npx vercel firewall publish`.
+
 ### 2026-08-24 17:05 — `docs/estado-sesiones` (sin commits) — corrección quirúrgica al SOT: duplicados 7/8 y despublicación de Shou
 
 - **Qué:** la auditoría detectó que #487 y #491 (retiradas por duplicado de #542/#543) seguían
