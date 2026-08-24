@@ -29,6 +29,11 @@ export const PUBLIC_KEYS = [
   // alfanuméricos de las subdivisiones ("93A"/"93B" → 93). Público por la
   // misma razón que `item`: ya viaja en la URL de la ficha y en el QR.
   'itemId',
+  // El certificado de laboratorio. Público a propósito: es el documento que
+  // sostiene lo que el catálogo afirma de la piedra, y ya se sirve por el proxy
+  // de Drive con permiso `anyone/reader`. Sin él acá, la ficha no puede pintar
+  // la diapositiva del certificado en el carrusel.
+  'certificateUrl',
   'nombre',
   'peso',
   'color',
@@ -126,6 +131,7 @@ export function toPublicItem(item: TreasureItem): PublicItem {
   return {
     item: item.item,
     itemId: item.itemId,
+    certificateUrl: item.certificateUrl,
     nombre: item.nombre,
     peso: item.peso,
     color: item.color,

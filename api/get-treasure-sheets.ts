@@ -111,6 +111,7 @@ const INVENTARIO_HEADERS = {
   // SPREADSHEET_ID points at SOT v3, where it lives at index 25.
   PROCEDENCIA: 'procedencia',
   FOTO_URL: 'fotourl', // SOT v3 col AL — Fotosíntesis-captured photo (Drive file)
+  CERTIFICADO_URL: 'certificadourl', // SOT v3 col AM — certificado de laboratorio
 };
 
 // Jewelry subcategory values from Column K. Three other copies of this list
@@ -281,6 +282,20 @@ export function mapRowToTreasureItem(
   if (fotoUrl) {
     item.imagen = fotoUrl;
     item.thumbnailUrl = fotoUrl;
+  }
+
+  // El certificado de laboratorio (col AM). Sin esto el campo NO llegaba al
+  // cliente por este riel: `ProductDetailPage` resuelve su `product` desde
+  // `useTreasure` — o sea desde acá — y sólo cae al doc de Convex cuando el
+  // ítem no está en la lista, que para un publicado nunca pasa. Resultado: el
+  // carrusel no podía pintar la diapositiva del certificado aunque la hoja lo
+  // tuviera, porque `certificateUrl` llegaba `undefined`.
+  // El nombre cambia de `certificadoUrl` (hoja y Convex) a `certificateUrl`
+  // (TreasureItem); `useFotosintesisCatalog.ts:164` hace el mismo mapeo para el
+  // riel de Convex.
+  const certificadoUrl = getValue(INVENTARIO_HEADERS.CERTIFICADO_URL);
+  if (certificadoUrl) {
+    item.certificateUrl = certificadoUrl;
   }
 
   // Also flag as jewelry if categoria matches a known jewelry subcategory (e.g. items with numeric peso)
