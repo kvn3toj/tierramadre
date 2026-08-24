@@ -19,6 +19,14 @@ export interface MensajeCheckout {
 const GENERICO =
   'No pudimos completar el pedido. Intenta de nuevo en un momento.';
 
+// Un 403 cuyo cuerpo no es JSON viene del edge (Vercel WAF / BotID), no del
+// endpoint: los errores propios del endpoint siempre traen JSON con `error`.
+// Ese bloqueo dura hasta que alguien lo levante — «intenta de nuevo en un
+// momento» invita a machacar un muro, así que el mensaje da la única salida
+// que sí funciona.
+const BLOQUEADO_EN_EDGE =
+  'Los pagos en línea no están disponibles por el momento. Escríbenos por WhatsApp y completamos tu compra.';
+
 function comoObjeto(v: unknown): Record<string, unknown> | null {
   return typeof v === 'object' && v !== null && !Array.isArray(v)
     ? (v as Record<string, unknown>)
@@ -30,7 +38,10 @@ export function mensajeDeRespuesta(
   body: unknown,
 ): MensajeCheckout {
   const raiz = comoObjeto(body);
-  if (!raiz) return { tono: 'error', texto: GENERICO };
+  if (!raiz) {
+    if (status === 403) return { tono: 'error', texto: BLOQUEADO_EN_EDGE };
+    return { tono: 'error', texto: GENERICO };
+  }
 
   const data = comoObjeto(raiz.data) ?? raiz;
   const error = typeof raiz.error === 'string' ? raiz.error : '';

@@ -108,4 +108,31 @@ describe('mensajeDeRespuesta', () => {
     expect(mensajeDeRespuesta(200, null).tono).toBe('error');
     expect(mensajeDeRespuesta(200, 'texto').tono).toBe('error');
   });
+
+  it('403 sin cuerpo JSON (bloqueo en el edge) no invita a reintentar y ofrece WhatsApp', () => {
+    // El WAF de Vercel (regla checkout-publico-llaves-test) responde 403 con un
+    // cuerpo que no es JSON — res.json() da null. Es un bloqueo que dura hasta
+    // que alguien levante la regla: «intenta de nuevo en un momento» miente.
+    const r = mensajeDeRespuesta(403, null);
+    expect(r.tono).toBe('error');
+    expect(r.texto).not.toMatch(/intenta de nuevo/i);
+    expect(r.texto).toMatch(/whatsapp/i);
+  });
+
+  it('403 con cuerpo no-JSON (página HTML del edge) recibe el mismo trato', () => {
+    const r = mensajeDeRespuesta(403, '<html>Forbidden</html>');
+    expect(r.tono).toBe('error');
+    expect(r.texto).not.toMatch(/intenta de nuevo/i);
+    expect(r.texto).toMatch(/whatsapp/i);
+  });
+
+  it('403 con un error nombrado del endpoint NO se confunde con el edge', () => {
+    // Si el endpoint algún día responde 403 con JSON y un código conocido,
+    // el mensaje específico gana sobre el del bloqueo.
+    const r = mensajeDeRespuesta(403, {
+      success: false,
+      error: 'ORIGEN_INVALIDO',
+    });
+    expect(r.texto).toMatch(/enlace/i);
+  });
 });
