@@ -29,7 +29,13 @@ import {
   useTheme,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import { ArrowLeft, CreditCard, MessageCircle, Plus, Check } from 'lucide-react';
+import {
+  ArrowLeft,
+  CreditCard,
+  MessageCircle,
+  Plus,
+  Check,
+} from 'lucide-react';
 import MediaGallery from '../../components/media/MediaGallery';
 import { MediaItem } from '../../components/media/types';
 import { TreasureItem } from '../../types';
@@ -572,11 +578,14 @@ export function PublicProductView({
         {/* Title + spec line */}
         <Box sx={{ mt: '16px' }}>{titleBlock}</Box>
 
+        {/* Per-share price — BEFORE the spec sheet, same order as the wide
+            layout. The CTA is sticky here, so with the price at the bottom a
+            client could reach "Pagar" without ever having crossed the figure
+            (recorrido de UI del 2026-08-24). */}
+        {priceBlock}
+
         {/* Shared gem-sheet body (identical to the in-app product page) */}
         {specSheet}
-
-        {/* Per-share price */}
-        {priceBlock}
       </Box>
 
       {/* Sticky WhatsApp CTA */}
