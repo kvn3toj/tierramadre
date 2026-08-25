@@ -17,7 +17,7 @@
       "maxDuration": 30
     },
     "api/get-batch-thumbnails.ts": {
-      "maxDuration": 30
+      "maxDuration": 120
     },
     "api/get-newest-products.js": {
       "maxDuration": 30

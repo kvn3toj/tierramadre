@@ -27,7 +27,12 @@ const API_URL =
   process.env.THUMBNAILS_SEED_URL ||
   'https://tierramadre.app/api/get-batch-thumbnails';
 
-const FETCH_TIMEOUT_MS = 15_000;
+// Un poco más que el maxDuration del endpoint (120s en vercel.json): la
+// primera consulta tras un deploy suele ser sin caché de CDN y tarda lo que
+// tarde Drive. Con 15s el seed fallaba SIEMPRE que el endpoint anduviera
+// lento, horneaba un seed vacío, y cada visitante nuevo veía la grilla sin
+// miniaturas + el toast rojo (medido 2026-08-25: seed servido con 0 entradas).
+const FETCH_TIMEOUT_MS = 125_000;
 
 function writeEmptySeed(reason) {
   const payload = { thumbnails: {}, generatedAt: null, reason };
@@ -66,7 +71,9 @@ async function main() {
     const count = Object.keys(data.thumbnails).length;
     console.log(`[seed] Wrote ${count} thumbnails to ${outPath}`);
   } catch (err) {
-    writeEmptySeed(err?.name === 'AbortError' ? 'timeout' : err?.message || 'fetch error');
+    writeEmptySeed(
+      err?.name === 'AbortError' ? 'timeout' : err?.message || 'fetch error',
+    );
   } finally {
     clearTimeout(timeout);
   }

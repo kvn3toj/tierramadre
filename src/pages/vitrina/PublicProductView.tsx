@@ -48,6 +48,7 @@ import {
   TrustCard,
 } from '../treasure/ProductDetail/gemSheet/GemSheetParts';
 import PrecioEspecialBadge from '../../components/treasure/PrecioEspecialBadge';
+import { convertToProxyUrl } from '../../utils/driveUrl';
 import { useThemeMode } from '../../contexts/ThemeContext';
 import { getQuietEmerald, qeFont } from '../../design-system';
 import { formatWeightLabel } from '../../utils/formatting';
@@ -237,6 +238,30 @@ export function PublicProductView({
     };
   }, [product.item, displayName]);
 
+  // El certificado como ÚLTIMA diapositiva — la misma regla que la ficha
+  // interna (ProductDetailPage, 6828e1e): sólo una imagen puede ser
+  // diapositiva (un PDF no cabe en un <img>, queda link-only en TrustCard),
+  // y va al final para no correr los índices de las fotos. Esta es la
+  // superficie que un cliente real recibe por link compartido; hasta ahora el
+  // certificado sólo existía acá como link «Ver».
+  const mediaConCertificado = useMemo<MediaItem[]>(() => {
+    const certUrl = product.certificateUrl?.trim();
+    if (!certUrl) return media;
+    if (/\.pdf(\?|#|$)/i.test(certUrl)) return media;
+    if (media.some((m) => m.category === 'certificate')) return media;
+    return [
+      ...media,
+      {
+        id: `certificate-${product.item}`,
+        url: convertToProxyUrl(certUrl) ?? certUrl,
+        type: 'image',
+        category: 'certificate',
+        alt: `Certificado de ${displayName || `producto ${product.item}`}`,
+        order: 999,
+      },
+    ];
+  }, [media, product.certificateUrl, product.item, displayName]);
+
   const handleConsult = () => {
     // Deterministic signal to GHL — fired BEFORE window.open and never
     // awaited, so it can't delay or block the WhatsApp CTA (which must open
@@ -291,7 +316,7 @@ export function PublicProductView({
         bgcolor: qe.well,
       }}
     >
-      <MediaGallery media={media} productName={displayName} />
+      <MediaGallery media={mediaConCertificado} productName={displayName} />
     </Paper>
   );
 
