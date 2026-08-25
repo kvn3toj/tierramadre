@@ -15,16 +15,12 @@ cuenta — y su ausencia ya costó caro: ver la entrada del 2026-08-23 16:10.
 >   Hoy prod NO corre desde `main`: corre desde la pila de checkout. Decir "desplegué Convex"
 >   sin decir **desde qué rama y qué SHA** deja a la siguiente sesión sin forma de reconstruirlo.
 
-> **🔴 `main` NO SE PUEDE DESPLEGAR A PRODUCCIÓN — desde el 2026-08-23 ~04:00.**
-> `build:vercel` → `scripts/build-app.mjs` → **`convex deploy --yes --cmd 'tsc -b && vite build'`**.
-> O sea que **cada build de producción de Vercel despliega Convex desde `main`**, no sólo el front.
-> Y el validador de `sales` de `main` rechaza los documentos vivos que escribió el riel de checkout
-> (`multiplicador`), así que el build muere en «Schema validation failed». Ver la entrada del 15:45.
->
-> **Y el fallo nos está protegiendo:** si ese build pasara con el `main` de hoy, desplegaría el
-> `convex/` de `main` a producción y **borraría el riel de Wompi entero** — más el fix de la fuga de
-> `observacion`. No lo "arregles" quitando el `convex deploy` del build: la salida es **mergear la
-> pila de checkout a `main`**, junto con `deploy/fuga-observacion`.
+> **✅ RESUELTO el 2026-08-25:** `main` volvió a ser desplegable. El blocker
+> (`sales.multiplicador` rechazando documentos vivos del riel de checkout) murió cuando la pila
+> de checkout entró a `main` (merge `integracion/checkout-a-main`, en `6828e1e`). Método: dos
+> deploys de producción Ready el 2026-08-25 desde `main` (`e7f1bae` → versión 2026.08.25.1040 y
+> `2969c75` → PR #150), ambos ejecutando el `convex deploy` que envuelve `build:vercel`.
+> El histórico del incidente queda en las entradas del 2026-08-23 15:44–16:10.
 
 ## Formato de cada entrada
 
@@ -38,6 +34,36 @@ cuenta — y su ausencia ya costó caro: ver la entrada del 2026-08-23 16:10.
 ```
 
 ## Historial
+
+### 2026-08-25 12:30 — PR #150 `fix/estado-retirada` → `main` — RETIRADA en el vocabulario, y los duplicados 7/8 + Shou cerrados en todos los rieles
+
+- **Qué:** merge del PR #150 (aprobado por Kevin): (1) estado `RETIRADA` en el vocabulario
+  completo — `schema.ts`, `normalizeEstado`, cuatro uniones de validadores en `products.ts`,
+  `INV_ESTADOS` del pull, `PRODUCT_ESTADOS`, StatusPip/ItemsPage; (2) mutación
+  `products._setMostrarEnCatalogo` para despublicar ítems legacy sin fila `lotItems` (patch +
+  bump de catálogo + fila de auditoría en `productEdits`).
+- Tocó: `main` (`e7f1bae` → `2969c75`); hoja SOT (Q482/Q484 → `RETIRADA`, payloads
+  `scripts/.data/correcciones-{487,491}-retirada.json`, respaldos en `scripts/.backups/`);
+  Convex prod (pull + mutación de Shou).
+- Vercel: sí — deployment `23xu3bua5`, ● Ready, versión 2026.08.25.1040 (buildTime 17:20Z).
+- Convex: sí — desde `main` @ `2969c75` vía el `convex deploy` del build. Gate de escritura:
+  `_setMostrarEnCatalogo` visible en `function-spec --prod` ANTES de escribir datos (la
+  secuencia merge → deploy → datos evita el patrón del `sales.multiplicador`).
+- Verificación (todo a ARCHIVO — un pipe de `npx convex run` se trunca y fabrica falsos
+  negativos, lección de esta misma jornada):
+  - Pull post-escritura: **`patched: 2, skipped: 574`** (el del 24-ago dio `patched: 0` —
+    el vocabulario era el tapón).
+  - `products:_getInternal`: #487 y #491 con `estado: "RETIRADA"`; #383 con
+    `mostrarEnCatalogo: false`.
+  - `publishedCatalog`: 441 filas, cero ocurrencias de `"383"`.
+  - Auditoría: fila en `productEdits` (`383 · mostrarEnCatalogo · true → false · saved`).
+- Pendiente / riesgo:
+  - `editHistory` devuelve `[]` sin `sessionToken` de staff — NO es prueba de ausencia de
+    auditoría; para verificar rastro usar `npx convex data productEdits --prod --order desc`.
+  - Los otros seis duplicados lógicos de la auditoría siguen esperando las decisiones del §8 —
+    esos NO son mecánicos y no se tocaron.
+  - La escritura manual de la columna Y (mostrarEnCatalogo) en la hoja es no-op por diseño
+    (campo de Convex, excluido del pull) — quedó documentado también en la ficha de Shou en Anima.
 
 ### 2026-08-24 18:20 — `fix/checkout-copy-403` → `main` — copy honesto del 403 + precio arriba en móvil, DESPLEGADO — y `main` volvió a ser desplegable
 
