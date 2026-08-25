@@ -1275,6 +1275,57 @@ export const _getInternal = internalQuery({
   },
 });
 
+/**
+ * Publica/despublica un ítem LEGACY — uno sin fila en `lotItems`, donde el
+ * riel normal (`lotItems.updateGemaFields` → `withPublishStamp`) no llega.
+ * Nació el 2026-08-25 para Shou (#383): quedó en 0 unidades por la fusión
+ * C-019 del 20-ago pero siguió con `mostrarEnCatalogo: true`, y ninguna
+ * mutación existente podía bajarlo (`_saveEdit`/`_saveEditMany` no aceptan el
+ * campo; el de lotItems exige la fila que un legacy no tiene).
+ *
+ * Deja fila en `productEdits` a propósito: `mostrarEnCatalogo` es de Convex
+ * (excluido del pull desde 2026-07-30), así que un cambio sin auditoría acá
+ * es un cambio sin rastro en ninguna parte.
+ */
+export const _setMostrarEnCatalogo = internalMutation({
+  args: {
+    itemId: v.string(),
+    mostrar: v.boolean(),
+    editorEmail: v.string(),
+  },
+  handler: async (ctx, { itemId, mostrar, editorEmail }) => {
+    const existing = await ctx.db
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+      .first();
+    if (!existing) throw new Error(`Producto ${itemId} no está en el espejo`);
+
+    const antes = existing.mostrarEnCatalogo === true;
+    if (antes === mostrar) return { itemId, changed: false };
+
+    await ctx.db.patch(existing._id, { mostrarEnCatalogo: mostrar });
+    await bumpCatalogVersionIfPublished(ctx, existing, {
+      mostrarEnCatalogo: mostrar,
+    });
+    // 'saved' y no 'pending': no hay push a la hoja que esperar — la columna Y
+    // es un espejo de solo salida y el próximo push regular la alineará.
+    await ctx.db.insert('productEdits', {
+      itemId,
+      editorEmail,
+      editedAt: new Date().toISOString(),
+      changes: [
+        {
+          field: 'mostrarEnCatalogo',
+          before: String(antes),
+          after: String(mostrar),
+        },
+      ],
+      status: 'saved' as const,
+    });
+    return { itemId, changed: true };
+  },
+});
+
 // =============================================================================
 // ACTIONS — talk to Google Sheets
 // =============================================================================
