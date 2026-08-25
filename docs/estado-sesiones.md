@@ -35,6 +35,116 @@ cuenta — y su ausencia ya costó caro: ver la entrada del 2026-08-23 16:10.
 
 ## Historial
 
+### 2026-08-25 13:30 — `fix/miniaturas-y-certificado-vitrina` → `main` + SOT — duplicados §8 ejecutados, certificado en /v, miniaturas revividas
+
+- **Qué (dos frentes en una sesión, ambos por decisión explícita de Kevin vía AskUserQuestion):**
+- **Frente 1 — duplicados lógicos del §8** (RESUMEN-AUDITORIA-2026-08-24.md §3): #363
+  Igualdad, #339 Jardín Secreto y #93 Dos Luciérnagas → `ESTADO = RETIRADA` en la hoja
+  (payloads `scripts/.data/correcciones-{363,339,93}-retirada-s8.json`, dry-run + respaldo +
+  relectura por cabecera, 3/3). Pull: **`patched: 3, skipped: 573`**. #363 además DESPUBLICADO
+  con `products._setMostrarEnCatalogo` (fila de auditoría en `productEdits`:
+  `363 · mostrarEnCatalogo · true → false · saved`). Catálogo público: 441 → **440**, los tres
+  ausentes, hijos vivos (#429–#433 ×5, #93A/#93B, #471/#472). **#471/#472 vs #467–#470 queda
+  SIN decidir a propósito**: Kevin pidió verlos — la comparación (fotos, pesos, costos, precios,
+  y el dato de que #468–#470 no tienen ni una foto en Drive) quedó publicada como artifact.
+  Estructura confirmada por datos: #471 = #467+#468 (0.36+0.38=0.74 ct) y #472 = #469+#470
+  (0.37+0.37=0.74 ct); #363 los contaba una tercera vez con `Cant. 4`.
+- **Frente 2 — los secundarios del recorrido de UI del 24-ago:**
+  - **`get-batch-thumbnails` 504 — causa raíz y fix.** Moría exacto en su `maxDuration: 30`
+    (medido: 30.37s → 504 reproducible), y en cascada el seed de build (timeout 15s) horneaba un
+    **seed VACÍO** (medido: 0 entradas servidas) → visitante nuevo sin miniaturas + toast rojo.
+    Fix: `maxDuration` 30 → 120 (`vercel.json`) y timeout del seed 15s → 125s. Post-deploy:
+    endpoint **200 en 18.6s con 308 miniaturas**, y el seed servido ya trae **308 entradas** (el
+    timeout nuevo viajó en el mismo build y alcanzó).
+  - **Certificado como última diapositiva en `/v/<token>`** (`PublicProductView`), misma regla
+    que la ficha (6828e1e): sólo imagen, PDF queda link-only, sin duplicar. TDD
+    (`tests/publicProductViewCertificado.test.tsx`, espejo del prop `media`). Verificado en el
+    bundle servido: el chunk `VitrinaPage-DZ_V7-9h.js` remoto contiene el marcador.
+  - **Fuga de `Ubicación` en `/p/N`: FALSA ALARMA, cerrada con método.** `/p/:itemId` tiene dos
+    rutas (`App.tsx:409` autenticada, `App.tsx:1114` anónima); el QA del 24-ago corrió en el
+    Chrome de Kevin CON sesión → montó la autenticada, que muestra Ubicación legítimamente. Los
+    rieles anónimos limpios: `get-treasure-sheets` sin clave `ubicacion` (medido 2026-08-25,
+    441 filas) y `publishedCatalog` es lista blanca desde `5c4fcb4`.
+- Tocó: hoja SOT (3 celdas Q), Convex prod (pull + 1 mutación), `src/pages/vitrina/PublicProductView.tsx`, `vercel.json`, `scripts/generate-thumbnails-seed.mjs`, 1 test nuevo, versión.
+- Vercel: sí — `b575eb7..b4163c8`, deployment `cui8de054` ● Ready, versión `2026.08.25.1103`.
+- Convex: funciones no (el `convex deploy` del build fue no-op); datos sí (pull + mutación, arriba).
+- Verificación: todo a archivo/curl — pull `patched: 3`, `productEdits` con la fila, catálogo 440,
+  endpoint 200/308, seed 308, marcador del certificado en el chunk remoto. La diapositiva no se
+  vio en navegador (mismo límite del 24-ago: la ventana no acepta resize a móvil).
+- Coordinación: REN-1 empujó a main dos veces durante la sesión (`0a100f7`, `b575eb7`, ambos
+  aditivos, verificado); mi rama rebasó sin conflicto. Su corrección aceptada: su segundo deploy
+  aterrizó ANTES de mi push (v1084) — nada quedó superseded.
+- Pendiente / riesgo:
+  - **La decisión #471/#472 vs #467–#470** — con el artifact en mano. Si «quedan los pares», el
+    sello de #467–#470 es mecánico con los mismos payloads-patrón; si «quedan las piedras», hace
+    falta sesión de fotos para #468–#470 antes de publicar.
+  - Los 15 vendidos/entregados del §4 y el resto del §8 (LC-03/LC-01, GIA vs presentación,
+    Lote 170, #441 «Vida», #484 Magia) siguen esperando decisiones.
+  - El cutover a llaves `prod_` sigue listo por el lado de UI (ver entrada 2026-08-24 18:20).
+
+### 2026-08-25 13:05 — `main` (ventana REN-1, worktree `renacer-spec` ya removido) — la compuerta del QR de Renacer queda ratificada y el spec entra a main
+
+- **Qué:** Kevin ratificó en sesión las tres compuertas de REN-1 y quedaron escritas verbatim
+  dentro del spec, que después se mergeó a `main`. Dos pushes:
+  - `0a100f7` — merge de `docs/renacer-qr-flow-spec`. **Docs-only**: un solo archivo nuevo,
+    `docs/superpowers/specs/2026-08-25-renacer-qr-flow-design.md` (647 líneas), con los rulings
+    ya dentro (§3.4 y §11.1, commit `0681ab8`).
+  - `b575eb7` — merge de `feat/renacer-fase0-captura-y-codigos`: el registro de códigos del §7.3
+    (`scripts/renacer-codigos.mjs` + su JSON vacío) y la hoja de armado de la captura GHL
+    (`GHL/07-RENACER-FASE0-CAPTURA.md`). **Cero archivos de app, de `api/` o de `convex/`.**
+- **Los tres rulings (los hereda quien siga, no se re-litigan):**
+  1. **URL impresa: `https://tierramadre.app/renacer/k/{codigo}`**, tal cual la propuesta §3.3.
+     `/renacer/k/*` y `/renacer/b/*` son contratos permanentes desde hoy. **La imprenta queda
+     habilitada** — esta sesión NO la ordenó.
+  2. **Código de kit: numérico 3–4 dígitos, secuencial desde `101`**, impreso también en texto
+     bajo el QR. Riesgo aceptado: es adivinable; lo mitiga la entrega en presencia, no el código.
+  3. **Precios de kits por aritmética lineal** ($111.000/u manillas, $166.500/u dijes, derivados
+     del 1+1 del 21-08). 1+100 = $11.211.000 / $16.816.500. Sin descuento por volumen en v1.
+- Tocó: `docs/superpowers/specs/2026-08-25-renacer-qr-flow-design.md` (nuevo),
+  `scripts/renacer-codigos.mjs` (nuevo), `scripts/.data/renacer-registro-codigos.json` (nuevo,
+  vacío), `GHL/07-RENACER-FASE0-CAPTURA.md` (nuevo). **`vercel.json` NO se tocó** (ver abajo).
+- **Vercel: sí, dos deploys, los dos EN VIVO y comprobados.** El del primer push sirvió
+  `2026.08.25.1074` (buildTime 17:54:51Z); el del segundo (`b575eb7`) sirve
+  **`2026.08.25.1084`** (buildTime 18:04:45Z). Ambos medidos con curl a `/version.json`, no
+  inferidos de que el push saliera.
+- **Convex: no directamente.** `build:vercel` envuelve `convex deploy` desde `main`, así que
+  ambos builds lo corrieron — pero sobre el **mismo `convex/` que ya estaba en prod** desde el
+  deploy de las 17:20Z (PR #150). Diff de funciones esperado: **0**. No se corrió
+  `npx convex deploy` a mano ni ninguna migración.
+- Verificación (método por afirmación):
+  - Docs-only, ambos merges: `git diff --name-status origin/main..main` ANTES de cada push —
+    la lista salió con exactamente los archivos citados y nada más.
+  - El worktree `renacer-spec` se removió solo después de comprobar
+    `git merge-base --is-ancestor 0681ab8 main` y que su `git status` estaba limpio.
+  - El registro de códigos se ejercitó de punta a punta con controles negativos: dry-run que no
+    crea archivo; misma venta dos veces → aborta; kit inexistente → aborta; más registradas que
+    unidades → aborta (los tres con exit 1). Después se **reseteó a `{"kits": []}`** y se
+    verificó por grep que no quedara ni una fila de prueba.
+  - **El token GHL del repo no puede escribir:** `POST /locations/{id}/customFields` → **401**
+    `The token is not authorized for this scope`, con control positivo `GET` → **200** en el
+    mismo minuto, y control negativo después del fallo: **17 campos antes, 17 después, 0 de
+    Renacer**. `GET /forms/` y `GET /funnels/funnel/list` → 401 también.
+  - Línea base de los paths de campaña, medida con curl HOY y ANTES de cualquier redirect:
+    `/renacer`, `/renacer/k/101` y `/renacer/ayudar` devuelven **200** (los sirve el rewrite
+    catch-all de la SPA), con `Location` vacío. Es el "antes" contra el que la próxima sesión
+    va a comprobar sus 307.
+- Coordinación: `tierramadre-a9` avisada del movimiento de `main` antes y después de empujar;
+  confirmó que no choca con sus dos fixes de plataforma. Esta entrada **se deja sin commitear**
+  a pedido suyo, siguiendo el protocolo de este archivo (el working tree muestra el estado real;
+  quien necesite commitear lo hace por worktree temporal a `docs/estado-sesiones`).
+- Pendiente / riesgo para la próxima sesión:
+  - **Los redirects `/renacer/*` NO existen todavía** — decisión de Kevin: entran en el mismo
+    push que la URL real del form GHL. Nada impreso aún, así que ningún escaneo se pierde.
+  - **El form y el funnel GHL no se armaron** — requieren la UI (el token no autoriza), y Kevin
+    los difirió a un hand-off aparte. La hoja `GHL/07-RENACER-FASE0-CAPTURA.md` los deja listos
+    para armar campo por campo.
+  - **Para automatizar los campos hace falta un token con `locations/customFields.write`.**
+  - **Dos defectos de diseño abiertos en la captura de Fase 0** (§5 de la hoja): las necesidades
+    son repetibles y un custom field de contacto no lo es — y de ahí cuelga el turno FIFO del §9;
+    y el timestamp del turno no cabe en un `DATE` de GHL, que no lleva hora.
+  - El consentimiento de imagen que faltaba (§10.2 lo exige, §7.2 no lo listaba) **ya se resolvió**:
+    Kevin lo mandó como campo 17, CHECKBOX fail-closed, obligatorio.
+
 ### 2026-08-25 12:30 — PR #150 `fix/estado-retirada` → `main` — RETIRADA en el vocabulario, y los duplicados 7/8 + Shou cerrados en todos los rieles
 
 - **Qué:** merge del PR #150 (aprobado por Kevin): (1) estado `RETIRADA` en el vocabulario
