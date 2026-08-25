@@ -68,6 +68,7 @@ export const list = query({
         v.literal('ESMERO'),
         v.literal('DISPONIBLE ADOPTADA'),
         v.literal('LOTE X CT'),
+        v.literal('RETIRADA'),
         v.literal(''),
       ),
     ),
@@ -1037,6 +1038,7 @@ const saveEditPatchArgs = v.object({
       v.literal('ESMERO'),
       v.literal('DISPONIBLE ADOPTADA'),
       v.literal('LOTE X CT'),
+      v.literal('RETIRADA'),
       v.literal(''),
     ),
   ),
@@ -1270,6 +1272,57 @@ export const _getInternal = internalQuery({
       .query('productInventory')
       .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
+  },
+});
+
+/**
+ * Publica/despublica un ítem LEGACY — uno sin fila en `lotItems`, donde el
+ * riel normal (`lotItems.updateGemaFields` → `withPublishStamp`) no llega.
+ * Nació el 2026-08-25 para Shou (#383): quedó en 0 unidades por la fusión
+ * C-019 del 20-ago pero siguió con `mostrarEnCatalogo: true`, y ninguna
+ * mutación existente podía bajarlo (`_saveEdit`/`_saveEditMany` no aceptan el
+ * campo; el de lotItems exige la fila que un legacy no tiene).
+ *
+ * Deja fila en `productEdits` a propósito: `mostrarEnCatalogo` es de Convex
+ * (excluido del pull desde 2026-07-30), así que un cambio sin auditoría acá
+ * es un cambio sin rastro en ninguna parte.
+ */
+export const _setMostrarEnCatalogo = internalMutation({
+  args: {
+    itemId: v.string(),
+    mostrar: v.boolean(),
+    editorEmail: v.string(),
+  },
+  handler: async (ctx, { itemId, mostrar, editorEmail }) => {
+    const existing = await ctx.db
+      .query('productInventory')
+      .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
+      .first();
+    if (!existing) throw new Error(`Producto ${itemId} no está en el espejo`);
+
+    const antes = existing.mostrarEnCatalogo === true;
+    if (antes === mostrar) return { itemId, changed: false };
+
+    await ctx.db.patch(existing._id, { mostrarEnCatalogo: mostrar });
+    await bumpCatalogVersionIfPublished(ctx, existing, {
+      mostrarEnCatalogo: mostrar,
+    });
+    // 'saved' y no 'pending': no hay push a la hoja que esperar — la columna Y
+    // es un espejo de solo salida y el próximo push regular la alineará.
+    await ctx.db.insert('productEdits', {
+      itemId,
+      editorEmail,
+      editedAt: new Date().toISOString(),
+      changes: [
+        {
+          field: 'mostrarEnCatalogo',
+          before: String(antes),
+          after: String(mostrar),
+        },
+      ],
+      status: 'saved' as const,
+    });
+    return { itemId, changed: true };
   },
 });
 
@@ -1996,6 +2049,7 @@ export const _upsertManyFromSheet = internalMutation({
             v.literal('ESMERO'),
             v.literal('DISPONIBLE ADOPTADA'),
             v.literal('LOTE X CT'),
+            v.literal('RETIRADA'),
             v.literal(''),
           ),
           qr: v.union(v.string(), v.null()),
@@ -2150,6 +2204,7 @@ export const _upsertFromSheet = internalMutation({
         v.literal('ESMERO'),
         v.literal('DISPONIBLE ADOPTADA'),
         v.literal('LOTE X CT'),
+        v.literal('RETIRADA'),
         v.literal(''),
       ),
       qr: v.union(v.string(), v.null()),
@@ -2356,6 +2411,7 @@ function normalizeEstado(
   | 'ESMERO'
   | 'DISPONIBLE ADOPTADA'
   | 'LOTE X CT'
+  | 'RETIRADA'
   | '' {
   const raw = String(v ?? '').trim();
   const upper = raw.toUpperCase();
@@ -2372,6 +2428,7 @@ function normalizeEstado(
   if (upper === 'ESMERO') return 'ESMERO';
   if (upper === 'DISPONIBLE ADOPTADA') return 'DISPONIBLE ADOPTADA';
   if (upper === 'LOTE X CT') return 'LOTE X CT';
+  if (upper === 'RETIRADA') return 'RETIRADA';
   if (raw === '') return 'DISPONIBLE'; // mirror the legacy default in get-treasure-sheets
   return '';
 }

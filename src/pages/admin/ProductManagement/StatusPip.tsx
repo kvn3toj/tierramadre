@@ -40,6 +40,7 @@ const LABELS: Record<EstadoValue, string> = {
   ESMERO: 'Esmero',
   'DISPONIBLE ADOPTADA': 'Adoptada',
   'LOTE X CT': 'Lote x ct',
+  RETIRADA: 'Retirada',
   '': 'Sin estado',
 };
 
@@ -63,9 +64,12 @@ function colorFor(estado: EstadoValue, foto: FotoTokens): string | null {
     case 'ESMERO':
       return foto.status.consigned;
     // Retornado came back from somewhere — no canonical color yet, leave
-    // hollow to flag it for review.
+    // hollow to flag it for review. RETIRADA is a row withdrawn from the
+    // inventory (duplicate/replaced) — hollow on purpose: it must not read
+    // as any live state.
     case 'Retornado':
     case 'LOTE X CT':
+    case 'RETIRADA':
     case '':
     default:
       return null;

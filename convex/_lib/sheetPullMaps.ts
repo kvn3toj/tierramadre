@@ -327,6 +327,7 @@ const INV_ESTADOS = [
   'ESMERO',
   'DISPONIBLE ADOPTADA',
   'LOTE X CT',
+  'RETIRADA',
 ] as const;
 
 /** Mirror of products.ts#normalizeEstado (kept here to avoid cross-importing a non-exported helper). */

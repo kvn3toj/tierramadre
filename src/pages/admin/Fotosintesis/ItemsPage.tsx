@@ -870,6 +870,8 @@ function estadoMeta(estado: EstadoValue, foto: FotoT): ItemEstadoMeta {
       return { label: 'Retornado', color: null };
     case 'LOTE X CT':
       return { label: 'Lote x ct', color: null };
+    case 'RETIRADA':
+      return { label: 'Retirada', color: null };
     default:
       return { label: 'Sin estado', color: null };
   }
