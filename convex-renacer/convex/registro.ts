@@ -9,6 +9,7 @@
 
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
+import { exigirTokenDeApp } from './lib/guardas';
 
 /**
  * Token opaco del carnet (D-1). 122 bits de entropía: adivinarlo no es un camino.
@@ -39,6 +40,7 @@ async function siguienteDeSecuencia(
 
 export const registrarBeneficiario = mutation({
   args: {
+    secret: v.string(),
     kitCode: v.number(),
     name: v.string(),
     email: v.optional(v.string()),
@@ -62,6 +64,7 @@ export const registrarBeneficiario = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    exigirTokenDeApp(args.secret);
     // §10.1: sin habeas data no hay registro. Se recoge EN PRESENCIA, antes de lo digital.
     if (!args.habeasData) {
       throw new Error(
@@ -84,6 +87,7 @@ export const registrarBeneficiario = mutation({
     if (!kit) throw new Error(`El código ${args.kitCode} no existe.`);
 
     const ahora = Date.now();
+    const cardToken = nuevoCardToken();
     const cardNumber = await siguienteDeSecuencia(ctx, 'cardNumber', 111);
 
     const beneficiaryId = await ctx.db.insert('beneficiaries', {
@@ -95,7 +99,7 @@ export const registrarBeneficiario = mutation({
       genero: args.genero,
       kitCode: args.kitCode,
       cardNumber,
-      cardToken: nuevoCardToken(),
+      cardToken,
       habeasDataAcceptedAt: ahora,
       donorVisibilityConsent: args.donorVisibilityConsent,
       imageConsent: args.imageConsent,
@@ -142,7 +146,10 @@ export const registrarBeneficiario = mutation({
       manillasRegistradas: kit.manillasRegistradas + 1,
     });
 
-    return { cardNumber, beneficiaryId };
+    // El token se devuelve UNA sola vez: es la credencial con la que esta persona
+    // después se suma a una necesidad, escribe en el muro y abre su carnet. El cliente
+    // lo guarda; el servidor no lo vuelve a mostrar.
+    return { cardNumber, cardToken, beneficiaryId };
   },
 });
 
@@ -154,8 +161,9 @@ export const registrarBeneficiario = mutation({
  * ubicación NO está en esa lista: quien entrega ya está ahí.
  */
 export const carnet = query({
-  args: { cardNumber: v.number(), token: v.string() },
+  args: { cardNumber: v.number(), token: v.string(), secret: v.string() },
   handler: async (ctx, args) => {
+    exigirTokenDeApp(args.secret);
     const persona = await ctx.db
       .query('beneficiaries')
       .withIndex('by_cardNumber', (q) => q.eq('cardNumber', args.cardNumber))

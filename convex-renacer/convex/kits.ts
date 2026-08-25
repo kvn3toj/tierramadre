@@ -14,6 +14,7 @@
 
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
+import { exigirTokenDeApp, exigirTokenDeOps } from './lib/guardas';
 import { kitTipo, producto } from './schema';
 
 /** Compuerta §3.4 · G-A.2 — ratificada 2026-08-25. No cambiar sin una compuerta nueva. */
@@ -53,6 +54,7 @@ async function siguienteDeSecuencia(
  */
 export const emitir = mutation({
   args: {
+    secret: v.string(),
     tipo: kitTipo,
     producto,
     saleId: v.string(),
@@ -60,6 +62,7 @@ export const emitir = mutation({
     fechaPago: v.string(),
   },
   handler: async (ctx, args) => {
+    exigirTokenDeOps(args.secret);
     const yaEmitido = await ctx.db
       .query('kits')
       .withIndex('by_saleId', (q) => q.eq('saleId', args.saleId))
@@ -104,8 +107,9 @@ export const emitir = mutation({
  * lo que esta query exponga queda expuesto a quien teclee un número al azar.
  */
 export const porCodigo = query({
-  args: { code: v.number() },
+  args: { code: v.number(), secret: v.string() },
   handler: async (ctx, args) => {
+    exigirTokenDeApp(args.secret);
     const kit = await ctx.db
       .query('kits')
       .withIndex('by_code', (q) => q.eq('code', args.code))
@@ -124,8 +128,9 @@ export const porCodigo = query({
 
 /** Progreso agregado del aportador (§4.9): "8 de tus 10 manillas ya fueron registradas". */
 export const progreso = query({
-  args: { saleId: v.string() },
+  args: { saleId: v.string(), secret: v.string() },
   handler: async (ctx, args) => {
+    exigirTokenDeOps(args.secret);
     const kit = await ctx.db
       .query('kits')
       .withIndex('by_saleId', (q) => q.eq('saleId', args.saleId))
@@ -147,6 +152,7 @@ export const progreso = query({
 
 export const marcarEstado = mutation({
   args: {
+    secret: v.string(),
     code: v.number(),
     estado: v.union(
       v.literal('emitido'),
@@ -156,6 +162,7 @@ export const marcarEstado = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    exigirTokenDeOps(args.secret);
     const kit = await ctx.db
       .query('kits')
       .withIndex('by_code', (q) => q.eq('code', args.code))

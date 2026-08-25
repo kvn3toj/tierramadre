@@ -67,6 +67,32 @@ inventario de esmeraldas — y `convex/migrations.ts` ya carga una migración si
 (`seedBucketC`). Además son datos de habeas data de damnificados con la silla Legal vacía.
 La línea roja del §8.1 se respeta tal cual fue ratificada.
 
+**⚠️ El proxy NO es una puerta por sí solo** (corregido el 2026-08-25, tras un review de
+seguridad sobre el primer commit del backend). En Convex, `mutation` y `query` son API
+**pública**: cualquiera con la URL del deployment las invoca directo, sin pasar nunca por
+`api/renacer-*`. La primera versión dejaba a cualquiera **quemar la secuencia de códigos
+impresos** (`kits.emitir`), censurar el muro de desahogo (`muro.ocultar`), inflar el apoyo de
+una necesidad en nombre de otro y firmar mensajes con el nombre de otro damnificado.
+
+La puerta real son dos cosas, en `convex-renacer/convex/lib/guardas.ts`:
+
+1. **Dos secretos compartidos**, el patrón que la casa ya usa (`ADMIN_SYNC_TOKEN` en
+   `api/checkout-create-order.ts`, citado por el spec §5.1). `RENACER_APP_TOKEN` lo llevan
+   los endpoints públicos; `RENACER_OPS_TOKEN` lo llevan **solo** el riel de pago y el CLI de
+   operador, y es el único que habilita emitir códigos, cambiar el estado de un kit y ocultar
+   mensajes. Comprometer el de la app no alcanza para acuñar un código.
+2. **Ninguna función recibe identidad por el body.** Un `beneficiaryId` en el request es una
+   afirmación del cliente, no una identidad. Quien actúa se resuelve desde
+   `cardNumber + cardToken` — la credencial que el registro entrega una sola vez, y que
+   funciona igual en el camino con Google y en el registro asistido, que no tiene sesión.
+
+Las dos guardas fallan cerradas: si la variable de entorno no está configurada, la función
+**rompe** en vez de comparar `undefined` con `undefined` y quedar abierta justo cuando falta
+la config. Las comparaciones son en tiempo constante.
+
+**Consecuencia para el Task 14:** el muro de **aliento** no se sirve todavía. El aportador no
+tiene credencial diseñada, y prefiero que falle a dejar un camino suplantable "por ahora".
+
 **Costo aceptado y dicho acá, no en la pantalla 6:** sin cliente Convex en el navegador **no
 hay reactividad viva**. El mapa de la Tribu y el muro refrescan al montar y después de cada
 acción, no solos. Para v1 alcanza; si algún día hace falta realtime, la salida es mover esas

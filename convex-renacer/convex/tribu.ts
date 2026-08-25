@@ -9,10 +9,12 @@
 
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
+import { exigirTokenDeApp, resolverBeneficiario } from './lib/guardas';
 
 export const necesidades = query({
-  args: { limite: v.optional(v.number()) },
+  args: { limite: v.optional(v.number()), secret: v.string() },
   handler: async (ctx, args) => {
+    exigirTokenDeApp(args.secret);
     const filas = await ctx.db
       .query('needs')
       .withIndex('by_createdAt')
@@ -39,28 +41,42 @@ export const necesidades = query({
   },
 });
 
-/** El "+1". Idempotente por índice compuesto: la misma persona no suma dos veces. */
+/**
+ * El "+1".
+ *
+ * **Quién se suma NO viene en el body.** Recibir un `beneficiaryId` es recibir una
+ * afirmación del cliente, no una identidad: cualquiera podría inflar el apoyo de una
+ * necesidad en nombre de otro — y `supportCount` alimenta cómo operaciones prioriza.
+ * Se resuelve desde la credencial del carnet.
+ *
+ * Idempotente por índice compuesto: la misma persona no suma dos veces.
+ */
 export const sumarse = mutation({
-  args: { needId: v.id('needs'), beneficiaryId: v.id('beneficiaries') },
+  args: {
+    secret: v.string(),
+    needId: v.id('needs'),
+    cardNumber: v.number(),
+    cardToken: v.string(),
+  },
   handler: async (ctx, args) => {
+    exigirTokenDeApp(args.secret);
+    const yo = await resolverBeneficiario(ctx, args.cardNumber, args.cardToken);
+
     const yaEstaba = await ctx.db
       .query('needSupports')
       .withIndex('by_need_and_beneficiary', (q) =>
-        q.eq('needId', args.needId).eq('beneficiaryId', args.beneficiaryId),
+        q.eq('needId', args.needId).eq('beneficiaryId', yo._id),
       )
       .unique();
-
-    if (yaEstaba) {
-      const need = await ctx.db.get(args.needId);
-      return { supportCount: need?.supportCount ?? 0, yaEstaba: true };
-    }
 
     const need = await ctx.db.get(args.needId);
     if (!need) throw new Error('Esa necesidad no existe.');
 
+    if (yaEstaba) return { supportCount: need.supportCount, yaEstaba: true };
+
     await ctx.db.insert('needSupports', {
       needId: args.needId,
-      beneficiaryId: args.beneficiaryId,
+      beneficiaryId: yo._id,
       createdAt: Date.now(),
     });
     await ctx.db.patch(args.needId, { supportCount: need.supportCount + 1 });
