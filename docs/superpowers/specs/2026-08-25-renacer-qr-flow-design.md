@@ -157,6 +157,76 @@ funciona en cualquier navegador de gama baja en campo, y no deja rastro cacheabl
 destino (un 308/301 cachearía el destino de Fase 0 en teléfonos que volverán a escanear en
 Fase 1).
 
+### 3.4 Decisiones de compuerta — RATIFICADAS 2026-08-25 (Kevin, en sesión)
+
+> Esta subsección **cierra la compuerta de §3.3**. Desde aquí la imprenta queda habilitada y lo
+> impreso queda congelado: ninguna sesión futura re-litiga este bloque. Ratificado por Kevin en
+> sesión interactiva el 2026-08-25 (ventana de ejecución Fase 0 de REN-1). Método: las dos
+> opciones se le presentaron con la propuesta del spec, sus alternativas y lo que cada una
+> foreclosa; eligió las dos recomendadas.
+
+**G-A.1 · Esquema de URL — RATIFICADO TAL CUAL LA PROPUESTA DE §3.3.**
+
+Ruling verbatim (opción elegida y su contenido):
+
+> **«Ratify as specced»**
+>
+> ```
+> IMPRESO (irreversible):
+>   https://tierramadre.app/renacer/k/{codigo}
+>
+> No impreso (cambiable siempre):
+>   /renacer            fork 2 botones
+>   /renacer/ayudar     aportador (RRSS/pauta)
+>   /renacer/b/{numero} carnet beneficiario
+>
+> Fase 0: /renacer/k/:codigo --307--> form GHL ?codigo=…
+> Fase 1: mismo path --> app delgada (1 línea de vercel.json)
+> ```
+
+Lo que queda cerrado con esta ratificación:
+
+- **`https://tierramadre.app/renacer/k/{codigo}` es la URL del QR impreso.** Es el único string
+  irreversible de todo el plan.
+- `/renacer/k/*` y `/renacer/b/*` son **contratos permanentes desde hoy**: no se reusan para otra
+  cosa, no se renombran, no se borran — ni siquiera cuando Fase 1 los sirva desde la app.
+- Se descartaron explícitamente: el dominio propio de campaña (`community/helpme`, ya perdido el
+  25-08) y el path corto `/r/{codigo}`.
+- Lo que **no** queda cerrado, a propósito: el **destino** de esos paths. Se re-apunta por fase
+  editando `vercel.json`, sin tocar un solo estuche (§8.5).
+
+**G-A.2 · Formato del código de kit — RATIFICADO: numérico 3–4 dígitos, secuencial.**
+
+Ruling verbatim:
+
+> **«Numérico 3–4 dígitos, secuencial»**
+>
+> ```
+> codigo: 101, 102, 103, … 9999
+> Impreso bajo el QR: «Código 666»
+> Dictado: "seis seis seis"
+>
+> Techo: 9.899 kits
+> Colisión: imposible (secuencial, registro único)
+> Adivinable: SÍ — un tercero puede teclear 667
+>   → mitiga la entrega en presencia, no el código
+> ```
+
+Lo que queda cerrado:
+
+- **Arranque de la secuencia: `101`.** Emisión secuencial desde el registro único de §7.3, una
+  fila por kit, sin huecos y sin reutilizar el código de un kit anulado.
+- El código va impreso **también en texto** bajo el QR («Código 666»): si el QR falla o el
+  teléfono no tiene cámara, el beneficiario lo teclea en `/renacer` o se lo dicta al facilitador.
+- Sin letras, sin checksum, sin ceros a la izquierda.
+- **Riesgo aceptado, medido 2026-08-25:** un secuencial es **adivinable** — un tercero puede
+  teclear `667` y caer en el formulario del kit vecino. La mitigación **no es el código**: la
+  manilla se entrega **solo en presencia** (§6.3) y el registro digital ocurre en ese momento,
+  con facilitador. Lo que un adivinador consigue es inscribirse contra el kit de otro; **no**
+  obtiene datos de nadie (el flujo del código no lee, escribe). **Fecha de revisión:** si aparece
+  registro fraudulento en la primera visita de campo, el remedio es un dígito verificador en la
+  **siguiente tirada de imprenta** — nunca un cambio de path.
+
 ---
 
 ## 4 · Flujo aportador — end-to-end (ratificado 25-08)
@@ -490,9 +560,58 @@ teléfono, sin datos, mayores) se registran de últimos o nunca.
 | a   | ¿Wompi expone los datos personales del comprador (dashboard/API)?     | **Parcialmente resuelta por diseño:** el riel propio captura y guarda el contacto antes de Wompi, así que Renacer no depende de esa exposición (método: lectura de `api/checkout-create-order.ts` y `api/_lib/wompi.ts`, §5.2). Lo que Wompi expone o no en su dashboard sigue **SIN VERIFICAR** — nadie lo ha mirado con acceso al panel. | 2026-08-25 | Kevin (acceso al dashboard) |
 | b   | Costo de envío nacional para aportadores locales                      | Sin decisión — contraentrega/interrapidísimo mencionados en sala, nada elegido (método: decisión 25-08, sección "Abiertos nuevos"). Regla vigente 21-08: entrega en perímetro urbano de Cali o familiar; el resto paga aparte.                                                                                                             | 2026-08-25 | Kevin / operaciones         |
 | c   | Videos de contexto (landing beneficiario y aportador)                 | Existen como decisión, no como asset — no hay guion aprobado ni pieza producida (método: decisión 25-08).                                                                                                                                                                                                                                  | 2026-08-25 | kira / producción           |
-| d   | Precio de los kits 1+5, 1+10 y 1+100                                  | El 1+1 está ratificado ($222.000 manillas / $333.000 dijes, 21-08). Para los otros tres **no aparece precio en ninguna de las tres decisiones curadas** (método: lectura completa de las notas del 21, 24 y 25-08 en Anima). La aritmética "N × precio unitario" es plausible pero NO está ratificada.                                     | 2026-08-25 | Kevin                       |
-| e   | Formato exacto del código de kit y arranque de la secuencia           | Propuesto en §3.1; se ratifica junto con la compuerta de URL §3.3.                                                                                                                                                                                                                                                                         | 2026-08-25 | Kevin (misma compuerta)     |
+| d   | Precio de los kits 1+5, 1+10 y 1+100                                  | ✅ **CERRADO 2026-08-25 (§11.1) — aritmética lineal ratificada por Kevin.** Antes de ese cierre: el 1+1 estaba ratificado ($222.000 manillas / $333.000 dijes, 21-08). Para los otros tres **no aparece precio en ninguna de las tres decisiones curadas** (método: lectura completa de las notas del 21, 24 y 25-08 en Anima). La aritmética "N × precio unitario" es plausible pero NO está ratificada. | 2026-08-25 | Kevin                       |
+| e   | Formato exacto del código de kit y arranque de la secuencia           | ✅ **CERRADO 2026-08-25 (§3.4 · G-A.2) — numérico 3–4 dígitos, secuencial desde 101.** Propuesto en §3.1; se ratifica junto con la compuerta de URL §3.3. | 2026-08-25 | Kevin (misma compuerta)     |
 | f   | Apertura del WAF sobre el checkout público + cutover a llaves `prod_` | Prerequisito del lanzamiento aportador; pertenece a TM-PAGOS-APP (compuertas G1–G5), no a REN-1. Estado 403 verificado por la sesión del 2026-08-24 (método: §5.3).                                                                                                                                                                        | 2026-08-25 | conductor / TM-PAGOS-APP    |
+
+### 11.1 Decisiones de compuerta — cierre de los abiertos (d) y (e), 2026-08-25
+
+Ratificado por Kevin en sesión interactiva el 2026-08-25, en la misma compuerta que §3.4.
+
+**(e) Formato del código de kit — CERRADO.** Ver §3.4 · G-A.2: numérico 3–4 dígitos, secuencial
+desde `101`, impreso también en texto bajo el QR. El abierto (e) deja de estar abierto.
+
+**(d) Precio de los kits 1+5, 1+10 y 1+100 — CERRADO: aritmética lineal.**
+
+Ruling verbatim:
+
+> **«Aritmética lineal»**
+>
+> ```
+> MANILLAS (unidad $111.000)
+>   1+1    2 u    $   222.000  ← ratificado 21-08
+>   1+5    6 u    $   666.000
+>   1+10  11 u    $ 1.221.000
+>   1+100 101 u   $11.211.000
+>
+> DIJES (unidad $166.500)
+>   1+1    2 u    $   333.000  ← ratificado 21-08
+>   1+5    6 u    $   999.000
+>   1+10  11 u    $ 1.831.500
+>   1+100 101 u   $16.816.500
+> ```
+
+**La cuadrícula de 4 (§4.3) queda con estos precios:**
+
+| Kit       | Unidades | Manillas COP  | Dijes COP     |
+| --------- | -------- | ------------- | ------------- |
+| **1+1**   | 2        | `222.000`     | `333.000`     |
+| **1+5**   | 6        | `666.000`     | `999.000`     |
+| **1+10**  | 11       | `1.221.000`   | `1.831.500`   |
+| **1+100** | 101      | `11.211.000`  | `16.816.500`  |
+
+Lo que queda cerrado:
+
+- El unitario se **deriva** del 1+1 ya ratificado el 21-08 ($222.000 ÷ 2 = $111.000 manillas;
+  $333.000 ÷ 2 = $166.500 dijes). No se inventó ninguna decisión comercial nueva — que era
+  exactamente el motivo por el que (d) estaba abierto.
+- **Sin descuento por volumen en v1.** El escalonado se propuso hoy y se descartó.
+- Esta tabla **es la tabla de servidor de §5.3**: el endpoint de orden valida `kitId` contra
+  ella y calcula el monto. **Ningún monto ni cantidad viaja desde el cliente** — así es como
+  REN-1 esquiva el filo `skip_limit` sin tocar el archivo congelado.
+- Riesgo asumido y dicho: el 1+100 queda en $11.211.000 (manillas) / $16.816.500 (dijes), un
+  ticket alto sin descuento. Si no se vende, la corrección es **de precio** y no toca nada
+  impreso: el código de kit no depende del precio.
 
 ---
 
