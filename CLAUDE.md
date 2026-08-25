@@ -307,6 +307,60 @@ exactamente lo que esperas (`+N, −0`).
 - Estos dos defectos son exactamente lo que el espejo v4 vuelve imposible por diseño (upsert por
   cabecera nombrada, verificación de deriva, serialización que no inventa valores).
 
+### 🔴 Presupuesto de lectura — el plan gratis se quema por LECTURAS, no por escrituras
+
+**Medido el 2026-08-25 (dashboard de Convex, team `semilla`, ventana 12–31 ago):** el team
+está **por encima del límite del plan gratis**, con **1.28 GB de lecturas contra 13.5 MB de
+escrituras — 99% lecturas**. `semilla` (`se`) es el team donde vive el Convex de TM
+(`dev:admired-jaguar-376`, proyecto `back-ago`), así que la quema es de esta app, no de algo
+ajeno.
+
+**La causa medida, no supuesta** (método: parseo de las cadenas `ctx.db.query(...).collect()`
+de `convex/*.ts`, 2026-08-25): **58 escaneos de tabla completa** — `.collect()` sin
+`.withIndex()` — sobre las tablas más grandes del sistema: `lotItems`, `clients`,
+`productInventory`, `lots`, `sales`.
+
+Las reglas, en orden de cuánto ahorran:
+
+1. **`.collect()` sin `.withIndex()` lee la tabla ENTERA y factura cada documento.** No
+   importa que después filtres en JS: ya se leyó todo. Si la tabla crece, la misma query
+   cuesta más cada mes sin que nadie cambie una línea.
+2. **`.filter()` de Convex corre DESPUÉS de leer.** `query('t').filter(...)` no es un `WHERE`:
+   lee todo y descarta. Lo que filtra barato es `.withIndex('by_x', q => q.eq('x', v))`.
+3. **Toda lectura de lista lleva cota.** `.take(n)` o paginación. Una query sin techo es una
+   factura sin techo.
+4. **Cuidado con `useQuery` sobre tablas que se escriben seguido.** Cada escritura re-ejecuta
+   las queries suscritas, y cada re-ejecución vuelve a leer. Una suscripción amplia sobre una
+   tabla caliente multiplica lecturas sin que nadie "haga" nada.
+5. **Antes de agregar un `.collect()` nuevo, preguntá cuánto mide la tabla en producción.** Si
+   no lo sabés, no es una query: es una apuesta.
+6. **Nada de polling.** Si querés saber si algo cambió, suscribite o consultá por evento — no
+   cada N segundos.
+
+**Deuda conocida, no arreglada:** los 58 escaneos siguen ahí. Arreglarlos es una tarea propia
+(indexar y acotar caso por caso), no algo para colar dentro de otro cambio.
+
+### Dos deployments de Convex, y en qué team vive cada uno
+
+| Qué                        | Team                 | Proyecto  | Dev deployment          |
+| -------------------------- | -------------------- | --------- | ----------------------- |
+| App de TM (esmeraldas)     | `semilla` (`se`)     | `back-ago`| `admired-jaguar-376`    |
+| **Campaña Renacer**        | `kevin-pineda-perez` | `renacer` | `savory-malamute-505`   |
+
+Renacer se creó en **otro team a propósito** (2026-08-25): `semilla` ya estaba sobre el límite
+del plan gratis, y meter ahí la campaña habría acelerado la interrupción de servicio del
+inventario. Es la misma línea roja del §8.1 del spec de Renacer, ahora con una segunda razón
+medida.
+
+**El CLI sube por el árbol.** `convex-renacer/` tiene su propio `package.json` y `convex.json`
+justamente para anclarlo; sin ellos, `npx convex` encuentra el `convex.json` de la raíz y el
+`CONVEX_DEPLOYMENT` del `.env.local` del repo, y despliega Renacer **dentro del Convex del
+inventario**. Antes de cualquier `deploy`, verificá el destino:
+
+```sh
+cd convex-renacer && grep '^CONVEX_DEPLOYMENT' .env.local   # debe decir savory-malamute-505
+```
+
 ## Anti-Blinking Best Practices (CRITICAL)
 
 When working with images, follow these rules to prevent flickering:
