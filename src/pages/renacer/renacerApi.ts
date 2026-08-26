@@ -121,6 +121,28 @@ export function sumarseA(
   ).then((r) => r.resultado);
 }
 
+export interface MensajeMuro {
+  id: string;
+  authorName: string;
+  body: string;
+  createdAt: number;
+}
+
+export async function leerMuro(): Promise<MensajeMuro[]> {
+  const { mensajes } = await pedir<{ mensajes: MensajeMuro[] }>('/api/renacer-muro');
+  return mensajes;
+}
+
+export function publicarEnMuro(
+  body: string,
+  credencial: CredencialCarnet,
+): Promise<{ id: string }> {
+  return pedir<{ id: string }>('/api/renacer-muro', {
+    method: 'POST',
+    body: JSON.stringify({ body, ...credencial }),
+  });
+}
+
 /**
  * La credencial del carnet vive en `localStorage`: sobrevive al cierre del navegador,
  * que en campo es lo normal —la persona se registra, guarda el teléfono, y vuelve

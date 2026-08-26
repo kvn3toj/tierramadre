@@ -349,6 +349,16 @@ const RenacerAportador = lazyWithRetry(
   () => import('./pages/renacer/RenacerAportador'),
   'RenacerAportador',
 );
+// `/renacer/tribu` y `/renacer/entorno` NO van impresas: a diferencia de `/renacer/k/*`
+// y `/renacer/b/*`, estas dos pueden cambiar de nombre cuando haga falta (§3.4 · G-A.1).
+const RenacerTribu = lazyWithRetry(
+  () => import('./pages/renacer/RenacerTribu'),
+  'RenacerTribu',
+);
+const RenacerEntorno = lazyWithRetry(
+  () => import('./pages/renacer/RenacerEntorno'),
+  'RenacerEntorno',
+);
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'treasure' | 'ambassadors';
@@ -1120,6 +1130,22 @@ function InvitationRouter() {
         element={
           <Suspense fallback={<LocalizedLoading messageKey="general" />}>
             <RenacerCarnet />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/renacer/tribu"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerTribu />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/renacer/entorno"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerEntorno />
           </Suspense>
         }
       />

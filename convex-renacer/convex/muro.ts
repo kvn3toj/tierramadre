@@ -25,7 +25,21 @@ export const mensajes = query({
       .filter((m) => m.hiddenAt === undefined)
       .map((m) => ({
         id: m._id,
-        authorName: m.authorName,
+        /**
+         * **Solo el nombre de pila**, aunque se guarde el completo.
+         *
+         * El muro se lee SIN credencial —cualquiera que abra `/renacer/entorno` lo ve—,
+         * así que es la superficie más expuesta de todo el flujo. Firmar un desahogo con
+         * el nombre completo de una damnificada la identifica ante cualquiera, y eso no
+         * lo consintió: el consentimiento del §10.3 es para que el aportador vea
+         * identidades, no para publicarlas en un muro abierto.
+         *
+         * El carnet ya recorta igual (§ D-1). Que dos pantallas del mismo flujo
+         * mostraran distinto era la inconsistencia; esta es la que manda.
+         *
+         * El nombre completo sigue guardado: moderar sin saber quién escribió no se puede.
+         */
+        authorName: m.authorName.trim().split(/\s+/)[0] ?? m.authorName,
         body: m.body,
         createdAt: m.createdAt,
       }));
