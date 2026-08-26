@@ -99,6 +99,21 @@
     },
     "api/mp-webhook.ts": {
       "maxDuration": 15
+    },
+    "api/renacer-kit.ts": {
+      "maxDuration": 15
+    },
+    "api/renacer-registro.ts": {
+      "maxDuration": 15
+    },
+    "api/renacer-carnet.ts": {
+      "maxDuration": 15
+    },
+    "api/renacer-tribu.ts": {
+      "maxDuration": 15
+    },
+    "api/renacer-muro.ts": {
+      "maxDuration": 15
     }
   },
   "headers": [

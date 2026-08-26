@@ -327,6 +327,29 @@ const PedidoConfirmadoPage = lazyWithRetry(
   'PedidoConfirmadoPage',
 );
 
+// Campaña Renacer — públicas, sin shell y sin auth.
+// `/renacer/k/:codigo` es la URL IMPRESA en cada estuche y `/renacer/b/:numero` la del
+// carnet: son CONTRATOS PERMANENTES desde el 2026-08-25 (compuerta §3.4 · G-A.1 del spec
+// `docs/superpowers/specs/2026-08-25-renacer-qr-flow-design.md`). Hay estuches impresos
+// que apuntan a esos paths — no se renombran, no se reusan y no se borran, ni siquiera
+// cuando lo que sirven cambie por completo.
+const RenacerPuerta = lazyWithRetry(
+  () => import('./pages/renacer/RenacerPuerta'),
+  'RenacerPuerta',
+);
+const RenacerBeneficiario = lazyWithRetry(
+  () => import('./pages/renacer/RenacerBeneficiario'),
+  'RenacerBeneficiario',
+);
+const RenacerCarnet = lazyWithRetry(
+  () => import('./pages/renacer/RenacerCarnet'),
+  'RenacerCarnet',
+);
+const RenacerAportador = lazyWithRetry(
+  () => import('./pages/renacer/RenacerAportador'),
+  'RenacerAportador',
+);
+
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'treasure' | 'ambassadors';
 
@@ -1063,6 +1086,40 @@ function InvitationRouter() {
         element={
           <Suspense fallback={<LocalizedLoading messageKey="general" />}>
             <PedidoConfirmadoPage />
+          </Suspense>
+        }
+      />
+      {/* Campaña Renacer. `/renacer/k/:codigo` y `/renacer/b/:numero` son contratos
+          permanentes: van impresos / en el QR del carnet (§3.4 · G-A.1). */}
+      <Route
+        path="/renacer"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerPuerta />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/renacer/k/:codigo"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerBeneficiario />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/renacer/ayudar"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerAportador />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/renacer/b/:numero"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerCarnet />
           </Suspense>
         }
       />
