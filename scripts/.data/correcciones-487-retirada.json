@@ -1,0 +1,20 @@
+{
+  "meta": {
+    "titulo": "#487: ESTADO vacío → RETIRADA (post-deploy del vocabulario, PR #150)",
+    "sot": "1oRw1KSh8L1CyjUnD_D1S8a3J3ewJ_V8lN1BFR-7Bv9U",
+    "tab": "Inventario",
+    "generado": "2026-08-25",
+    "fuente": "Auditoría 2026-08-24, duplicados lógicos 7/8; vocabulario RETIRADA desplegado vía PR #150"
+  },
+  "updates": [
+    {
+      "itemId": "487",
+      "campo": "ESTADO",
+      "col": "Q",
+      "valorActual": "",
+      "valorNuevo": "RETIRADA",
+      "modo": "replace",
+      "nota": "El vacío del 24-ago no era ingerible por el pull ('' → DISPONIBLE, legacy default). Con RETIRADA en el vocabulario, el pull ya puede aterrizarlo en Convex."
+    }
+  ]
+}

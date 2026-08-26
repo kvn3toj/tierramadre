@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "titulo": "#487/#491 retiradas: ESTADO a vacío · #383 Shou: despublicar del catálogo — solo #491",
+    "sot": "1oRw1KSh8L1CyjUnD_D1S8a3J3ewJ_V8lN1BFR-7Bv9U",
+    "tab": "Inventario",
+    "generado": "2026-08-24",
+    "fuente": "Auditoría 2026-08-24 (duplicados lógicos 7 y 8) + fusión C-019 aplicada al SOT el 2026-08-20",
+    "nota": "ESTADO va a '' (vacío) y NO a 'RETIRADA': el enum de Convex (schema.ts, productInventory.estado) y PRODUCT_ESTADOS en src/data/vocabularies.ts son listas cerradas donde 'RETIRADA' no existe — escribirla rompería la validación del sync. El vacío ya es válido y está en uso (9 filas); la retirada queda documentada en el nombre y la observación de cada fila."
+  },
+  "updates": [
+    {
+      "itemId": "491",
+      "campo": "ESTADO",
+      "col": "Q",
+      "valorActual": "DISPONIBLE",
+      "valorNuevo": "",
+      "modo": "replace",
+      "nota": "Fila retirada por duplicado de #543 (el nombre ya lo dice, Cant. 0, despublicada). Mismo mecanismo que #487."
+    }
+  ]
+}

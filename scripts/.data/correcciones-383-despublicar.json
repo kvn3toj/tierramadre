@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "titulo": "#487/#491 retiradas: ESTADO a vacío · #383 Shou: despublicar del catálogo — solo #383",
+    "sot": "1oRw1KSh8L1CyjUnD_D1S8a3J3ewJ_V8lN1BFR-7Bv9U",
+    "tab": "Inventario",
+    "generado": "2026-08-24",
+    "fuente": "Auditoría 2026-08-24 (duplicados lógicos 7 y 8) + fusión C-019 aplicada al SOT el 2026-08-20",
+    "nota": "ESTADO va a '' (vacío) y NO a 'RETIRADA': el enum de Convex (schema.ts, productInventory.estado) y PRODUCT_ESTADOS en src/data/vocabularies.ts son listas cerradas donde 'RETIRADA' no existe — escribirla rompería la validación del sync. El vacío ya es válido y está en uso (9 filas); la retirada queda documentada en el nombre y la observación de cada fila."
+  },
+  "updates": [
+    {
+      "itemId": "383",
+      "campo": "mostrarEnCatalogo",
+      "col": "Y",
+      "valorActual": "true",
+      "valorNuevo": false,
+      "modo": "replace",
+      "nota": "Shou quedó en 0 unidades el 20-ago (fusión a #381 Partículas de Luz) pero sigue publicado en el catálogo público. Se despublica; su ESTADO queda como está (DISPONIBLE con 0 unidades, mismo criterio que la fila ya aplicó a Teia). Se escribe como booleano JSON false (RAW no parsea strings; \"FALSE\" texto rompería la columna de checkbox)."
+    }
+  ]
+}

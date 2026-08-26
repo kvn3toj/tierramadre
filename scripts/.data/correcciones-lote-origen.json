@@ -1,0 +1,286 @@
+{
+  "meta": {
+    "generado": "2026-08-23",
+    "fuente": "Presentación \"Ver lote Origen\" (18 certificados), leída 2026-08-23",
+    "presentacion": "https://docs.google.com/presentation/d/1ynkvclgEPGM3epnoecqzm1DZ8bKv024dQPXC3jqnU_U/edit",
+    "principio": "Solo correcciones que NO dependen del conflicto GIA ni del recosteo Extrafine/Fine.",
+    "modo_observacion": "APPEND — nunca reemplazar. Requiere que la limpieza del paso 0 ya haya corrido."
+  },
+  "paso_0_limpieza_fuga": {
+    "descripcion": "Eliminar de `observacion` toda frase de piso de negociación antes de cualquier append.",
+    "items": [
+      482,
+      544,
+      545,
+      546,
+      549,
+      550,
+      551,
+      553,
+      554
+    ],
+    "regex_a_eliminar": "\\s*Piso de negociación \\$[\\d\\.]+ \\(× ?[\\d\\.]+\\)\\s*—\\s*INTERNO, no se anuncia\\.?",
+    "verificacion": "Tras limpiar, `products:getPublicByItem` no debe devolver la subcadena 'Piso de negociación' ni 'INTERNO' en ningún ítem publicado.",
+    "nota": "Si el piso de negociación debe conservarse, moverlo a un campo interno que getPublicByItem NO proyecte. NO dejarlo en observacion."
+  },
+  "correcciones": [
+    {
+      "item": 549,
+      "nombre": "Luz de la Montaña",
+      "cambios": {
+        "calidad": {
+          "de": "F1",
+          "a": "NO OIL"
+        }
+      },
+      "evidencia": "Reporte 025892 · Extrafine · NO OIL (Lote Origen · 00-2)",
+      "observacion_append": "Calidad corregida 2026-08-23: F1 → NO OIL. Reporte 025892 (Extrafine, sin indicaciones de embellecimiento). Fuente: Presentación \"Ver lote Origen\" (18 certificados), leída 2026-08-23. El F1 previo era herencia de lote, no lectura de certificado."
+    },
+    {
+      "item": 551,
+      "nombre": "Latido de la Tierra",
+      "cambios": {
+        "calidad": {
+          "de": "F1",
+          "a": "NO OIL"
+        },
+        "medidas": {
+          "de": "9.5 × 7 mm",
+          "a": "9.58 × 7.01 × 4.16 mm"
+        }
+      },
+      "evidencia": "Reporte 028563 · Extrafine · NO OIL · dimensiones 9,58 × 7,01 × 4,16 mm · PDF leído directamente",
+      "observacion_append": "Calidad corregida 2026-08-23: F1 → NO OIL, y medidas a 3 ejes. Reporte 028563: 'Sin indicaciones de embellecimiento de claridad', 9,58 × 7,01 × 4,16 mm, Lágrima/Pear, Verde Vívido, Colombia + formación Muzo. Fuente: PDF del certificado + Presentación \"Ver lote Origen\" (18 certificados), leída 2026-08-23."
+    },
+    {
+      "item": 553,
+      "nombre": "Alma Ancestral",
+      "cambios": {
+        "calidad": {
+          "de": "F1",
+          "a": "NO OIL"
+        },
+        "peso": {
+          "de": 0.86,
+          "a": 0.84
+        }
+      },
+      "evidencia": "Reporte 028562 · Extrafine · NO OIL · 0,84 ct",
+      "observacion_append": "Calidad corregida 2026-08-23: F1 → NO OIL (reporte 028562, Extrafine). Peso corregido 0,86 → 0,84 ct: la presentación dice 0,84 y el costoBaseCOP vigente ($3.127.793) es exactamente 0,84 × $3.723.563/ct. Esto cierra la desviación de tarifa de −2,33% que el ítem arrastraba. Fuente: Presentación \"Ver lote Origen\" (18 certificados), leída 2026-08-23."
+    },
+    {
+      "item": 552,
+      "nombre": "Corazón Valiente",
+      "cambios": {
+        "calidad": {
+          "de": "F2",
+          "a": "NO OIL"
+        },
+        "medidas": {
+          "de": "5.46 × 5.02 mm",
+          "a": "5.01 × 5.45 × 4.08 mm"
+        },
+        "costoBaseCOP": {
+          "de": 0,
+          "a": 5632706
+        },
+        "precioFinalCOP": {
+          "de": "",
+          "a": 25347177
+        }
+      },
+      "evidencia": "Reporte 025888 · PDF leído directamente · 0,56 ct · 5,01 × 5,45 × 4,08 mm · Corazón · Verde Vívido · sin indicaciones de embellecimiento",
+      "observacion_append": "Costeado y corregido 2026-08-23. El reporte 025888 cae DENTRO del bloque del Lote Origen (025887–025893), no en la serie 0285xx del Lote 170 — eso resuelve la decisión que el ítem tenía abierta ('SIN COSTAR hasta definir el lote'). Tarifa Extrafine: 0,56 ct × $10.058.404/ct = $5.632.706. Precio $25.347.177 = costo × 4,5 (markup del lote). Calidad F2 → NO OIL y medidas a 3 ejes, ambas del certificado. NOTA: el 025888 NO aparece entre los 18 de la presentación, así que hay al menos 2 reportes fuera de ella (025888 y 025889)."
+    },
+    {
+      "item": 554,
+      "nombre": "Arrecife",
+      "cambios": {
+        "calidad": {
+          "de": "F1",
+          "a": "F2"
+        }
+      },
+      "evidencia": "Reporte 028613 · Fine · F2 moderado",
+      "observacion_append": "Calidad corregida 2026-08-23: F1 → F2. Reporte 028613 está en el bloque Fine / F2 moderado. La tarifa baja ($3.723.563/ct) que ya tenía es la correcta para Fine; lo que estaba mal era la etiqueta. Fuente: Presentación \"Ver lote Origen\" (18 certificados), leída 2026-08-23."
+    },
+    {
+      "item": 484,
+      "nombre": "Magia",
+      "cambios": {
+        "calidad": {
+          "de": "Extra Fina F2",
+          "a": "Fine F2"
+        }
+      },
+      "evidencia": "Reporte 028619 · Fine · F2 moderado · el PDF dice 'Indicaciones de embellecimiento de claridad'",
+      "observacion_append": "Calidad corregida 2026-08-23: 'Extra Fina F2' → 'Fine F2'. El reporte 028619 está en el bloque Fine, no Extrafine; el 'Extra' sobraba. El tratamiento sí es correcto: el PDF dice 'Indicaciones de embellecimiento de claridad'. Fuente: Presentación \"Ver lote Origen\" (18 certificados), leída 2026-08-23. SIGUE SIN COSTEAR: falta definir si sale del Lote piedra Lágrima ($65.000.000 = $14.639.640/ct) o del Lote 170 ($16.532.620)."
+    },
+    {
+      "item": 483,
+      "nombre": "Gratitud",
+      "cambios": {
+        "color": {
+          "de": "",
+          "a": "Verde Vívido"
+        },
+        "medidas": {
+          "de": "",
+          "a": "6.02 × 6.78 × 4.35 mm"
+        }
+      },
+      "evidencia": "Reporte 028564 · PDF leído directamente · Extrafine NO OIL · Corazón · Colombia + formación Muzo",
+      "observacion_append": "Color y medidas cargados 2026-08-23 del reporte 028564: Verde Vívido, 6,02 × 6,78 × 4,35 mm (el certificado lista ancho antes de largo, natural en corte corazón — se preserva el orden del certificado). Calidad NO OIL ya era correcta. SIGUE SIN COSTEAR: es Extrafine y la tarifa que se le había estimado era la Fine — ver la decisión abierta del recosteo."
+    }
+  ],
+  "lote": {
+    "C-090": {
+      "pesoTotalQuilates": {
+        "de": 21.21,
+        "a": 21.25
+      },
+      "razon": "El desfase de 0,04 ct es el ajuste 0,52 → 0,56 de #552, que se aplicó al ítem pero no al total del lote. Suma verificada de los 11 ítems = 21,25.",
+      "atencion": "Si además se aplica la corrección de peso de #553 (0,86 → 0,84), el total pasa a 21,23. Aplicar AMBAS y recalcular, no una sola."
+    }
+  },
+  "congelados_no_tocar": [
+    {
+      "item": 544,
+      "nombre": "Viaje Estelar",
+      "calidad_actual": "F1",
+      "calidad_segun_presentacion": "NO OIL",
+      "razon": "CONFLICTO: GIA 2231993415 (jun-2026) dice 'Clarity Enhanced (F1)'. Medidas idénticas (12,91 × 6,78 × 5,88) ⇒ misma piedra. NO TOCAR hasta resolver."
+    },
+    {
+      "item": 545,
+      "nombre": "Sentir de la Montaña",
+      "calidad_actual": "F1",
+      "calidad_segun_presentacion": "NO OIL",
+      "razon": "CONFLICTO: GIA 2235993538 dice 'Clarity Enhanced (F1)'. Medidas idénticas (10,09 × 5,59 × 4,80) ⇒ misma piedra. NO TOCAR."
+    },
+    {
+      "item": 550,
+      "nombre": "Libertad",
+      "calidad_actual": "F1",
+      "calidad_segun_presentacion": "NO OIL",
+      "razon": "CONFLICTO: GIA 2235993408 dice 'Clarity Enhanced (F1)'. Medidas idénticas (6,78 × 5,44 × 4,16) ⇒ misma piedra. NO TOCAR."
+    }
+  ],
+  "no_incluido_a_proposito": {
+    "recosteo_extrafine": {
+      "monto": 29983652,
+      "items": [
+        551,
+        550,
+        553,
+        483
+      ],
+      "razon": "Requiere confirmar si existe factura separada del Lote 170. Si el rate $3.723.563/ct salió de las tablas Extrafine/Fine (como dicen las notas) y no de una factura, estas 4 piedras Extrafine están en la fila equivocada. Depende además de resolver el conflicto GIA.",
+      "detalle": {
+        "551": {
+          "hoy": 5510873,
+          "extrafine": 14886438
+        },
+        "550": {
+          "hoy": 3723563,
+          "extrafine": 10058404
+        },
+        "553": {
+          "hoy": 3127793,
+          "extrafine": 8449059
+        },
+        "483": {
+          "hoy": 0,
+          "extrafine": 8951980
+        }
+      }
+    },
+    "medidas_3_ejes_GIA": {
+      "items": [
+        545,
+        550
+      ],
+      "razon": "Sus profundidades (4,80 y 4,16 mm) vienen del GIA, y esos dos ítems están congelados por el conflicto. Se aplican junto con la resolución."
+    }
+  },
+  "certificados": {
+    "descripcion": "certificadoUrl para los 8 ítems cuyo certificado se subió a Drive el 2026-08-23.",
+    "convencion": "fotosintesis/{lote}/{item}-cert/ — misma que usan los 368 ítems que ya tenían certificadoUrl.",
+    "escribir_en": "columna AM (certificadoUrl). Usar SIEMPRE la url_jpg: es la que el carrusel puede renderizar. El PDF queda en la misma carpeta como documento fuente.",
+    "permiso": "anyone/reader/allowFileDiscovery=false — verificado con lectura anónima, 8/8 devuelven image/jpeg 200.",
+    "items": [
+      {
+        "item": 483,
+        "lote": "C-069",
+        "laboratorio": "Tierra Madre",
+        "reporte": "028564",
+        "certificadoUrl": "https://drive.google.com/uc?export=view&id=1iB-cdiFOAHkBAQcZKNfILTK_2rs3ut2B",
+        "pdf_fuente": "https://drive.google.com/file/d/152Qpy15Be8Uo6lkXgY3xfx7cd8p76OPt/view",
+        "carpetaDrive": "1HlTzn9QfzY15jTSxJda6N-ddTTtHCw4y"
+      },
+      {
+        "item": 484,
+        "lote": "C-069",
+        "laboratorio": "Tierra Madre",
+        "reporte": "028619",
+        "certificadoUrl": "https://drive.google.com/uc?export=view&id=1e5skXUxCSaUCCovYJbItgrwdUydY8-U9",
+        "pdf_fuente": "https://drive.google.com/file/d/1HZatVbcXo1RokbzPtxAEyIeolXcn-kiV/view",
+        "carpetaDrive": "14Ko9ShrBPerj3OQ5x3suS70ZdsRTEgNU"
+      },
+      {
+        "item": 544,
+        "lote": "C-090",
+        "laboratorio": "GIA",
+        "reporte": "2231993415",
+        "certificadoUrl": "https://drive.google.com/uc?export=view&id=1YDo4sxjhcLhPqucFRSTzWV1cAk3qY0Vv",
+        "pdf_fuente": "https://drive.google.com/file/d/1ZwKdz2vtK6KL8mznLX-k5EgepO0L51bh/view",
+        "carpetaDrive": "1q-UATLKjt_U_9R_-dKQb6QTfrycXIU2P"
+      },
+      {
+        "item": 545,
+        "lote": "C-090",
+        "laboratorio": "GIA",
+        "reporte": "2235993538",
+        "certificadoUrl": "https://drive.google.com/uc?export=view&id=1TUkYmloD4Hv6ovtQEtmy8oGCVPUaF34-",
+        "pdf_fuente": "https://drive.google.com/file/d/1HJEG271Bknum1h0HxOD9DCeNIpgLiotV/view",
+        "carpetaDrive": "1Tl0St2FLkpkTqjoqhvshC8QTMdSboXQv"
+      },
+      {
+        "item": 546,
+        "lote": "C-090",
+        "laboratorio": "Tierra Madre",
+        "reporte": "025893",
+        "certificadoUrl": "https://drive.google.com/uc?export=view&id=1NkFpXzVBLLdd_YaLCvMyH_lMAjO0cco1",
+        "pdf_fuente": "https://drive.google.com/file/d/1XYC3D3EM16xTyc3pjIxUwuBiVBen3g9Q/view",
+        "carpetaDrive": "1YdvdgoeGlGSrB93ICNd5GaN66OApWKhI"
+      },
+      {
+        "item": 550,
+        "lote": "C-090",
+        "laboratorio": "GIA",
+        "reporte": "2235993408",
+        "certificadoUrl": "https://drive.google.com/uc?export=view&id=1L96kvSf0tKPVjN5mNtyn0S6jBSjCK5zh",
+        "pdf_fuente": "https://drive.google.com/file/d/1Y6nGiSvsIVjXqJiHQGrdIXcV-ghx8nS7/view",
+        "carpetaDrive": "1eIxsHMKIj53HYRdCHPEm0Pptw7Gsg-PM"
+      },
+      {
+        "item": 551,
+        "lote": "C-090",
+        "laboratorio": "Tierra Madre",
+        "reporte": "028563",
+        "certificadoUrl": "https://drive.google.com/uc?export=view&id=1PdMKSoQUiKQFToQRnM0rvhkPcLDZhoB-",
+        "pdf_fuente": "https://drive.google.com/file/d/1z-UsQhNlK5FsJuf-YqcX7z9MRTj-WAM9/view",
+        "carpetaDrive": "1hVgg4MhmxLoekhLPeaxepQmZEw9pzNJd"
+      },
+      {
+        "item": 552,
+        "lote": "C-090",
+        "laboratorio": "Tierra Madre",
+        "reporte": "025888",
+        "certificadoUrl": "https://drive.google.com/uc?export=view&id=11NUXkMeWeerU-ZgbldgJqmYsq6Zd7ypk",
+        "pdf_fuente": "https://drive.google.com/file/d/1SBl2MYpCwsUxo5KcLNLsTT3HzreO7xiJ/view",
+        "carpetaDrive": "1IzWOPhrCKO_VHRB3d9PEjH0JSianILoW"
+      }
+    ]
+  }
+}

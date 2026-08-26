@@ -1,0 +1,20 @@
+{
+  "meta": {
+    "titulo": "#93 → RETIRADA (duplicados §8, decisión Kevin 2026-08-25)",
+    "sot": "1oRw1KSh8L1CyjUnD_D1S8a3J3ewJ_V8lN1BFR-7Bv9U",
+    "tab": "Inventario",
+    "generado": "2026-08-25",
+    "fuente": "RESUMEN-AUDITORIA-2026-08-24.md §3/§8; decisión explícita de Kevin vía AskUserQuestion (sesión tierramadre-a9, 2026-08-25). #363 además se despublica del catálogo (mutación products._setMostrarEnCatalogo, PR #150). #471/#472 vs #467–#470 queda EXPRESAMENTE fuera: Kevin pidió verlos antes de decidir."
+  },
+  "updates": [
+    {
+      "itemId": "93",
+      "campo": "ESTADO",
+      "col": "Q",
+      "valorActual": "DISPONIBLE",
+      "valorNuevo": "RETIRADA",
+      "modo": "replace",
+      "nota": "Dividido el 12-ago en #93A Romeo y #93B Julieta (la observación lo documenta: «Padre retirado para evitar doble venta; la fila y el QR siguen vivos»). Cant. 0, Convex ya lo tiene despublicado."
+    }
+  ]
+}

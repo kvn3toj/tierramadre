@@ -1,0 +1,106 @@
+{
+  "meta": {
+    "titulo": "#546 Planeta Verde — correcciones desde el certificado 025893",
+    "sot": "1oRw1KSh8L1CyjUnD_D1S8a3J3ewJ_V8lN1BFR-7Bv9U",
+    "tab": "Inventario",
+    "gid": 1819792669,
+    "generado": "2026-08-23",
+    "reglaObservacion": "col AA se ANEXA, no se reemplaza",
+    "fuente": "Certificado de laboratorio nº 025893, 6-dic-2024, aportado por el dueño 23-ago-2026"
+  },
+  "updates": [
+    {
+      "itemId": "546",
+      "campo": "Calidad",
+      "col": "F",
+      "valorActual": "F1",
+      "valorNuevo": "NO OIL",
+      "modo": "replace",
+      "nota": "⚠️ EL CAMBIO IMPORTANTE. El certificado dice \"Sin indicaciones de embellecimiento de claridad / No indications of clarity enhancement\". Eso es NO OIL, la categoría más alta de CALIDADES. F1 implica tratamiento leve, que la piedra no tiene."
+    },
+    {
+      "itemId": "546",
+      "campo": "Color",
+      "col": "E",
+      "valorActual": "Verde Muzo",
+      "valorNuevo": "Verde Vívido",
+      "modo": "replace",
+      "nota": "El certificado dice \"Verde Vívido / Vivid Green\" y en Origen solo pone \"Colombia\" — NO atribuye mina. Compárese con el cert. 028619 de #484 Magia, que sí dice \"formación Muzo\" explícitamente."
+    },
+    {
+      "itemId": "546",
+      "campo": "Medidas",
+      "col": "I",
+      "valorActual": "13.41 × 6.46 mm",
+      "valorNuevo": "13.40 × 6.47 × 5.48 mm",
+      "modo": "replace",
+      "nota": "El SOT tenía 2 ejes, invertidos y sin profundidad. Con los 3 ejes el peso calculado da 3,88 ct contra 3,87 declarados (100%). Se escribe en orden largo × ancho × profundidad."
+    },
+    {
+      "itemId": "546",
+      "campo": "Corte",
+      "col": "H",
+      "valorActual": "Octogonal",
+      "valorNuevo": "Esmeralda",
+      "modo": "replace",
+      "nota": "El certificado dice \"Esmeralda / Emerald\". El corte esmeralda ES el octogonal escalonado, y \"Esmeralda\" ya existía en Listas. Ver Pendiente 1."
+    },
+    {
+      "itemId": "546",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "Alta 12-ago-2026 desde la hoja \"Inventario 12 Agosto\". Sin costo: la hoja no lo trae. NO ofertable hasta costear. · Costo cargado 2026-08-20: report 025893 (Lote Origen · 00-5), 3.87 ct × $10.058.404/ct lapidado. Fuente: tablas Extrafine/Fine + presentación \"Ver lote Origen\". loteId sin tocar. · Precio de lista 2026-08-21: $175.167.099 = costo × 4.5 (Nivel A, modelo calibrado 2026-08-20). Piso de negociación $136.241.077 (× 3.5) — INTERNO, no se anuncia. Lote Origen · 00-5.",
+      "valorNuevo": "Certificado 025893 (6-dic-2024) leído 23-ago-2026: SIN indicaciones de embellecimiento de claridad → NO OIL, no F1. Color de certificado \"Verde Vívido\"; el origen solo dice \"Colombia\", NO atribuye mina. Forma \"Esmeralda / Emerald\". Dimensiones 6,47 × 13,40 × 5,48 mm (el peso calculado da 3,88 ct vs 3,87 declarados, 100%). Comentario del laboratorio: residuos del proceso de talla. · Alta 12-ago-2026 desde la hoja \"Inventario 12 Agosto\". Sin costo: la hoja no lo trae. NO ofertable hasta costear. · Costo cargado 2026-08-20: report 025893 (Lote Origen · 00-5), 3.87 ct × $10.058.404/ct lapidado. Fuente: tablas Extrafine/Fine + presentación \"Ver lote Origen\". loteId sin tocar. · Precio de lista 2026-08-21: $175.167.099 = costo × 4.5 (Nivel A, modelo calibrado 2026-08-20). Piso de negociación $136.241.077 (× 3.5) — INTERNO, no se anuncia. Lote Origen · 00-5.",
+      "modo": "append",
+      "nota": "Cierra la trazabilidad: el report 025893 que ya citaba la observación es este certificado."
+    },
+    {
+      "itemId": "546",
+      "campo": "certificadoUrl",
+      "col": "AM",
+      "valorActual": "",
+      "valorNuevo": "<URL_DRIVE_CERT_025893>",
+      "modo": "replace",
+      "nota": "⚠️ BLOQUEADO: hay que subir el PDF a Drive y poner el enlace. Sin certificado enlazado no se sostiene un precio de US$14.849/ct. 368 de 545 ítems ya tienen certificadoUrl; este no."
+    }
+  ],
+  "noSeToca": [
+    {
+      "campo": "costoBaseCOP",
+      "valor": 38926022,
+      "motivo": "VERIFICADO: $38.926.022 ÷ 3,87 ct = $10.058.404/ct exacto, igual a lo declarado en la observación. No se toca."
+    },
+    {
+      "campo": "precioFinalCOP",
+      "valor": 175167099,
+      "motivo": "Queda como está. Pasar de F1 a NO OIL sube la banda de mercado (la referencia dice que \"no oil\" cotiza 60–100% sobre \"minor oil\"), pero subir el precio es decisión comercial, no una corrección de dato. Ver Pendiente 3."
+    }
+  ],
+  "pendientes": [
+    {
+      "n": 1,
+      "tema": "\"Octogonal\" vs \"Esmeralda\" en las otras 5",
+      "detalle": "#544, #545, #549, #550 declaran corte Octogonal igual que #546. Si sus certificados también dicen \"Esmeralda\", hay que unificar — y entonces `Octogonal`, que agregamos a Listas el 12-ago, sobra y bifurca el vocabulario."
+    },
+    {
+      "n": 2,
+      "tema": "Las 11 de C-090 dicen \"Verde Muzo\" sin respaldo",
+      "detalle": "El único certificado que tenemos (el de #546) no atribuye mina. Si los otros diez tampoco, llamarlas Muzo en el catálogo es una afirmación de origen que ningún laboratorio respaldó. En esmeraldas eso es delicado comercialmente."
+    },
+    {
+      "n": 3,
+      "tema": "Revisar el multiplicador de precio para NO OIL",
+      "detalle": "CALIDAD_FACTORS solo premia +15% al pasar de F1 (1,00) a NO OIL (1,15), y el propio código lo marca como \"seeded defaults, not blessed numbers\". El mercado premia 60–100%. Con el precio actual de US$14.849/ct la piedra queda conservadora; la banda defendible sería $280M–$350M."
+    },
+    {
+      "n": 4,
+      "tema": "Las 11 fichas tienen solo 2 ejes y ningún certificadoUrl",
+      "detalle": "Todas se cargaron desde la hoja del 12-ago, que traía largo × ancho. Los certificados tienen los 3 ejes. Hay que recuperar profundidad y enlazar certificado en las 11."
+    },
+    {
+      "n": 5,
+      "tema": "Desvíos de tarifa ya detectados en C-090",
+      "detalle": "#544 +0,24%, #549 +0,87%, #553 −2,33% respecto de las dos tarifas del lote ($10.058.404/ct y $3.723.563/ct). #548 y #552 siguen en costo 0. Y C-090 tiene costoTotalCOP = 0 en Lotes mientras sus ítems suman $147.616.861."
+    }
+  ]
+}

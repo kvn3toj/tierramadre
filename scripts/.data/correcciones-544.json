@@ -1,0 +1,88 @@
+{
+  "meta": {
+    "titulo": "#544 Viaje Estelar — correcciones desde el GIA 2231993415",
+    "sot": "1oRw1KSh8L1CyjUnD_D1S8a3J3ewJ_V8lN1BFR-7Bv9U",
+    "tab": "Inventario",
+    "gid": 1819792669,
+    "generado": "2026-08-23",
+    "reglaObservacion": "col AA se ANEXA, no se reemplaza",
+    "fuente": "GIA Emerald Origin Report nº 2231993415, 25-jun-2026",
+    "nota546": "Las medidas de #546 ya están en correcciones-546.json (13.40 × 6.47 × 5.48 mm, cert. 025893). No se duplican aquí."
+  },
+  "updates": [
+    {
+      "itemId": "544",
+      "campo": "Medidas",
+      "col": "I",
+      "valorActual": "12.91 × 6.78 mm",
+      "valorNuevo": "12.91 × 6.78 × 5.88 mm",
+      "modo": "replace",
+      "nota": "El GIA da los 3 ejes; el SOT tenía 2. Con la profundidad el peso calculado da 4,20 ct contra 4,10 certificados (102%), consistente para step cut."
+    },
+    {
+      "itemId": "544",
+      "campo": "costoBaseCOP",
+      "col": "L",
+      "valorActual": 41340039,
+      "valorNuevo": 41239456,
+      "modo": "replace",
+      "nota": "⚠️ El costeo usó 4.11 ct (así lo dice la propia observación) pero el GIA certifica 4.10. 4,10 × $10.058.404/ct = $41.239.456. Sobreestimado en $100.583."
+    },
+    {
+      "itemId": "544",
+      "campo": "precioFinalCOP",
+      "col": "M",
+      "valorActual": 186030176,
+      "valorNuevo": 185577554,
+      "modo": "replace",
+      "nota": "Arrastra la corrección del costo, manteniendo el mismo × 4,5 del modelo del 20-ago. Diferencia −$452.622."
+    },
+    {
+      "itemId": "544",
+      "campo": "observacion",
+      "col": "AA",
+      "valorActual": "Alta 12-ago-2026 desde la hoja \"Inventario 12 Agosto\". Sin costo: la hoja no lo trae. NO ofertable hasta costear. · Costo cargado 2026-08-20: report 025890 (Lote Origen · 00-4), 4.11 ct × $10.058.404/ct lapidado. Fuente: tablas Extrafine/Fine + presentación \"Ver lote Origen\". loteId sin tocar. · Precio de lista 2026-08-21: $186.030.176 = costo × 4.5 (Nivel A, modelo calibrado 2026-08-20). Piso de negociación …",
+      "valorNuevo": "GIA Emerald Origin Report 2231993415 (25-jun-2026) leído 23-ago-2026: 4.10 ct, 12.91 × 6.78 × 5.88 mm, Octagonal, Step Cut, Clarity Enhanced (F1), color \"Green\", transparencia Transparent, especie Natural Beryl. ORIGEN GEOGRÁFICO: Colombia — el GIA NO atribuye Muzo. CORRECCIÓN DE COSTO: el costeo del 20-ago usó 4.11 ct; el GIA certifica 4.10. costoBaseCOP baja de $41.340.039 a $41.239.456 (−$100.583) y el precio de $186.030.176 a $185.577.554. Con esto el nivel alto de C-090 (#544, #545, #546) queda parejo en $10.058.404/ct. · Alta 12-ago-2026 desde la hoja \"Inventario 12 Agosto\". Sin costo: la hoja no lo trae. NO ofertable hasta costear. · Costo cargado 2026-08-20: report 025890 (Lote Origen · 00-4), 4.11 ct × $10.058.404/ct lapidado. Fuente: tablas Extrafine/Fine + presentación \"Ver lote Origen\". loteId sin tocar. · Precio de lista 2026-08-21: $186.030.176 = costo × 4.5 (Nivel A, modelo calibrado 2026-08-20). Piso de negociación …",
+      "modo": "append",
+      "nota": ""
+    },
+    {
+      "itemId": "544",
+      "campo": "certificadoUrl",
+      "col": "AM",
+      "valorActual": "",
+      "valorNuevo": "<URL_DRIVE_GIA_2231993415>",
+      "modo": "replace",
+      "nota": "⚠️ BLOQUEADO hasta subir el PDF a Drive. Es un GIA — el documento con más peso comercial del inventario."
+    }
+  ],
+  "noSeToca": [
+    {
+      "campo": "Calidad",
+      "valor": "F1",
+      "motivo": "CONFIRMADO por el GIA: \"Clarity Enhanced (F1)\". El SOT ya estaba bien."
+    },
+    {
+      "campo": "Corte",
+      "valor": "Octogonal",
+      "motivo": "CONFIRMADO: el GIA dice \"Octagonal\". A diferencia de #546, cuyo certificado dice \"Esmeralda\". Son cortes distintos — `Octogonal` NO sobra del vocabulario."
+    },
+    {
+      "campo": "Peso (ct)",
+      "valor": 4.1,
+      "motivo": "CONFIRMADO por el GIA. Lo que estaba mal era el costeo, no el peso."
+    }
+  ],
+  "decisionPendiente": {
+    "campo": "Color",
+    "valorActual": "Verde Muzo",
+    "detalle": "El GIA es un ORIGIN REPORT — su propósito específico es determinar procedencia — y dice \"Colombia\", no Muzo. El color lo gradúa como \"Green\" a secas, no \"Vivid Green\". Van dos de dos: el cert. 025893 de #546 tampoco atribuye mina. Llamarla \"Verde Muzo\" contradice un GIA que está en la mano. NO se escribe sin tu decisión: el reemplazo obvio sería \"Verde\" o \"Verde Intenso\", ambos ya en el vocabulario."
+  },
+  "pendientes": [
+    "Las 11 de C-090 dicen \"Verde Muzo\" y ningún certificado lo respalda. Revisar el lote completo.",
+    "Faltan los certificados de las otras 9 piedras de C-090 (#545, #547–#554).",
+    "#548 Anillo Semilla y #552 Corazón Valiente siguen en costo 0.",
+    "C-090 tiene costoTotalCOP = 0 en Lotes mientras sus ítems suman $147.616.861.",
+    "#553 Alma Ancestral desvía −2,33% de la tarifa baja; puede ser el mismo tipo de error de peso que #544."
+  ]
+}
