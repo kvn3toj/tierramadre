@@ -49,18 +49,81 @@ Desde el 31-08 los códigos no nacen de una compra sino de una **raíz** (el lí
 comunitario que invita). A cada raíz se le habilita un bloque numérico; ella reparte los
 códigos uno por persona, de una lista en papel si hace falta. Todo con `RENACER_OPS_TOKEN`:
 
+### De dónde sale el token de operador
+
+Todo lo de abajo lo pide, y el runbook nunca lo decía — era el agujero del procedimiento,
+no un detalle. El token vive en el deployment, no en el repo:
+
+```sh
+cd convex-renacer
+OPS=$(npx convex env get RENACER_OPS_TOKEN)        # dev
+OPS=$(npx convex env get --prod RENACER_OPS_TOKEN) # producción
+```
+
+> ⚠️ **`npx convex run` también apunta a dev por defecto.** El aviso de más arriba es
+> para `deploy`, pero el mismo pie se mete en `run`: sin `--prod` vas a emitir la raíz, o
+> a ocultar el mensaje, **en la base de datos equivocada** — y el síntoma es que no pasa
+> nada visible, que es el peor síntoma posible. Para producción, `--prod` en cada
+> `convex run`.
+
 ```sh
 cd convex-renacer
 
 # Pablo / Casamangles: código de raíz 100, reparte 101…199
-npx convex run raices:emitir '{"secret":"<OPS>","codigoBase":100,"tamano":100,"nombre":"Pablo","comunidad":"Casamangles","zona":"Cali"}'
+npx convex run raices:emitir '{"secret":"'$OPS'","codigoBase":100,"tamano":100,"nombre":"Pablo","comunidad":"Casamangles","zona":"Cali"}'
 
 # Mitchell: 200 → 201…299
-npx convex run raices:emitir '{"secret":"<OPS>","codigoBase":200,"tamano":100,"nombre":"Mitchell","comunidad":"Sevilla y Potrerito"}'
+npx convex run raices:emitir '{"secret":"'$OPS'","codigoBase":200,"tamano":100,"nombre":"Mitchell","comunidad":"Sevilla y Potrerito"}'
 
-npx convex run raices:listar '{"secret":"<OPS>"}'
-npx convex run raices:marcarEstado '{"secret":"<OPS>","codigoBase":100,"estado":"pausada"}'
+npx convex run raices:listar '{"secret":"'$OPS'"}'
+npx convex run raices:marcarEstado '{"secret":"'$OPS'","codigoBase":100,"estado":"pausada"}'
+
+# El día en que arrancó la campaña. Sin esto el contador de "días de campaña" no se
+# pinta — a propósito: la fecha es un hecho del negocio, no un default (D-0901-3).
+npx convex run stats:fijarInicio '{"secret":"'$OPS'","iniciadaEn":1756684800000}'
 ```
+
+### Moderar los muros
+
+Los dos muros públicos (`desahogo` y `gratitud`) los escribe gente en crisis y los lee
+cualquiera. Ocultar un mensaje se puede desde el día uno; lo que faltaba era decir cómo:
+
+```sh
+# 1. Encontrar el id (el muro no lo muestra en pantalla)
+curl -s "https://tierramadre.app/api/renacer-muro?wall=desahogo" | python3 -m json.tool
+
+# 2. Ocultarlo
+npx convex run --prod muro:ocultar '{"secret":"'$OPS'","id":"<id del paso 1>"}'
+```
+
+> **Esto es un procedimiento de emergencia, no una herramienta.** Exige laptop, repo,
+> auth de Convex y leer JSON a ojo — y **no tiene vuelta atrás**: `hiddenAt` se escribe
+> en un solo lugar y no se limpia en ninguno, así que un mensaje ocultado por error solo
+> se recupera desde el dashboard de Convex. La consola de operaciones (ventana aparte,
+> 2026-09-01) se lleva esto a una pantalla con des-ocultar incluido. Mientras tanto: el
+> cuello de botella real no son estos dos comandos, es que **nadie está mirando el muro**
+> — no hay botón de reportar ni aviso a nadie.
+
+### 🔑 El enlace del panel de la raíz — ENTRÉGALO, o el panel no existe para nadie
+
+`raices:emitir` devuelve un **`panelToken`**, y esa respuesta es la única vez que se ve.
+Con él se arma la URL que la raíz usa para repartir sus códigos:
+
+```
+https://tierramadre.app/renacer/r/{codigoBase}?t={panelToken}
+```
+
+Eso es lo que se le manda por WhatsApp. **Sin ese enlace la raíz no tiene panel**: la
+ruta existe desde el 2026-09-01 y nada en el repo la construía —era huérfana—, así que
+este párrafo es la única cosa que la hace alcanzable.
+
+- **Si se pierde el enlace**, se recupera re-corriendo `raices:emitir` con los MISMOS
+  datos: es idempotente por `codigoBase`, devuelve `yaExistia:true` y re-sirve el token
+  (y se lo acuña a una raíz emitida antes del 01-09, que no tenía).
+- `raices:listar` **no** lo devuelve, a propósito: es una credencial, no un dato de
+  inventario.
+- El token es la razón por la que `codigoBase` puede ser dictable sin que el panel quede
+  abierto — mismo argumento que el `cardToken` del carnet (D-1).
 
 Reglas que el backend hace cumplir: los bloques no se solapan; el código de la raíz
 (`codigoBase`) no se reparte; **un código, una persona** — el segundo registro con el
