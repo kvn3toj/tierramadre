@@ -8,7 +8,7 @@
  * código de kit adivinable fue "el flujo del código no lee, escribe", y acá sí se lee:
  * sin token, un número secuencial le mostraría a cualquiera el registro de un damnificado.
  *
- * Lo que muestra es lo que una entrega necesita — número, nombre de pila, código de kit.
+ * Lo que muestra es lo que una entrega necesita — número, nombre de pila, código y raíz.
  * **La dirección no está**, a propósito: quien entrega ya está ahí, y ponerla en una
  * pantalla que se muestra en público la expone sin que sirva para nada.
  */
@@ -20,6 +20,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import RenacerLayout, { useRenacerTokens } from './RenacerLayout';
 import { BotonSecundario } from './ui';
 import { leerCarnet, guardarCredencial, type Carnet } from './renacerApi';
+import { copy } from './renacerCopy';
 import { qeFont } from '../../design-system';
 
 export default function RenacerCarnet() {
@@ -111,9 +112,16 @@ export default function RenacerCarnet() {
         <Typography sx={{ fontFamily: qeFont.serif, fontSize: 26, color: t.text }}>
           {carnet.primerNombre}
         </Typography>
-        <Typography sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.subtle, mt: 0.5 }}>
-          Kit {carnet.kitCode}
-        </Typography>
+        {carnet.codigo !== null && (
+          <Typography sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.subtle, mt: 0.5 }}>
+            {copy.carnet.codigo(carnet.codigo)}
+          </Typography>
+        )}
+        {carnet.raiz && (
+          <Typography sx={{ fontFamily: qeFont.ui, fontSize: 13, color: t.subtle, mt: 0.25 }}>
+            {copy.carnet.raiz(carnet.raiz.nombre, carnet.raiz.comunidad)}
+          </Typography>
+        )}
       </Box>
 
       <Typography
@@ -125,7 +133,7 @@ export default function RenacerCarnet() {
 
       <Box sx={{ display: 'grid', gap: 1.5 }}>
         <BotonSecundario onClick={() => navegar('/renacer/tribu')}>
-          Ver el mapa de la tribu
+          Conocer las necesidades
         </BotonSecundario>
         <BotonSecundario onClick={() => navegar('/renacer/entorno')}>
           Muro y meditaciones

@@ -9,10 +9,14 @@
  */
 
 import type * as kits from "../kits.js";
+import type * as lib_bolsas from "../lib/bolsas.js";
+import type * as lib_codigos from "../lib/codigos.js";
 import type * as lib_guardas from "../lib/guardas.js";
 import type * as muro from "../muro.js";
+import type * as raices from "../raices.js";
 import type * as registro from "../registro.js";
 import type * as tribu from "../tribu.js";
+import type * as voluntarios from "../voluntarios.js";
 
 import type {
   ApiFromModules,
@@ -22,10 +26,14 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   kits: typeof kits;
+  "lib/bolsas": typeof lib_bolsas;
+  "lib/codigos": typeof lib_codigos;
   "lib/guardas": typeof lib_guardas;
   muro: typeof muro;
+  raices: typeof raices;
   registro: typeof registro;
   tribu: typeof tribu;
+  voluntarios: typeof voluntarios;
 }>;
 
 /**

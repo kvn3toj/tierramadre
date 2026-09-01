@@ -330,9 +330,9 @@ const PedidoConfirmadoPage = lazyWithRetry(
 // Campaña Renacer — públicas, sin shell y sin auth.
 // `/renacer/k/:codigo` es la URL IMPRESA en cada estuche y `/renacer/b/:numero` la del
 // carnet: son CONTRATOS PERMANENTES desde el 2026-08-25 (compuerta §3.4 · G-A.1 del spec
-// `docs/superpowers/specs/2026-08-25-renacer-qr-flow-design.md`). Hay estuches impresos
-// que apuntan a esos paths — no se renombran, no se reusan y no se borran, ni siquiera
-// cuando lo que sirven cambie por completo.
+// `docs/superpowers/specs/2026-08-25-renacer-qr-flow-design.md`). Son la URL de todo
+// código de invitación y del carnet — no se renombran, no se reusan y no se borran, ni
+// siquiera cuando lo que sirven cambie por completo (como pasó el 31-08).
 const RenacerPuerta = lazyWithRetry(
   () => import('./pages/renacer/RenacerPuerta'),
   'RenacerPuerta',
@@ -358,6 +358,10 @@ const RenacerTribu = lazyWithRetry(
 const RenacerEntorno = lazyWithRetry(
   () => import('./pages/renacer/RenacerEntorno'),
   'RenacerEntorno',
+);
+const RenacerCapacidades = lazyWithRetry(
+  () => import('./pages/renacer/RenacerCapacidades'),
+  'RenacerCapacidades',
 );
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
@@ -1146,6 +1150,14 @@ function InvitationRouter() {
         element={
           <Suspense fallback={<LocalizedLoading messageKey="general" />}>
             <RenacerEntorno />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/renacer/capacidades"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerCapacidades />
           </Suspense>
         }
       />

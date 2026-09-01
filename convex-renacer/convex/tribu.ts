@@ -4,7 +4,10 @@
  * La regla de visibilidad del §10.3 vive acá y no en la pantalla: **el texto de la
  * necesidad se muestra; la identidad de quien la pidió, solo con `donorVisibilityConsent`
  * explícito.** Ponerla en el cliente sería mandar el nombre por la red y confiar en que
- * el JSX no lo pinte.
+ * el JSX no lo pinte. Y cuando se muestra, es solo el nombre de pila (D-0831-5).
+ *
+ * Desde el 31-08 cada necesidad trae su **bolsa** (`categoria`) y su **prioridad**; la
+ * pantalla agrupa por bolsa. El orden de despacho sigue siendo `createdAt` (§9).
  */
 
 import { mutation, query } from './_generated/server';
@@ -31,10 +34,12 @@ export const necesidades = query({
           id: n._id,
           whatINeed: n.whatINeed,
           whyItMatters: n.whyItMatters,
+          categoria: n.categoria ?? null,
+          prioridad: n.prioridad ?? null,
           status: n.status,
           createdAt: n.createdAt,
           supportCount: n.supportCount,
-          autorNombre: puedeVerse ? autor.name : null,
+          autorNombre: puedeVerse ? (autor.name.trim().split(/\s+/)[0] ?? autor.name) : null,
         };
       }),
     );
@@ -42,14 +47,8 @@ export const necesidades = query({
 });
 
 /**
- * El "+1".
- *
- * **Quién se suma NO viene en el body.** Recibir un `beneficiaryId` es recibir una
- * afirmación del cliente, no una identidad: cualquiera podría inflar el apoyo de una
- * necesidad en nombre de otro — y `supportCount` alimenta cómo operaciones prioriza.
- * Se resuelve desde la credencial del carnet.
- *
- * Idempotente por índice compuesto: la misma persona no suma dos veces.
+ * El "+1". **Quién se suma NO viene en el body**: se resuelve desde la credencial del
+ * carnet. Idempotente por índice compuesto: la misma persona no suma dos veces.
  */
 export const sumarse = mutation({
   args: {

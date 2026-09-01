@@ -10,7 +10,7 @@
  * nada depende solo del color.
  */
 
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Box, Button, Checkbox, TextField, Typography } from '@mui/material';
 import { useRenacerTokens } from './RenacerLayout';
 import { qeFont } from '../../design-system';
@@ -247,6 +247,180 @@ export function HuecoDeVideo({ nota }: { nota: string }) {
       >
         {nota}
       </Typography>
+    </Box>
+  );
+}
+
+/**
+ * Selector de etiquetas: chips sugeridos + texto libre. Para bolsas (una) y para
+ * capacidades (varias). Sin `<datalist>` — roto en iOS Safari, mismo criterio que
+ * `SuggestInput` de Fotosíntesis — y con objetivos táctiles de 40px+.
+ */
+export function SelectorDeEtiquetas({
+  etiqueta,
+  razon,
+  sugeridas,
+  elegidas,
+  onChange,
+  maximo,
+  placeholderLibre,
+}: {
+  etiqueta: string;
+  razon?: string;
+  sugeridas: readonly string[];
+  elegidas: string[];
+  onChange: (v: string[]) => void;
+  /** 1 = elección única (bolsa); mayor = varias (capacidades). */
+  maximo: number;
+  placeholderLibre?: string;
+}) {
+  const t = useRenacerTokens();
+  const [libre, setLibre] = useState('');
+
+  function alternar(valor: string) {
+    if (elegidas.includes(valor)) {
+      onChange(elegidas.filter((e) => e !== valor));
+      return;
+    }
+    if (maximo === 1) {
+      onChange([valor]);
+      return;
+    }
+    if (elegidas.length >= maximo) return;
+    onChange([...elegidas, valor]);
+  }
+
+  function agregarLibre() {
+    const v = libre.trim().replace(/\s+/g, ' ');
+    if (!v) return;
+    setLibre('');
+    alternar(v);
+  }
+
+  const propias = elegidas.filter((e) => !sugeridas.includes(e));
+
+  return (
+    <Box sx={{ mb: 2.5 }}>
+      <Typography
+        component="p"
+        sx={{ fontFamily: qeFont.ui, fontSize: 15, color: t.text, mb: 0.5 }}
+      >
+        {etiqueta}
+      </Typography>
+      {razon && (
+        <Typography
+          sx={{ fontFamily: qeFont.ui, fontSize: 13.5, color: t.subtle, mb: 1, lineHeight: 1.45 }}
+        >
+          {razon}
+        </Typography>
+      )}
+
+      <Box role="group" aria-label={etiqueta} sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
+        {[...sugeridas, ...propias].map((valor) => {
+          const activa = elegidas.includes(valor);
+          return (
+            <Box
+              key={valor}
+              component="button"
+              type="button"
+              aria-pressed={activa}
+              onClick={() => alternar(valor)}
+              sx={{
+                fontFamily: qeFont.ui,
+                fontSize: 14,
+                minHeight: 40,
+                px: 1.5,
+                borderRadius: 999,
+                cursor: 'pointer',
+                border: `1px solid ${activa ? t.accent : t.border}`,
+                bgcolor: activa ? t.accent : t.surface,
+                color: activa ? t.onAccent : t.text,
+              }}
+            >
+              {valor}
+            </Box>
+          );
+        })}
+      </Box>
+
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <TextField
+          fullWidth
+          size="small"
+          value={libre}
+          onChange={(e) => setLibre(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              agregarLibre();
+            }
+          }}
+          placeholder={placeholderLibre ?? 'Otra…'}
+          inputProps={{ 'aria-label': `${etiqueta} — otra` }}
+          sx={{
+            '& .MuiOutlinedInput-root': { bgcolor: t.surface },
+            '& input': { fontFamily: qeFont.ui, fontSize: 15, color: t.text },
+            '& fieldset': { borderColor: t.border },
+          }}
+        />
+        <Button
+          type="button"
+          onClick={agregarLibre}
+          disabled={!libre.trim()}
+          sx={{ fontFamily: qeFont.ui, color: t.accent, minHeight: 40, whiteSpace: 'nowrap' }}
+        >
+          Agregar
+        </Button>
+      </Box>
+    </Box>
+  );
+}
+
+/** Una opción grande del hub del aportador: título, bajada y a dónde lleva. */
+export function OpcionCard({
+  titulo,
+  bajada,
+  onClick,
+  deshabilitada,
+  nota,
+}: {
+  titulo: string;
+  bajada: string;
+  onClick?: () => void;
+  deshabilitada?: boolean;
+  nota?: string;
+}) {
+  const t = useRenacerTokens();
+  return (
+    <Box
+      component="button"
+      type="button"
+      onClick={deshabilitada ? undefined : onClick}
+      aria-disabled={deshabilitada}
+      sx={{
+        width: '100%',
+        textAlign: 'left',
+        border: `1px solid ${t.border}`,
+        bgcolor: t.surface,
+        borderRadius: 3,
+        p: 2.5,
+        mb: 1.5,
+        cursor: deshabilitada ? 'default' : 'pointer',
+        opacity: deshabilitada ? 0.7 : 1,
+        '&:hover': deshabilitada ? undefined : { borderColor: t.accent },
+      }}
+    >
+      <Typography sx={{ fontFamily: qeFont.serif, fontSize: 22, color: t.text, mb: 0.5 }}>
+        {titulo}
+      </Typography>
+      <Typography sx={{ fontFamily: qeFont.ui, fontSize: 14.5, color: t.muted, lineHeight: 1.5 }}>
+        {bajada}
+      </Typography>
+      {nota && (
+        <Typography sx={{ fontFamily: qeFont.ui, fontSize: 13, color: t.subtle, mt: 1 }}>
+          {nota}
+        </Typography>
+      )}
     </Box>
   );
 }

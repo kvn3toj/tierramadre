@@ -114,6 +114,9 @@
     },
     "api/renacer-muro.ts": {
       "maxDuration": 15
+    },
+    "api/renacer-voluntario.ts": {
+      "maxDuration": 15
     }
   },
   "headers": [

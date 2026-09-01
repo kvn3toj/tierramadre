@@ -42,3 +42,32 @@ cd convex-renacer
 npm install
 npx convex dev            # la primera vez: elegir el proyecto `renacer`
 ```
+
+## Operación (pivote 31-08): raíces y códigos
+
+Desde el 31-08 los códigos no nacen de una compra sino de una **raíz** (el líder
+comunitario que invita). A cada raíz se le habilita un bloque numérico; ella reparte los
+códigos uno por persona, de una lista en papel si hace falta. Todo con `RENACER_OPS_TOKEN`:
+
+```sh
+cd convex-renacer
+
+# Pablo / Casamangles: código de raíz 100, reparte 101…199
+npx convex run raices:emitir '{"secret":"<OPS>","codigoBase":100,"tamano":100,"nombre":"Pablo","comunidad":"Casamangles","zona":"Cali"}'
+
+# Mitchell: 200 → 201…299
+npx convex run raices:emitir '{"secret":"<OPS>","codigoBase":200,"tamano":100,"nombre":"Mitchell","comunidad":"Sevilla y Potrerito"}'
+
+npx convex run raices:listar '{"secret":"<OPS>"}'
+npx convex run raices:marcarEstado '{"secret":"<OPS>","codigoBase":100,"estado":"pausada"}'
+```
+
+Reglas que el backend hace cumplir: los bloques no se solapan; el código de la raíz
+(`codigoBase`) no se reparte; **un código, una persona** — el segundo registro con el
+mismo código se rechaza; una raíz pausada deja de admitir registros. Los códigos de kit
+del diseño viejo (`kits`) siguen resolviendo como camino legado.
+
+Riesgo aceptado (misma postura que la compuerta §3.4 del 25-08): el código es
+adivinable — un tercero puede teclear 105 y quemar ese lugar del bloque. Lo mitiga la
+entrega en presencia y la lista de la raíz; si aparece fraude, `resolverCodigo` es el
+único punto donde entrarían códigos opacos.

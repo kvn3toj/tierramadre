@@ -44,13 +44,13 @@ export function tokenDeApp(): string {
   return RENACER_APP_TOKEN;
 }
 
-/** Código de kit: numérico, 3–4 dígitos, sin ceros a la izquierda (compuerta §3.4 · G-A.2). */
-export function parseCodigoKit(valor: unknown): number | null {
-  const s = String(valor ?? '').trim();
-  if (!/^[1-9][0-9]{2,3}$/.test(s)) return null;
-  const n = Number(s);
-  return n >= 101 && n <= 9999 ? n : null;
-}
+/**
+ * Código de invitación (o de kit legado): numérico, 3–4 dígitos, sin ceros a la izquierda.
+ * La regla vive en `convex-renacer/convex/lib/codigos.ts` — una sola fuente para el
+ * backend, el proxy y la app. Se conserva el nombre viejo como alias.
+ */
+export { parseCodigo } from '../../convex-renacer/convex/lib/codigos.js';
+export { parseCodigo as parseCodigoKit } from '../../convex-renacer/convex/lib/codigos.js';
 
 /** Número de carnet: mismo formato de entrada, distinto rango (arranca en 111). */
 export function parseNumeroCarnet(valor: unknown): number | null {

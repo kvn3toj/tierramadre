@@ -1,13 +1,16 @@
 /**
- * GET /api/renacer-kit?codigo=101 — resuelve el código impreso en el estuche.
+ * GET /api/renacer-kit?codigo=101 — resuelve un código de invitación.
  *
- * PÚBLICO, y esa es la restricción de diseño: el código es **adivinable a propósito**
- * (§3.4 · G-A.2 aceptó el riesgo, mitigado por la entrega en presencia). Así que todo
- * lo que este endpoint devuelva queda expuesto a quien teclee un número al azar — por
- * eso devuelve solo si el código existe y de qué tipo es. Nunca el contacto del
- * aportador, nunca nada de otros beneficiarios.
+ * El nombre del archivo es el de antes del pivote (31-08) y se conserva porque la app
+ * ya lo llama así; lo que resuelve hoy es **la raíz** (el líder que invitó) y, como
+ * camino legado, un código de kit.
  *
- * 200: { existe: false } | { existe: true, tipo, producto, estado }
+ * PÚBLICO, y esa es la restricción de diseño: el código es adivinable a propósito, así
+ * que todo lo que este endpoint devuelva queda expuesto a quien teclee un número al
+ * azar — por eso devuelve solo si existe, de quién viene (nombre y comunidad de la raíz)
+ * y si ya fue usado. Nunca el contacto de la raíz, nunca nada de otros beneficiarios.
+ *
+ * 200: { existe: false, motivo } | { existe: true, origen, raiz?, activa, usado }
  * 400: código con formato inválido
  * 503: Renacer sin configurar en este entorno
  */
@@ -18,7 +21,7 @@ import {
   renacerClient,
   renacerConfigurado,
   tokenDeApp,
-  parseCodigoKit,
+  parseCodigo,
 } from './_lib/renacer-convex.js';
 import { api } from '../convex-renacer/convex/_generated/api.js';
 
@@ -28,14 +31,14 @@ export default withApiHandler(
       return sendError(res, 503, 'Renacer no está configurado en este entorno.');
     }
 
-    const codigo = parseCodigoKit(req.query.codigo);
+    const codigo = parseCodigo(req.query.codigo);
     if (codigo === null) {
       return sendError(res, 400, 'Código inválido.');
     }
 
-    const kit = await renacerClient.query(api.kits.porCodigo, {
+    const kit = await renacerClient.query(api.raices.resolverCodigo, {
       secret: tokenDeApp(),
-      code: codigo,
+      codigo,
     });
 
     return sendSuccess(res, { kit });

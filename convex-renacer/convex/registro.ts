@@ -1,20 +1,24 @@
 /**
  * El registro del beneficiario: una sola transacción que crea la persona, sus
- * necesidades y sus capacidades, y mueve el contador del kit.
+ * necesidades y sus capacidades, y mueve el contador de la raíz (o del kit legado).
  *
  * Es una sola mutation a propósito. Si el beneficiario quedara creado y las necesidades
  * fallaran, tendríamos una persona registrada sin turno — que en el §9 es peor que no
  * estar registrado, porque parece atendida y no lo está.
+ *
+ * **Pivote 31-08:** el código viene de una raíz (líder que invita), no de un kit. Un
+ * código se usa UNA vez: es de una persona, se lo dio quien la invitó. Los códigos de
+ * kit ya emitidos siguen resolviendo por el camino legado.
  */
 
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
 import { exigirTokenDeApp } from './lib/guardas';
+import { normalizarBolsa } from './lib/bolsas';
+import { esCodigoDeRaiz } from './lib/codigos';
+import { raizDeCodigo } from './raices';
 
-/**
- * Token opaco del carnet (D-1). 122 bits de entropía: adivinarlo no es un camino.
- * Convex permite aleatoriedad en mutations — la siembra por reintento la maneja el runtime.
- */
+/** Token opaco del carnet (D-1). Dos UUID v4 concatenados: adivinarlo no es un camino. */
 function nuevoCardToken(): string {
   return (crypto.randomUUID() + crypto.randomUUID()).replace(/-/g, '');
 }
@@ -41,9 +45,10 @@ async function siguienteDeSecuencia(
 export const registrarBeneficiario = mutation({
   args: {
     secret: v.string(),
-    kitCode: v.number(),
+    codigo: v.number(),
     name: v.string(),
     email: v.optional(v.string()),
+    telefono: v.optional(v.string()),
     googleId: v.optional(v.string()),
     ubicacion: v.string(),
     edad: v.number(),
@@ -56,35 +61,57 @@ export const registrarBeneficiario = mutation({
     habeasData: v.boolean(),
     donorVisibilityConsent: v.boolean(),
     imageConsent: v.boolean(),
-    /** El camino asistido (D-2) no pasa por Google y deja registrado quién asistió. */
     assistedBy: v.optional(v.string()),
-    needs: v.array(v.object({ whatINeed: v.string(), whyItMatters: v.string() })),
+    needs: v.array(
+      v.object({
+        whatINeed: v.string(),
+        whyItMatters: v.string(),
+        categoria: v.optional(v.string()),
+      }),
+    ),
     capacities: v.optional(
       v.array(v.object({ title: v.string(), description: v.string() })),
     ),
   },
   handler: async (ctx, args) => {
     exigirTokenDeApp(args.secret);
-    // §10.1: sin habeas data no hay registro. Se recoge EN PRESENCIA, antes de lo digital.
     if (!args.habeasData) {
       throw new Error(
         'No se puede registrar sin consentimiento de habeas data (§10.1). ' +
           'Se recoge en presencia, guiado por el facilitador, antes del registro digital.',
       );
     }
-
-    // El §6 fija el orden: necesidades PRIMERO. Un registro sin ninguna necesidad no es
-    // un registro incompleto, es una persona sin turno en el §9.
     if (args.needs.length === 0) {
       throw new Error('Un registro sin necesidades no toma turno (§9). Al menos una.');
     }
 
-    const kit = await ctx.db
-      .query('kits')
-      .withIndex('by_code', (q) => q.eq('code', args.kitCode))
-      .unique();
+    // ── Resolver el código: raíz primero, kit legado después ──────────────────
+    const raiz = await raizDeCodigo(ctx, args.codigo);
+    let kit: { _id: any; manillasRegistradas: number } | null = null;
 
-    if (!kit) throw new Error(`El código ${args.kitCode} no existe.`);
+    if (raiz) {
+      if (esCodigoDeRaiz(raiz, args.codigo)) {
+        throw new Error('Ese es el código de quien invita, no el tuyo. Pedile el tuyo.');
+      }
+      if (raiz.estado !== 'activa') {
+        throw new Error('Ese código pertenece a una invitación que ya no está activa.');
+      }
+      const usado = await ctx.db
+        .query('beneficiaries')
+        .withIndex('by_codigo', (q) => q.eq('codigo', args.codigo))
+        .first();
+      if (usado) {
+        // Un código, una persona. El segundo uso no se acumula en silencio: se rechaza,
+        // y quien lo intentó tiene que volver a quien lo invitó.
+        throw new Error('Ese código ya fue usado. Pedile uno nuevo a quien te invitó.');
+      }
+    } else {
+      kit = await ctx.db
+        .query('kits')
+        .withIndex('by_code', (q) => q.eq('code', args.codigo))
+        .unique();
+      if (!kit) throw new Error(`El código ${args.codigo} no existe.`);
+    }
 
     const ahora = Date.now();
     const cardToken = nuevoCardToken();
@@ -93,11 +120,14 @@ export const registrarBeneficiario = mutation({
     const beneficiaryId = await ctx.db.insert('beneficiaries', {
       name: args.name,
       email: args.email,
+      telefono: args.telefono,
       googleId: args.googleId,
       ubicacion: args.ubicacion,
       edad: args.edad,
       genero: args.genero,
-      kitCode: args.kitCode,
+      codigo: args.codigo,
+      raizId: raiz?._id,
+      kitCode: kit ? args.codigo : undefined,
       cardNumber,
       cardToken,
       habeasDataAcceptedAt: ahora,
@@ -107,19 +137,18 @@ export const registrarBeneficiario = mutation({
     });
 
     /**
-     * Cada necesidad lleva su propio `createdAt` — EL TURNO (§9).
-     *
-     * `Date.now()` es constante durante toda una mutation de Convex (es determinista a
-     * propósito), así que sin el offset las tres necesidades de una misma persona
-     * quedarían empatadas y el desempate lo rompería el orden interno de la base.
-     * El offset por índice conserva **el orden en que la persona las escribió**, que es
-     * información real: no inventa un dato, preserva uno que si no se pierde.
+     * Cada necesidad lleva su propio `createdAt` — EL TURNO (§9). `Date.now()` es
+     * constante durante una mutation, así que el offset por índice conserva el orden
+     * en que la persona las escribió. Ese mismo índice es la **prioridad** (31-08):
+     * "escribí en orden de prioridad" — el dato se guarda tal cual lo dio.
      */
     for (const [i, necesidad] of args.needs.entries()) {
       await ctx.db.insert('needs', {
         reporterId: beneficiaryId,
         whatINeed: necesidad.whatINeed,
         whyItMatters: necesidad.whyItMatters,
+        categoria: normalizarBolsa(necesidad.categoria) ?? undefined,
+        prioridad: i + 1,
         status: 'open',
         createdAt: ahora + i,
         supportCount: 0,
@@ -129,26 +158,21 @@ export const registrarBeneficiario = mutation({
     for (const capacidad of args.capacities ?? []) {
       await ctx.db.insert('capacities', {
         providerId: beneficiaryId,
+        origen: 'beneficiario',
         title: capacidad.title,
         description: capacidad.description,
         isActive: true,
       });
     }
 
-    /**
-     * El contador del aportador (§4.9). **No se topea en `manillasTotal` a propósito:**
-     * pasarse es exactamente la señal de fraude que el §3.4 dijo vigilar — el código es
-     * adivinable y un tercero puede inscribirse contra el kit de otro. Taparlo con un
-     * `Math.min` escondería el único indicador que tenemos. Se revisa al cierre de la
-     * primera visita de campo.
-     */
-    await ctx.db.patch(kit._id, {
-      manillasRegistradas: kit.manillasRegistradas + 1,
-    });
+    if (raiz) {
+      await ctx.db.patch(raiz._id, { registrados: raiz.registrados + 1 });
+    } else if (kit) {
+      // Legado: no se topea a propósito — pasarse era la señal de fraude del diseño viejo.
+      await ctx.db.patch(kit._id, { manillasRegistradas: kit.manillasRegistradas + 1 });
+    }
 
-    // El token se devuelve UNA sola vez: es la credencial con la que esta persona
-    // después se suma a una necesidad, escribe en el muro y abre su carnet. El cliente
-    // lo guarda; el servidor no lo vuelve a mostrar.
+    // El token se devuelve UNA sola vez. El cliente lo guarda; el servidor no lo repite.
     return { cardNumber, cardToken, beneficiaryId };
   },
 });
@@ -171,12 +195,22 @@ export const carnet = query({
 
     // Misma respuesta para "no existe" y "token equivocado": distinguirlas le confirmaría
     // a quien tantea cuáles números están tomados.
-    if (!persona || persona.cardToken !== args.token) return null;
+    if (!persona || !igualEnTiempoConstante(persona.cardToken, args.token)) return null;
+
+    const raiz = persona.raizId ? await ctx.db.get(persona.raizId) : null;
 
     return {
       cardNumber: persona.cardNumber,
       primerNombre: persona.name.trim().split(/\s+/)[0] ?? persona.name,
-      kitCode: persona.kitCode,
+      codigo: persona.codigo ?? persona.kitCode ?? null,
+      raiz: raiz ? { nombre: raiz.nombre, comunidad: raiz.comunidad } : null,
     };
   },
 });
+
+function igualEnTiempoConstante(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}

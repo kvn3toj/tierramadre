@@ -8,28 +8,37 @@
  * acción, no solas.
  */
 
-export interface KitResuelto {
-  existe: boolean;
-  tipo?: '1+1' | '1+5' | '1+10' | '1+100';
-  producto?: 'manillas' | 'dijes';
-  estado?: 'emitido' | 'impreso' | 'entregando' | 'cerrado';
-}
+/** Lo que devuelve resolver un código de invitación (o de kit legado). */
+export type CodigoResuelto =
+  | { existe: false; motivo: 'no_existe' | 'es_raiz' }
+  | {
+      existe: true;
+      origen: 'raiz' | 'kit';
+      raiz?: { nombre: string; comunidad: string };
+      activa: boolean;
+      usado: boolean;
+    };
 
 export interface Necesidad {
   id: string;
   whatINeed: string;
   whyItMatters: string;
+  /** La bolsa (31-08). `null` cuando la persona no eligió ninguna. */
+  categoria: string | null;
+  /** El orden en que la persona la escribió, 1 = la primera. */
+  prioridad: number | null;
   status: 'open' | 'resolved';
   createdAt: number;
   supportCount: number;
-  /** `null` cuando la persona no dio consentimiento de visibilidad (§10.3). */
+  /** `null` cuando la persona no dio consentimiento de visibilidad (§10.3). Solo nombre de pila. */
   autorNombre: string | null;
 }
 
 export interface Carnet {
   cardNumber: number;
   primerNombre: string;
-  kitCode: number;
+  codigo: number | null;
+  raiz: { nombre: string; comunidad: string } | null;
 }
 
 /** La credencial que el registro entrega UNA vez. El cliente la guarda; el servidor no la repite. */
@@ -61,8 +70,9 @@ async function pedir<T>(url: string, init?: RequestInit): Promise<T> {
   return cuerpo as T;
 }
 
-export async function resolverKit(codigo: string | number): Promise<KitResuelto> {
-  const { kit } = await pedir<{ kit: KitResuelto }>(
+/** El endpoint conserva el nombre `renacer-kit` de antes del pivote; resuelve raíces y kits. */
+export async function resolverCodigo(codigo: string | number): Promise<CodigoResuelto> {
+  const { kit } = await pedir<{ kit: CodigoResuelto }>(
     `/api/renacer-kit?codigo=${encodeURIComponent(String(codigo))}`,
   );
   return kit;
@@ -75,24 +85,29 @@ export async function leerCarnet(
   const { carnet } = await pedir<{ carnet: Carnet | null }>(
     `/api/renacer-carnet?numero=${encodeURIComponent(String(numero))}&t=${encodeURIComponent(token)}`,
   );
-  // `?? null` porque un payload ausente y un `null` explícito significan lo mismo acá:
-  // no hay carnet que mostrar.
   return carnet ?? null;
 }
 
+export interface NecesidadNueva {
+  whatINeed: string;
+  whyItMatters: string;
+  categoria?: string;
+}
+
 export interface DatosRegistro {
-  kitCode: number;
+  codigo: number;
   name: string;
   ubicacion: string;
   edad: number;
   genero: string;
+  telefono?: string;
   email?: string;
   googleId?: string;
   habeasData: boolean;
   donorVisibilityConsent: boolean;
   imageConsent: boolean;
   assistedBy?: string;
-  needs: Array<{ whatINeed: string; whyItMatters: string }>;
+  needs: NecesidadNueva[];
   capacities?: Array<{ title: string; description: string }>;
 }
 
@@ -104,7 +119,24 @@ export async function registrar(datos: DatosRegistro): Promise<CredencialCarnet>
   return registro;
 }
 
-export async function leerTribu(limite = 50): Promise<Necesidad[]> {
+export interface DatosVoluntario {
+  nombre: string;
+  contacto: string;
+  procedencia?: string;
+  motivo?: string;
+  habeasData: boolean;
+  capacities: Array<{ title: string; description?: string; category?: string }>;
+}
+
+export async function registrarVoluntario(datos: DatosVoluntario): Promise<{ voluntarioId: string }> {
+  const { voluntario } = await pedir<{ voluntario: { voluntarioId: string } }>(
+    '/api/renacer-voluntario',
+    { method: 'POST', body: JSON.stringify(datos) },
+  );
+  return voluntario;
+}
+
+export async function leerTribu(limite = 100): Promise<Necesidad[]> {
   const { necesidades } = await pedir<{ necesidades: Necesidad[] }>(
     `/api/renacer-tribu?limite=${limite}`,
   );
@@ -145,8 +177,7 @@ export function publicarEnMuro(
 
 /**
  * La credencial del carnet vive en `localStorage`: sobrevive al cierre del navegador,
- * que en campo es lo normal —la persona se registra, guarda el teléfono, y vuelve
- * horas o días después—. No es PII: es un número de carnet y un token opaco.
+ * que en campo es lo normal. No es PII: es un número de carnet y un token opaco.
  */
 const CLAVE = 'renacer:credencial';
 
