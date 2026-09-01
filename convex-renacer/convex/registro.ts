@@ -17,6 +17,7 @@ import { exigirTokenDeApp } from './lib/guardas';
 import { normalizarBolsa } from './lib/bolsas';
 import { esCodigoDeRaiz } from './lib/codigos';
 import { raizDeCodigo } from './raices';
+import { sumarStat } from './stats';
 
 /** Token opaco del carnet (D-1). Dos UUID v4 concatenados: adivinarlo no es un camino. */
 function nuevoCardToken(): string {
@@ -164,6 +165,9 @@ export const registrarBeneficiario = mutation({
         isActive: true,
       });
     }
+
+    await sumarStat(ctx, 'familias', 1);
+    await sumarStat(ctx, 'necesidadesAbiertas', args.needs.length);
 
     if (raiz) {
       await ctx.db.patch(raiz._id, { registrados: raiz.registrados + 1 });

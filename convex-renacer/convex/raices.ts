@@ -11,6 +11,7 @@ import { v } from 'convex/values';
 import { exigirTokenDeApp, exigirTokenDeOps } from './lib/guardas';
 import { bloqueValido, bloquesSeSolapan, codigoEnBloque, esCodigoDeRaiz } from './lib/codigos';
 import { estadoRaiz } from './schema';
+import { sumarStat } from './stats';
 
 /** Cota de lectura para `listar`: las raíces se cuentan en decenas, no en miles. */
 const RAICES_MAX = 500;
@@ -59,6 +60,7 @@ export const emitir = mutation({
       registrados: 0,
       createdAt: Date.now(),
     });
+    await sumarStat(ctx, 'raicesActivas', 1);
     return { raizId, codigoBase: args.codigoBase, yaExistia: false };
   },
 });
@@ -90,6 +92,9 @@ export const marcarEstado = mutation({
       .withIndex('by_codigoBase', (q) => q.eq('codigoBase', args.codigoBase))
       .unique();
     if (!raiz) throw new Error(`No existe la raíz ${args.codigoBase}.`);
+    const eraActiva = raiz.estado === 'activa';
+    const seraActiva = args.estado === 'activa';
+    if (eraActiva !== seraActiva) await sumarStat(ctx, 'raicesActivas', seraActiva ? 1 : -1);
     await ctx.db.patch(raiz._id, { estado: args.estado });
     return { codigoBase: raiz.codigoBase, estado: args.estado };
   },

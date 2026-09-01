@@ -199,3 +199,16 @@ export function leerCredencial(): CredencialCarnet | null {
     return null;
   }
 }
+
+export interface Contadores {
+  raicesActivas: number;
+  familias: number;
+  necesidadesAbiertas: number;
+  voluntarios: number;
+  updatedAt: number | null;
+}
+
+export async function leerContadores(): Promise<Contadores> {
+  const { contadores } = await pedir<{ contadores: Contadores }>('/api/renacer-contadores');
+  return contadores;
+}

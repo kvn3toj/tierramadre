@@ -24,11 +24,16 @@ import {
   parseCodigo,
 } from './_lib/renacer-convex.js';
 import { api } from '../convex-renacer/convex/_generated/api.js';
+import { ipDe, permitir, LIMITES } from './_lib/renacer-ratelimit.js';
 
 export default withApiHandler(
   async (req: VercelRequest, res: VercelResponse) => {
     if (!renacerConfigurado || !renacerClient) {
       return sendError(res, 503, 'Renacer no está configurado en este entorno.');
+    }
+
+    if (!permitir('renacer-kit', ipDe(req), LIMITES.resolverCodigo)) {
+      return sendError(res, 429, 'Demasiados intentos. Esperá un minuto e intentá de nuevo.');
     }
 
     const codigo = parseCodigo(req.query.codigo);

@@ -15,6 +15,7 @@ import type * as lib_guardas from "../lib/guardas.js";
 import type * as muro from "../muro.js";
 import type * as raices from "../raices.js";
 import type * as registro from "../registro.js";
+import type * as stats from "../stats.js";
 import type * as tribu from "../tribu.js";
 import type * as voluntarios from "../voluntarios.js";
 
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   muro: typeof muro;
   raices: typeof raices;
   registro: typeof registro;
+  stats: typeof stats;
   tribu: typeof tribu;
   voluntarios: typeof voluntarios;
 }>;

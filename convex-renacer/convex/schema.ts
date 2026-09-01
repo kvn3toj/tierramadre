@@ -194,6 +194,16 @@ export default defineSchema({
    * (31-08: quien recibe un símbolo deja las gracias en la web). `hiddenAt` es la
    * moderación mínima desde el día uno.
    */
+  /** Contadores de campaña: un solo documento, 1 lectura (31-08). El recaudo vive en TM. */
+  stats: defineTable({
+    key: v.literal('campana'),
+    raicesActivas: v.number(),
+    familias: v.number(),
+    necesidadesAbiertas: v.number(),
+    voluntarios: v.number(),
+    updatedAt: v.number(),
+  }).index('by_key', ['key']),
+
   wallMessages: defineTable({
     wall: v.union(v.literal('desahogo'), v.literal('aliento'), v.literal('gratitud')),
     authorId: v.string(),

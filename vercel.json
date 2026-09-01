@@ -117,6 +117,9 @@
     },
     "api/renacer-voluntario.ts": {
       "maxDuration": 15
+    },
+    "api/renacer-contadores.ts": {
+      "maxDuration": 15
     }
   },
   "headers": [

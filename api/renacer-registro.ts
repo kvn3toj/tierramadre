@@ -26,6 +26,7 @@ import {
   parseTexto,
 } from './_lib/renacer-convex.js';
 import { api } from '../convex-renacer/convex/_generated/api.js';
+import { ipDe, permitir, LIMITES } from './_lib/renacer-ratelimit.js';
 
 const MAX_NECESIDADES = 20;
 const MAX_CAPACIDADES = 20;
@@ -53,6 +54,10 @@ export default withApiHandler(
   async (req: VercelRequest, res: VercelResponse) => {
     if (!renacerConfigurado || !renacerClient) {
       return sendError(res, 503, 'Renacer no está configurado en este entorno.');
+    }
+
+    if (!permitir('renacer-registro', ipDe(req), LIMITES.registro)) {
+      return sendError(res, 429, 'Demasiados intentos. Esperá un minuto e intentá de nuevo.');
     }
 
     const body = (req.body ?? {}) as Record<string, unknown>;

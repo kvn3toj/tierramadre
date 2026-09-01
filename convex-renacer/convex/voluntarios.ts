@@ -9,6 +9,7 @@
 import { mutation } from './_generated/server';
 import { v } from 'convex/values';
 import { exigirTokenDeApp } from './lib/guardas';
+import { sumarStat } from './stats';
 
 export const registrarVoluntario = mutation({
   args: {
@@ -52,6 +53,7 @@ export const registrarVoluntario = mutation({
       });
     }
 
+    await sumarStat(ctx, 'voluntarios', 1);
     return { voluntarioId };
   },
 });
