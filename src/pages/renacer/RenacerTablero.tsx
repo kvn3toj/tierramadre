@@ -21,7 +21,7 @@ import { renacerFont } from '../../design-system';
 function Cifra({ valor, etiqueta }: { valor: number; etiqueta: string }) {
   const t = useRenacerTokens();
   return (
-    <Box sx={{ flex: '1 1 40%', minWidth: 140, border: `1px solid ${t.border}`, bgcolor: t.surface, backdropFilter: 'blur(10px)', borderRadius: '16px', p: 2 }}>
+    <Box role="group" aria-label={`${valor} ${etiqueta}`} sx={{ flex: '1 1 40%', minWidth: 140, border: `1px solid ${t.border}`, bgcolor: t.surface, backdropFilter: 'blur(10px)', borderRadius: '16px', p: 2 }}>
       <Typography sx={{ fontFamily: renacerFont.display, fontWeight: 800, fontSize: 36, lineHeight: 1, letterSpacing: '-0.03em', color: t.text }}>
         {valor}
       </Typography>
@@ -50,7 +50,8 @@ function Seccion({ titulo, nota, children }: { titulo: string; nota?: string; ch
 /** Una barra fina con su magnitud escrita: el color marca, el texto informa. */
 function Barra({ etiqueta, valor, max, detalle, tono }: { etiqueta: string; valor: number; max: number; detalle?: string; tono?: 'acento' | 'suave' }) {
   const t = useRenacerTokens();
-  const ancho = max > 0 ? Math.max(2, Math.round((valor / max) * 100)) : 0;
+  // Cero es cero: sin barra. Un mínimo visible para un valor vacío es un dato inventado con forma de dato.
+  const ancho = valor === 0 || max <= 0 ? 0 : Math.max(2, Math.round((valor / max) * 100));
   return (
     <Box role="listitem" sx={{ py: 1 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 2, mb: 0.6 }}>
@@ -71,7 +72,7 @@ const hace = (ts: number) => {
   const m = Math.round((Date.now() - ts) / 60000);
   if (m < 60) return `hace ${Math.max(1, m)} min`;
   const h = Math.round(m / 60);
-  if (h < 48) return `hace ${h} h`;
+  if (h < 24) return `hace ${h} h`;
   return `hace ${Math.round(h / 24)} días`;
 };
 
@@ -112,34 +113,38 @@ export default function RenacerTablero() {
     <RenacerLayout
       marca
       titulo="Cómo va la campaña"
-      bajada="Lo que las familias piden, cuánto va cada comunidad y qué manos se han ofrecido. Sin nombres: solo lo que hace falta y lo que ya hay."
+      bajada="Lo que las familias piden, cuánto va cada comunidad y qué manos se han ofrecido. Sin nombres: cuánto hace falta y cuántas manos hay."
     >
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.25, mb: 3.5 }} aria-label="Totales de la campaña">
+      <Box role="group" aria-label="Totales de la campaña" sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.25, mb: 3.5 }}>
         <Cifra valor={datos.totales.familias} etiqueta="familias inscritas" />
         <Cifra valor={datos.totales.necesidadesAbiertas} etiqueta="necesidades abiertas" />
         <Cifra valor={datos.totales.raicesActivas} etiqueta="comunidades activas" />
         <Cifra valor={datos.totales.voluntarios} etiqueta="personas que ofrecen ayuda" />
+        {/* "Cuántos días va" (reunión 31-08), solo si el arranque está fijado (D-0901-3). */}
+        {datos.totales.diasDeCampana !== null && (
+          <Cifra valor={datos.totales.diasDeCampana} etiqueta="días de campaña" />
+        )}
       </Box>
 
-      <Seccion titulo="Qué están pidiendo" nota="Necesidades abiertas por tipo. El número es lo que cuenta; la barra solo lo hace visible.">
+      <Seccion titulo="Qué están pidiendo" nota="Necesidades abiertas por tipo.">
         {datos.bolsas.length === 0 ? (
           <Typography sx={{ fontFamily: renacerFont.ui, fontSize: 14, color: t.subtle }}>Todavía no hay necesidades registradas.</Typography>
         ) : (
           <Box role="list">
             {datos.bolsas.map((b) => (
-              <Barra key={b.nombre} etiqueta={b.nombre} valor={b.abiertas} max={maxBolsa} detalle={b.apoyos > 0 ? `· ${b.apoyos} se sumaron` : undefined} />
+              <Barra key={b.nombre} etiqueta={b.nombre} valor={b.abiertas} max={maxBolsa} detalle={b.apoyos > 0 ? `· ${b.apoyos === 1 ? '1 familia más' : `${b.apoyos} familias más`}` : undefined} />
             ))}
           </Box>
         )}
       </Seccion>
 
-      <Seccion titulo="Comunidades" nota="Familias registradas sobre el cupo que cada comunidad tiene para invitar.">
+      <Seccion titulo="Comunidades" nota="Familias registradas del cupo que cada comunidad tiene para invitar. Cada barra va sobre su propio cupo.">
         {datos.comunidades.length === 0 ? (
           <Typography sx={{ fontFamily: renacerFont.ui, fontSize: 14, color: t.subtle }}>Aún no hay comunidades activas.</Typography>
         ) : (
           <Box role="list">
             {datos.comunidades.map((c) => (
-              <Barra key={c.comunidad} etiqueta={c.zona ? `${c.comunidad} · ${c.zona}` : c.comunidad} valor={c.registrados} max={c.cupo} detalle={`/ ${c.cupo}`} tono={c.activa ? 'acento' : 'suave'} />
+              <Barra key={c.comunidad} etiqueta={c.zona ? `${c.comunidad} · ${c.zona}` : c.comunidad} valor={c.registrados} max={c.cupo} detalle={`de ${c.cupo} cupos${c.activa ? '' : ' · en pausa'}`} tono={c.activa ? 'acento' : 'suave'} />
             ))}
           </Box>
         )}
@@ -157,20 +162,23 @@ export default function RenacerTablero() {
         )}
       </Seccion>
 
-      <Seccion titulo="Últimos pedidos" nota="Tal como los escribieron, sin decir quién.">
+      <Seccion titulo="Últimas necesidades" nota="Tal como las escribieron, sin decir quién.">
+        {datos.ultimos.length === 0 && (
+          <Typography sx={{ fontFamily: renacerFont.ui, fontSize: 14, color: t.subtle }}>Todavía no hay necesidades registradas.</Typography>
+        )}
         {datos.ultimos.map((u, i) => (
           <Box key={i} sx={{ py: 1.25, borderTop: i === 0 ? 'none' : `1px solid ${t.hairline}` }}>
             <Typography sx={{ fontFamily: renacerFont.ui, fontSize: 15, color: t.text }}>{u.whatINeed}</Typography>
             <Typography sx={{ fontFamily: renacerFont.ui, fontSize: 12.5, color: t.subtle, mt: 0.25 }}>
               {u.categoria ?? 'Sin tipo'} · {hace(u.createdAt)}
-              {u.supportCount > 0 && ` · ${u.supportCount} se sumaron`}
+              {u.supportCount > 0 && ` · ${u.supportCount === 1 ? '1 familia más' : `${u.supportCount} familias más`}`}
             </Typography>
           </Box>
         ))}
       </Seccion>
 
       <Typography sx={{ fontFamily: renacerFont.ui, fontSize: 12.5, color: t.subtle, mb: 2.5 }}>
-        Actualizado {hace(datos.updatedAt)}. El recaudo de la bolsa común se suma cuando la tienda entre en campaña.
+        Actualizado {hace(datos.updatedAt)}. Cuánto lleva la bolsa común lo vamos a mostrar acá cuando la tienda esté en campaña.
       </Typography>
 
       <BotonSecundario onClick={() => navegar('/renacer/ayudar')}>Volver</BotonSecundario>

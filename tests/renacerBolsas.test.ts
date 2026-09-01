@@ -3,9 +3,9 @@ import { normalizarBolsa, BOLSAS_SUGERIDAS } from '../convex-renacer/convex/lib/
 
 describe('normalizarBolsa', () => {
   it('acerca a la sugerida sin importar mayúsculas ni tildes', () => {
-    expect(normalizarBolsa('alimentos')).toBe('Alimentos');
-    expect(normalizarBolsa('ACOMPANAMIENTO PSICOLOGICO')).toBe('Acompañamiento psicológico');
-    expect(normalizarBolsa('  techo y   vivienda ')).toBe('Techo y vivienda');
+    expect(normalizarBolsa('comida')).toBe('Comida');
+    expect(normalizarBolsa('APOYO EMOCIONAL')).toBe('Apoyo emocional');
+    expect(normalizarBolsa('  techo y   materiales ')).toBe('Techo y materiales');
   });
   it('capitaliza una bolsa nueva y colapsa espacios', () => {
     expect(normalizarBolsa('asistencia  legal')).toBe('Asistencia legal');

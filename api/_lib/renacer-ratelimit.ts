@@ -83,4 +83,10 @@ export const LIMITES = {
   resolverCodigo: 30,
   registro: 5,
   voluntario: 5,
+  /**
+   * El panel de la raíz. Más bajo que `resolverCodigo` porque acá el número adivinable
+   * (`codigoBase`) va acompañado de un token de 64 hex: quien tantea no está probando
+   * códigos, está probando tokens, y no hay uso legítimo que necesite 30 por minuto.
+   */
+  panelRaiz: 10,
 } as const;

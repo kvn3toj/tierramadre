@@ -54,6 +54,26 @@ function exigir(recibido: string, nombreVariable: string): void {
   }
 }
 
+/**
+ * Un token opaco de credencial: dos UUID v4 concatenados. Adivinarlo no es un camino.
+ *
+ * Lo usan el carnet del beneficiario (`cardToken`, D-1) y el panel de la raíz
+ * (`panelToken`, 2026-09-01) — las dos superficies que LEEN a partir de un número
+ * público y adivinable.
+ */
+export function nuevoTokenOpaco(): string {
+  return (crypto.randomUUID() + crypto.randomUUID()).replace(/-/g, '');
+}
+
+/**
+ * Compara una credencial recibida contra la guardada, en tiempo constante y tratando
+ * `undefined` como "no hay credencial" — nunca como "coincide".
+ */
+export function tokenCoincide(guardado: string | undefined, recibido: string): boolean {
+  if (!guardado) return false;
+  return igualEnTiempoConstante(guardado, recibido);
+}
+
 /** Lo que puede hacer un visitante, a través de los endpoints públicos. */
 export function exigirTokenDeApp(secret: string): void {
   exigir(secret, 'RENACER_APP_TOKEN');

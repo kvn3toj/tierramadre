@@ -10,11 +10,16 @@
  * nada depende solo del color.
  */
 
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { Box, Button, Checkbox, TextField, Typography } from '@mui/material';
 import { useRenacerTokens } from './RenacerLayout';
-import { renacerFont, renacerRadius } from '../../design-system';
+import { renacerFont, renacerRadius, type RenacerTokens } from '../../design-system';
 const qeFont = { ui: renacerFont.ui, serif: renacerFont.display };
+
+/** Anillo de foco visible sobre cualquier fondo: los botones propios no heredan el de MUI. */
+export const anilloFoco = (t: RenacerTokens) => ({
+  '&:focus-visible': { outline: 'none', boxShadow: t.focus, borderColor: t.accent },
+});
 
 export function BotonPrincipal({
   children,
@@ -51,6 +56,7 @@ export function BotonPrincipal({
         '&:hover': { bgcolor: t.accentStrong, transform: 'translateY(-1px)' },
         '&:active': { transform: 'translateY(0)' },
         '&.Mui-disabled': { bgcolor: t.surface2, color: t.subtle, boxShadow: 'none' },
+        ...anilloFoco(t),
       }}
     >
       {children}
@@ -72,7 +78,7 @@ export function BotonSecundario({
       size="large"
       onClick={onClick}
       sx={{
-        border: `1px solid ${t.border}`,
+        border: `1px solid ${t.controlBorder}`,
         color: t.text,
         fontFamily: renacerFont.display,
         fontWeight: 600,
@@ -83,7 +89,8 @@ export function BotonSecundario({
         borderRadius: renacerRadius.pill,
         bgcolor: 'transparent',
         transition: 'background-color 160ms ease, border-color 160ms ease',
-        '&:hover': { bgcolor: t.glass, borderColor: t.muted },
+        '&:hover': { bgcolor: t.glass, borderColor: t.text },
+        ...anilloFoco(t),
       }}
     >
       {children}
@@ -107,6 +114,8 @@ export function Campo({
   multilinea,
   tipo,
   requerido,
+  autoComplete,
+  numerico,
 }: {
   etiqueta: string;
   razon?: string;
@@ -116,24 +125,35 @@ export function Campo({
   multilinea?: boolean;
   tipo?: 'text' | 'number' | 'email';
   requerido?: boolean;
+  autoComplete?: string;
+  /** Teclado numérico sin el spinner de `type=number` (Safari lo rompe al scrollear). */
+  numerico?: boolean;
 }) {
   const t = useRenacerTokens();
+  const id = useId();
   return (
     <Box sx={{ mb: 2.5 }}>
       <Typography
         component="label"
+        htmlFor={id}
         sx={{ display: 'block', fontFamily: qeFont.ui, fontSize: 15, color: t.text, mb: 0.5 }}
       >
         {etiqueta}
         {requerido && (
-          <Box component="span" sx={{ color: t.accent, ml: 0.5 }} aria-hidden>
-            *
-          </Box>
+          <>
+            <Box component="span" sx={{ color: t.accent, ml: 0.5 }} aria-hidden>
+              *
+            </Box>
+            <Box component="span" sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
+              (obligatorio)
+            </Box>
+          </>
         )}
       </Typography>
 
       {razon && (
         <Typography
+          id={`${id}-razon`}
           sx={{ fontFamily: qeFont.ui, fontSize: 13.5, color: t.subtle, mb: 1, lineHeight: 1.45 }}
         >
           {razon}
@@ -142,15 +162,19 @@ export function Campo({
 
       <TextField
         fullWidth
+        id={id}
         value={valor}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         multiline={multilinea}
         minRows={multilinea ? 2 : undefined}
-        type={tipo ?? 'text'}
+        type={tipo === 'number' ? 'text' : (tipo ?? 'text')}
+        required={requerido}
+        autoComplete={autoComplete}
         inputProps={{
-          'aria-label': etiqueta,
-          inputMode: tipo === 'number' ? 'numeric' : undefined,
+          'aria-required': requerido || undefined,
+          'aria-describedby': razon ? `${id}-razon` : undefined,
+          inputMode: numerico || tipo === 'number' ? 'numeric' : undefined,
         }}
         sx={{
           '& .MuiOutlinedInput-root': {
@@ -162,12 +186,31 @@ export function Campo({
           },
           '& input, & textarea': { fontFamily: qeFont.ui, fontSize: 16, color: t.text },
           '& input::placeholder, & textarea::placeholder': { color: t.subtle, opacity: 1 },
-          '& fieldset': { borderColor: t.border },
-          '& .MuiOutlinedInput-root:hover fieldset': { borderColor: t.muted },
+          '& fieldset': { borderColor: t.controlBorder },
+          '& .MuiOutlinedInput-root:hover fieldset': { borderColor: t.text },
           '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: t.accent },
         }}
       />
     </Box>
+  );
+}
+
+/**
+ * Lo que falta para poder seguir. Se muestra ARRIBA del botón principal cuando está
+ * deshabilitado: un botón gris sin explicación es la fricción más frecuente del flujo,
+ * y en el registro asistido quien lee en voz alta no puede adivinar qué faltó.
+ */
+export function LoQueFalta({ faltantes }: { faltantes: string[] }) {
+  const t = useRenacerTokens();
+  if (faltantes.length === 0) return null;
+  return (
+    <Typography
+      role="status"
+      aria-live="polite"
+      sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.muted, mb: 1.5, lineHeight: 1.5 }}
+    >
+      Falta: {faltantes.join(' · ')}
+    </Typography>
   );
 }
 
@@ -194,9 +237,9 @@ export function Consentimiento({
         checked={marcado}
         onChange={(e) => onChange(e.target.checked)}
         inputProps={{ 'aria-label': texto }}
-        sx={{ color: t.muted, p: 1, '&.Mui-checked': { color: t.accent }, '& .MuiSvgIcon-root': { fontSize: 24 } }}
+        sx={{ color: t.controlBorder, p: 1.5, '&.Mui-checked': { color: t.accent }, '& .MuiSvgIcon-root': { fontSize: 24 }, ...anilloFoco(t) }}
       />
-      <Box sx={{ pt: 1 }}>
+      <Box sx={{ pt: 1.5 }}>
         <Typography
           component="label"
           onClick={() => onChange(!marcado)}
@@ -220,7 +263,14 @@ export function Consentimiento({
 export function Pasos({ actual, total }: { actual: number; total: number }) {
   const t = useRenacerTokens();
   return (
-    <Box sx={{ display: 'flex', gap: 0.75, mb: 3 }} aria-label={`Paso ${actual} de ${total}`}>
+    <Box
+      role="progressbar"
+      aria-valuenow={actual}
+      aria-valuemin={1}
+      aria-valuemax={total}
+      aria-label={`Paso ${actual} de ${total}`}
+      sx={{ display: 'flex', gap: 0.75, mb: 3 }}
+    >
       {Array.from({ length: total }, (_, i) => (
         <Box
           key={i}
@@ -228,7 +278,7 @@ export function Pasos({ actual, total }: { actual: number; total: number }) {
             height: 4,
             flex: 1,
             borderRadius: 2,
-            bgcolor: i < actual ? t.accent : t.surface2,
+            bgcolor: i < actual ? t.accent : t.track,
             boxShadow: i < actual ? '0 0 12px rgba(127,224,127,0.45)' : 'none',
             transition: 'background-color 300ms ease',
           }}
@@ -285,7 +335,7 @@ export function HuecoDeVideo({ nota }: { nota: string }) {
       >
         ▶
       </Box>
-      <Typography sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.subtle, lineHeight: 1.45 }}>
+      <Typography sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.muted, lineHeight: 1.45 }}>
         {nota}
       </Typography>
     </Box>
@@ -369,11 +419,12 @@ export function SelectorDeEtiquetas({
               sx={{
                 fontFamily: qeFont.ui,
                 fontSize: 14,
-                minHeight: 40,
-                px: 1.75,
+                minHeight: 48,
+                px: 2,
                 borderRadius: renacerRadius.chip,
                 cursor: 'pointer',
-                border: `1px solid ${activa ? t.accent : t.border}`,
+                border: `1px solid ${activa ? t.accent : t.controlBorder}`,
+                ...anilloFoco(t),
                 bgcolor: activa ? t.accent : t.glass,
                 color: activa ? t.onAccent : t.text,
                 fontWeight: activa ? 600 : 400,
@@ -402,10 +453,10 @@ export function SelectorDeEtiquetas({
           placeholder={placeholderLibre ?? 'Otra…'}
           inputProps={{ 'aria-label': `${etiqueta} — otra` }}
           sx={{
-            '& .MuiOutlinedInput-root': { bgcolor: t.glass, borderRadius: renacerRadius.pill },
+            '& .MuiOutlinedInput-root': { bgcolor: t.glass, borderRadius: renacerRadius.pill, minHeight: 48 },
             '& input': { fontFamily: qeFont.ui, fontSize: 15, color: t.text },
             '& input::placeholder': { color: t.subtle, opacity: 1 },
-            '& fieldset': { borderColor: t.border },
+            '& fieldset': { borderColor: t.controlBorder },
             '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: t.accent },
           }}
         />
@@ -413,7 +464,7 @@ export function SelectorDeEtiquetas({
           type="button"
           onClick={agregarLibre}
           disabled={!libre.trim()}
-          sx={{ fontFamily: renacerFont.display, fontWeight: 600, textTransform: 'none', color: t.accent, minHeight: 40, whiteSpace: 'nowrap', borderRadius: renacerRadius.pill }}
+          sx={{ fontFamily: renacerFont.display, fontWeight: 600, textTransform: 'none', color: t.accent, minHeight: 48, px: 2, whiteSpace: 'nowrap', borderRadius: renacerRadius.pill, '&.Mui-disabled': { color: t.subtle }, ...anilloFoco(t) }}
         >
           Agregar
         </Button>
@@ -422,14 +473,17 @@ export function SelectorDeEtiquetas({
   );
 }
 
-/** Una opción grande del hub del aportador: título, bajada y a dónde lleva. */
+/** Una opción grande del hub del aportador: qué clase de compromiso es, título, bajada y a dónde lleva. */
 export function OpcionCard({
+  rol,
   titulo,
   bajada,
   onClick,
   deshabilitada,
   nota,
 }: {
+  /** "Comprar" · "Ofrecer tiempo" · "Mirar": tres compromisos distintos, dichos antes del título. */
+  rol?: string;
   titulo: string;
   bajada: string;
   onClick?: () => void;
@@ -442,7 +496,7 @@ export function OpcionCard({
       component="button"
       type="button"
       onClick={deshabilitada ? undefined : onClick}
-      aria-disabled={deshabilitada}
+      disabled={deshabilitada}
       sx={{
         width: '100%',
         textAlign: 'left',
@@ -454,21 +508,27 @@ export function OpcionCard({
         mb: 1.5,
         color: t.text,
         cursor: deshabilitada ? 'default' : 'pointer',
-        opacity: deshabilitada ? 0.62 : 1,
         transition: 'transform 180ms ease, border-color 180ms ease, background-color 180ms ease',
         '&:hover': deshabilitada ? undefined : { borderColor: t.accent, bgcolor: t.glassStrong, transform: 'translateY(-2px)' },
+        ...anilloFoco(t),
       }}
     >
-      <Typography sx={{ fontFamily: renacerFont.display, fontWeight: 700, fontSize: 20, letterSpacing: '-0.01em', color: t.text, mb: 0.75 }}>
+      {rol && (
+        <Typography sx={{ fontFamily: renacerFont.display, fontWeight: 600, fontSize: 11.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: deshabilitada ? t.subtle : t.accent, mb: 0.75 }}>
+          {rol}
+        </Typography>
+      )}
+      <Typography sx={{ fontFamily: renacerFont.display, fontWeight: 700, fontSize: 20, letterSpacing: '-0.01em', color: deshabilitada ? t.muted : t.text, mb: 0.75 }}>
         {titulo}
       </Typography>
       <Typography sx={{ fontFamily: qeFont.ui, fontSize: 14.5, color: t.muted, lineHeight: 1.5 }}>
         {bajada}
       </Typography>
       {nota && (
-        <Typography sx={{ fontFamily: qeFont.ui, fontSize: 13, color: t.subtle, mt: 1 }}>
+        // La razón por la que no funciona se lee MÁS fuerte que la oferta muerta, no más débil.
+        <Box component="span" sx={{ display: 'inline-block', mt: 1.5, px: 1.5, py: 0.6, borderRadius: renacerRadius.pill, bgcolor: t.surface2, color: t.text, fontFamily: qeFont.ui, fontSize: 13 }}>
           {nota}
-        </Typography>
+        </Box>
       )}
     </Box>
   );

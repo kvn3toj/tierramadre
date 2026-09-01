@@ -40,7 +40,8 @@ export const renacerTokens = {
   hairline: 'rgba(255,255,255,0.10)',
   text: renacerPalette.ink,
   muted: 'rgba(255,255,255,0.74)',
-  subtle: 'rgba(255,255,255,0.52)',
+  /** Medido 2026-09-01: 0.60 da 4.84:1 sobre el punto más claro del degradado. No aclarar por gusto. */
+  subtle: 'rgba(255,255,255,0.60)',
   accent: renacerPalette.sprout,
   accentStrong: renacerPalette.sproutStrong,
   onAccent: renacerPalette.deep,
@@ -53,6 +54,11 @@ export const renacerTokens = {
   glass: 'rgba(255,255,255,0.05)',
   glassStrong: 'rgba(255,255,255,0.08)',
   glassBorder: 'rgba(255,255,255,0.14)',
+  /** Bordes que SIGNIFICAN (campos, chips, botones) — 3.29:1, distinto del hairline decorativo. */
+  controlBorder: 'rgba(255,255,255,0.36)',
+  track: 'rgba(255,255,255,0.36)',
+  /** Errores: nunca en el verde del éxito. */
+  alert: '#F5B183',
   glow: '0 0 0 1px rgba(127,224,127,0.35), 0 12px 32px rgba(127,224,127,0.18)',
   focus: '0 0 0 3px rgba(127,224,127,0.35)',
   /** El fondo del hero: la luz entra desde arriba y se apaga hacia lo profundo. */
@@ -77,7 +83,8 @@ export const renacerTokensLight = {
   hairline: 'rgba(10,42,30,0.09)',
   text: renacerPalette.forest,
   muted: 'rgba(10,42,30,0.72)',
-  subtle: 'rgba(10,42,30,0.52)',
+  /** Medido 2026-09-01: 0.66 da 4.93:1 sobre el papel (AA). 0.52 daba 3.28:1 y fallaba. */
+  subtle: 'rgba(10,42,30,0.66)',
   accent: '#0E7A4E',
   accentStrong: '#0B6640',
   onAccent: '#FFFFFF',
@@ -89,6 +96,9 @@ export const renacerTokensLight = {
   glass: 'rgba(255,255,255,0.78)',
   glassStrong: 'rgba(255,255,255,0.96)',
   glassBorder: 'rgba(10,42,30,0.12)',
+  controlBorder: 'rgba(10,42,30,0.54)',
+  track: 'rgba(10,42,30,0.54)',
+  alert: '#9A4B1F',
   glow: '0 0 0 1px rgba(14,122,78,0.22), 0 10px 26px rgba(14,122,78,0.20)',
   focus: '0 0 0 3px rgba(14,122,78,0.26)',
   /**

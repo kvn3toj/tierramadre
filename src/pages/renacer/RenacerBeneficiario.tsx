@@ -21,14 +21,19 @@ import {
   Campo,
   Consentimiento,
   HuecoDeVideo,
+  LoQueFalta,
   Pasos,
   SelectorDeEtiquetas,
+  anilloFoco,
 } from './ui';
-import { guardarCredencial, registrar, resolverCodigo, type CodigoResuelto } from './renacerApi';
+import { guardarCredencial, leerCredencial, registrar, resolverCodigo, type CodigoResuelto } from './renacerApi';
 import { ORDEN_PASOS, type PasoId } from './flujo';
 import { copy } from './renacerCopy';
 import { BOLSAS_SUGERIDAS } from '../../../convex-renacer/convex/lib/bolsas';
-import { qeFont } from '../../design-system';
+import { renacerFont } from '../../design-system';
+const qeFont = { ui: renacerFont.ui, serif: renacerFont.display };
+
+const GENEROS = ['Mujer', 'Hombre', 'Otro', 'Prefiero no decir'] as const;
 
 const TOTAL_PASOS = ORDEN_PASOS.length;
 
@@ -46,6 +51,7 @@ export default function RenacerBeneficiario() {
   const t = useRenacerTokens();
 
   const [resuelto, setResuelto] = useState<CodigoResuelto | 'cargando' | 'error'>('cargando');
+  const [intento, setIntento] = useState(0);
   const [indice, setIndice] = useState(0);
   const paso: PasoId = ORDEN_PASOS[indice] ?? 'bienvenida';
 
@@ -55,7 +61,7 @@ export default function RenacerBeneficiario() {
   const [ubicacion, setUbicacion] = useState('');
   const [telefono, setTelefono] = useState('');
   const [edad, setEdad] = useState('');
-  const [genero, setGenero] = useState('');
+  const [genero, setGenero] = useState<string[]>([]);
   const [email, setEmail] = useState('');
 
   const [habeasData, setHabeasData] = useState(false);
@@ -72,13 +78,15 @@ export default function RenacerBeneficiario() {
 
   useEffect(() => {
     let vigente = true;
+    setResuelto('cargando');
     resolverCodigo(codigo)
       .then((r) => vigente && setResuelto(r))
+      // Un fallo de red NO es "código malo": se distingue y se ofrece reintentar el mismo código.
       .catch(() => vigente && setResuelto('error'));
     return () => {
       vigente = false;
     };
-  }, [codigo]);
+  }, [codigo, intento]);
 
   if (resuelto === 'cargando') {
     return (
@@ -88,46 +96,60 @@ export default function RenacerBeneficiario() {
     );
   }
 
+  if (resuelto === 'error') {
+    return (
+      <RenacerLayout centrado marca titulo={copy.beneficiario.sinConexion} bajada={copy.beneficiario.sinConexionBajada}>
+        <BotonPrincipal onClick={() => setIntento((i) => i + 1)}>Reintentar</BotonPrincipal>
+        <Box sx={{ mt: 1.5 }}>
+          <BotonSecundario onClick={() => navegar('/renacer')}>Volver al inicio</BotonSecundario>
+        </Box>
+      </RenacerLayout>
+    );
+  }
   // Código con formato malo, inexistente, ya usado, o inactivo: pantalla honesta con
   // salida. Nunca un 404 crudo, nunca la pantalla de bienvenida del catálogo.
-  if (resuelto === 'error' || !resuelto.existe) {
+  const miCarnet = leerCredencial();
+  if (!resuelto.existe) {
     return (
-      <RenacerLayout
-        titulo={copy.beneficiario.codigoNoReconocido}
-        bajada={copy.beneficiario.codigoNoReconocidoBajada}
-      >
-        <BotonSecundario onClick={() => navegar('/renacer')}>Escribirlo de nuevo</BotonSecundario>
+      <RenacerLayout centrado marca titulo={copy.beneficiario.codigoNoReconocido} bajada={copy.beneficiario.codigoNoReconocidoBajada}>
+        <BotonPrincipal onClick={() => navegar('/renacer')}>Escribirlo de nuevo</BotonPrincipal>
       </RenacerLayout>
     );
   }
   if (resuelto.usado) {
     return (
-      <RenacerLayout titulo={copy.beneficiario.codigoUsado} bajada={copy.beneficiario.codigoUsadoBajada}>
-        <BotonSecundario onClick={() => navegar('/renacer')}>Volver al inicio</BotonSecundario>
+      <RenacerLayout centrado marca titulo={copy.beneficiario.codigoUsado} bajada={copy.beneficiario.codigoUsadoBajada}>
+        {miCarnet && (
+          <BotonPrincipal onClick={() => navegar(`/renacer/b/${miCarnet.cardNumber}?t=${miCarnet.cardToken}`)}>
+            {copy.puerta.botonMiCarnet}
+          </BotonPrincipal>
+        )}
+        <Box sx={{ mt: miCarnet ? 1.5 : 0 }}>
+          <BotonSecundario onClick={() => navegar('/renacer')}>Volver al inicio</BotonSecundario>
+        </Box>
       </RenacerLayout>
     );
   }
   if (!resuelto.activa) {
     return (
-      <RenacerLayout titulo={copy.beneficiario.codigoInactivo} bajada={copy.beneficiario.codigoInactivoBajada}>
+      <RenacerLayout centrado marca titulo={copy.beneficiario.codigoInactivo} bajada={copy.beneficiario.codigoInactivoBajada}>
         <BotonSecundario onClick={() => navegar('/renacer')}>Volver al inicio</BotonSecundario>
       </RenacerLayout>
     );
   }
 
-  const necesidadesValidas = necesidades.filter(
-    (n) => n.whatINeed.trim() && n.whyItMatters.trim(),
-  );
+  // "Por qué importa" es opcional (01-09): pedirle a alguien que justifique cada necesidad por
+  // escrito era una barrera, no un dato.
+  const necesidadesValidas = necesidades.filter((n) => n.whatINeed.trim());
   const edadNumero = Number(edad);
-  const datosValidos =
-    nombre.trim().length > 0 &&
-    ubicacion.trim().length > 0 &&
-    genero.trim().length > 0 &&
-    Number.isInteger(edadNumero) &&
-    edadNumero > 0 &&
-    edadNumero <= 120 &&
-    habeasData &&
-    (!asistido || facilitador.trim().length > 0);
+  const faltanDatos: string[] = [];
+  if (!nombre.trim()) faltanDatos.push('tu nombre');
+  if (!ubicacion.trim()) faltanDatos.push('dónde vivís');
+  if (!(Number.isInteger(edadNumero) && edadNumero > 0 && edadNumero <= 120)) faltanDatos.push('tu edad');
+  if (genero.length === 0) faltanDatos.push('tu género');
+  if (asistido && !facilitador.trim()) faltanDatos.push('quién te está ayudando');
+  if (!habeasData) faltanDatos.push('autorizar el uso de tus datos');
+  const datosValidos = faltanDatos.length === 0;
 
   const avanzar = () => setIndice((i) => Math.min(i + 1, TOTAL_PASOS - 1));
   const retroceder = () => setIndice((i) => Math.max(i - 1, 0));
@@ -143,7 +165,7 @@ export default function RenacerBeneficiario() {
         ubicacion: ubicacion.trim(),
         telefono: telefono.trim() || undefined,
         edad: edadNumero,
-        genero: genero.trim(),
+        genero: genero[0] ?? '',
         email: email.trim() || undefined,
         habeasData,
         donorVisibilityConsent: visibilidad,
@@ -184,7 +206,7 @@ export default function RenacerBeneficiario() {
         bajada={copy.beneficiario.bienvenidaBajada}
       >
         <Pasos actual={indice + 1} total={TOTAL_PASOS} />
-        <HuecoDeVideo nota="Acá va el video de bienvenida." />
+        <HuecoDeVideo nota="Pronto, un video corto de bienvenida." />
         <Box
           sx={{ border: `1px solid ${t.border}`, bgcolor: t.surface, borderRadius: 2, p: 2, mb: 3 }}
         >
@@ -201,7 +223,7 @@ export default function RenacerBeneficiario() {
           )}
         </Box>
         <BotonPrincipal onClick={avanzar}>
-          {ORDEN_PASOS[1] === 'necesidades' ? 'Contarles qué necesito' : 'Empezar'}
+          {ORDEN_PASOS[1] === 'necesidades' ? copy.beneficiario.bienvenidaBoton : 'Empezar'}
         </BotonPrincipal>
       </RenacerLayout>
     );
@@ -213,7 +235,7 @@ export default function RenacerBeneficiario() {
       <RenacerLayout
         resetScrollKey={indice}
         titulo="¿Qué necesitás?"
-        bajada="Escribilo con tus palabras y en orden: la primera es la que más urge. Si querés, elegí de qué tipo es — y si ninguno encaja, escribí uno."
+        bajada="Escribí con tus palabras lo que hace falta. Poné primero lo que más urge."
       >
         <Pasos actual={indice + 1} total={TOTAL_PASOS} />
 
@@ -222,11 +244,11 @@ export default function RenacerBeneficiario() {
             key={i}
             sx={{ border: `1px solid ${t.border}`, bgcolor: t.surface, borderRadius: 2, p: 2, mb: 2 }}
           >
-            <Typography sx={{ fontFamily: qeFont.ui, fontSize: 13, color: t.subtle, mb: 1 }}>
-              {i === 0 ? '1 · la que más urge' : `${i + 1}`}
+            <Typography sx={{ fontFamily: renacerFont.display, fontWeight: 600, fontSize: 12.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: t.subtle, mb: 1 }}>
+              {i === 0 ? 'Necesidad 1 · la que más urge' : `Necesidad ${i + 1}`}
             </Typography>
             <Campo
-              etiqueta="Qué necesitás"
+              etiqueta="Lo que necesitás"
               valor={n.whatINeed}
               onChange={(v) =>
                 setNecesidades((prev) => prev.map((x, j) => (j === i ? { ...x, whatINeed: v } : x)))
@@ -235,14 +257,13 @@ export default function RenacerBeneficiario() {
               requerido
             />
             <Campo
-              etiqueta="¿Por qué importa?"
+              etiqueta="Por qué importa (opcional)"
               valor={n.whyItMatters}
               onChange={(v) =>
                 setNecesidades((prev) => prev.map((x, j) => (j === i ? { ...x, whyItMatters: v } : x)))
               }
               placeholder="Se nos llueve la casa y hay dos niños"
               multilinea
-              requerido
             />
             <SelectorDeEtiquetas
               etiqueta="De qué tipo es (opcional)"
@@ -259,9 +280,9 @@ export default function RenacerBeneficiario() {
                 component="button"
                 type="button"
                 onClick={() => setNecesidades((prev) => prev.filter((_, j) => j !== i))}
-                sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.subtle, background: 'none', border: 0, p: 0, cursor: 'pointer' }}
+                sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.muted, background: 'none', border: 0, px: 1.5, ml: -1.5, minHeight: 48, display: 'inline-flex', alignItems: 'center', cursor: 'pointer', borderRadius: 999, ...anilloFoco(t) }}
               >
-                Quitar esta
+                Quitar esta necesidad
               </Typography>
             )}
           </Box>
@@ -273,11 +294,12 @@ export default function RenacerBeneficiario() {
           </BotonSecundario>
         </Box>
 
+        <LoQueFalta faltantes={necesidadesValidas.length === 0 ? ['escribir al menos una necesidad'] : []} />
         <BotonPrincipal disabled={necesidadesValidas.length === 0 || (esUltimo && enviando)} onClick={esUltimo ? enviar : avanzar}>
           {esUltimo ? 'Terminar mi registro' : 'Continuar'}
         </BotonPrincipal>
         <Box sx={{ mt: 1.5 }}>
-          <BotonSecundario onClick={retroceder}>Volver</BotonSecundario>
+          <BotonSecundario onClick={retroceder}>Atrás</BotonSecundario>
         </Box>
       </RenacerLayout>
     );
@@ -293,44 +315,56 @@ export default function RenacerBeneficiario() {
       >
         <Pasos actual={indice + 1} total={TOTAL_PASOS} />
 
-        <Campo etiqueta="Tu nombre" valor={nombre} onChange={setNombre} requerido />
+        <Campo etiqueta="Tu nombre" valor={nombre} onChange={setNombre} requerido autoComplete="name" />
         <Campo
           etiqueta="Dónde vivís"
-          razon="Es la zona a la que llega la ayuda. Un barrio y una referencia alcanzan si no hay nomenclatura. Quien te invitó puede moverse entre varias zonas — por eso te lo preguntamos a vos."
+          razon="Es la zona a la que llega la ayuda. Con el barrio y una referencia basta si no hay nomenclatura. Quien te invitó puede moverse entre varias zonas; por eso te lo preguntamos a vos."
           valor={ubicacion}
           onChange={setUbicacion}
           multilinea
           requerido
+          autoComplete="street-address"
+          placeholder={resuelto.raiz ? `${resuelto.raiz.comunidad}, …` : undefined}
         />
         <Campo
           etiqueta="Teléfono (opcional)"
           razon="Para avisarte por WhatsApp cuando la ayuda esté en camino."
           valor={telefono}
           onChange={(v) => setTelefono(v.replace(/[^0-9+()\s-]/g, '').slice(0, 40))}
-          tipo="text"
+          autoComplete="tel"
+          numerico
         />
         <Campo
           etiqueta="Edad"
-          razon="Algunas ayudas se organizan por edad — por ejemplo, las que priorizan adultos mayores."
+          razon="Algunas ayudas se organizan por edad; por ejemplo, las que priorizan adultos mayores."
           valor={edad}
           onChange={(v) => setEdad(v.replace(/[^0-9]/g, '').slice(0, 3))}
-          tipo="number"
+          numerico
           requerido
         />
-        <Campo etiqueta="Género" valor={genero} onChange={setGenero} requerido />
+        <SelectorDeEtiquetas
+          etiqueta="Género"
+          razon="Algunas ayudas se organizan por género; por ejemplo, las que priorizan mujeres cabeza de hogar."
+          sugeridas={GENEROS}
+          elegidas={genero}
+          onChange={setGenero}
+          maximo={1}
+          placeholderLibre="Otra forma de decirlo"
+        />
         <Campo
           etiqueta="Correo (opcional)"
           razon="Solo si querés que te escribamos cuando haya novedades."
           valor={email}
           onChange={setEmail}
           tipo="email"
+          autoComplete="email"
         />
 
         <Box sx={{ height: '1px', bgcolor: t.hairline, my: 3 }} />
 
         <Consentimiento
           texto="Alguien me está ayudando a hacer este registro"
-          detalle="Si no tenés cómo hacerlo solo, un facilitador puede registrarte. Queda anotado quién fue."
+          detalle="Si preferís que otra persona lo llene por vos, se puede. Queda anotado quién te ayudó."
           marcado={asistido}
           onChange={setAsistido}
         />
@@ -345,7 +379,7 @@ export default function RenacerBeneficiario() {
             real]: la silla Legal está vacía (§10 del spec). */}
         <Consentimiento
           texto="Autorizo el uso de mis datos para organizar y entregar la ayuda"
-          detalle="Guardamos tu nombre, dónde vivís, tu edad, tu género y tu teléfono, y los usamos solo para hacerte llegar la ayuda. Podés pedir que los borremos cuando quieras."
+          detalle="Guardamos lo que escribís en este registro (incluido tu correo si lo diste, y lo que necesitás) y lo usamos solo para hacerte llegar la ayuda. Podés pedir que lo borremos cuando quieras."
           marcado={habeasData}
           onChange={setHabeasData}
         />
@@ -356,19 +390,20 @@ export default function RenacerBeneficiario() {
           onChange={setVisibilidad}
         />
         <Consentimiento
-          texto="Autorizo que me tomen fotos para la campaña"
+          texto="Autorizo que me tomen fotos y que se usen en la campaña"
           detalle="Podés recibir la ayuda igual sin marcar esto. Nunca se publican fotos de menores de edad."
           marcado={imagen}
           onChange={setImagen}
         />
 
         <Box sx={{ mt: 3 }}>
+          <LoQueFalta faltantes={faltanDatos} />
           <BotonPrincipal disabled={!datosValidos || (esUltimo && enviando)} onClick={esUltimo ? enviar : avanzar}>
             {esUltimo ? 'Terminar mi registro' : 'Continuar'}
           </BotonPrincipal>
         </Box>
         <Box sx={{ mt: 1.5 }}>
-          <BotonSecundario onClick={retroceder}>Volver</BotonSecundario>
+          <BotonSecundario onClick={retroceder}>Atrás</BotonSecundario>
         </Box>
       </RenacerLayout>
     );
@@ -380,14 +415,17 @@ export default function RenacerBeneficiario() {
     <RenacerLayout
       resetScrollKey={indice}
       titulo="¿Querés ayudar vos también?"
-      bajada="Esto es opcional. Alguien que necesita ayuda hoy también tiene algo que ofrecer — y así es como la tribu se sostiene sola."
+      bajada="Es opcional. Hoy te hace falta algo; mañana lo que vos sabés hacer le puede hacer falta a alguien más."
     >
       <Pasos actual={indice + 1} total={TOTAL_PASOS} />
 
       {capacidades.map((c, i) => (
         <Box key={i} sx={{ border: `1px solid ${t.border}`, bgcolor: t.surface, borderRadius: 2, p: 2, mb: 2 }}>
+          <Typography sx={{ fontFamily: renacerFont.display, fontWeight: 600, fontSize: 12.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: t.subtle, mb: 1 }}>
+            {`Lo que sé hacer · ${i + 1}`}
+          </Typography>
           <Campo
-            etiqueta={`Lo que sé hacer ${i + 1}`}
+            etiqueta="Lo que sé hacer"
             valor={c.title}
             onChange={(v) => setCapacidades((prev) => prev.map((x, j) => (j === i ? { ...x, title: v } : x)))}
             placeholder="Cocinar para muchos"
@@ -403,21 +441,22 @@ export default function RenacerBeneficiario() {
 
       <Box sx={{ mb: 3 }}>
         <BotonSecundario onClick={() => setCapacidades((prev) => [...prev, { title: '', description: '' }])}>
-          {capacidades.length === 0 ? 'Quiero enlistar mis capacidades' : 'Agregar otra'}
+          {capacidades.length === 0 ? 'Ofrecer lo que sé hacer' : 'Agregar otra'}
         </BotonSecundario>
       </Box>
 
       {errorEnvio && (
-        <Typography role="alert" sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.accent, mb: 2, lineHeight: 1.45 }}>
-          {errorEnvio}
+        <Typography role="alert" sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.alert, mb: 2, lineHeight: 1.45 }}>
+          No pudimos guardar el registro. Intentá de nuevo. <Box component="span" sx={{ color: t.subtle }}>({errorEnvio})</Box>
         </Typography>
       )}
 
+      <LoQueFalta faltantes={listoParaEnviar ? [] : [...(necesidadesValidas.length === 0 ? ['al menos una necesidad'] : []), ...faltanDatos]} />
       <BotonPrincipal disabled={enviando || !listoParaEnviar} onClick={enviar}>
         {enviando ? 'Guardando…' : 'Terminar mi registro'}
       </BotonPrincipal>
       <Box sx={{ mt: 1.5 }}>
-        <BotonSecundario onClick={retroceder}>Volver</BotonSecundario>
+        <BotonSecundario onClick={retroceder}>Atrás</BotonSecundario>
       </Box>
     </RenacerLayout>
   );

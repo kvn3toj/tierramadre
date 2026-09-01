@@ -13,15 +13,16 @@
  */
 
 export const BOLSAS_SUGERIDAS = [
-  'Alimentos',
-  'Techo y vivienda',
-  'Ropa y abrigo',
+  'Comida',
+  'Techo y materiales',
+  'Cocina y enseres',
+  'Ropa y cobijas',
   'Salud y medicinas',
-  'Acompañamiento psicológico',
-  'Agua y saneamiento',
-  'Trabajo e ingresos',
-  'Educación y niños',
-  'Animales',
+  'Apoyo emocional',
+  'Agua y aseo',
+  'Volver a trabajar',
+  'Escuela y estudio',
+  'Animales y ganado',
   'Documentos y trámites',
 ] as const;
 
@@ -47,15 +48,16 @@ function sinTildes(s: string): string {
 
 /** Ideas para quien quiere ayudar y no sabe cómo — la lista que pidió la sala el 31-08. */
 export const CAPACIDADES_SUGERIDAS = [
-  'Cocinar para quienes ayudan',
+  'Cocinar',
   'Levantar escombros',
-  'Obra blanca y reparaciones',
+  'Construcción y arreglos',
   'Cuidar animales',
   'Acompañamiento psicológico',
-  'Talleres y coaching (virtual)',
-  'Talleres y coaching (presencial)',
-  'Transporte',
-  'Asesoría de marca o negocio',
+  'Salud y primeros auxilios',
+  'Dar talleres o formación',
+  'Transporte (tengo vehículo)',
+  'Asesorías (negocio, legal, contable)',
   'Clases para niños',
-  'Gestión y organización',
+  'Organizar y coordinar',
+  'Prestar un espacio o bodega',
 ] as const;

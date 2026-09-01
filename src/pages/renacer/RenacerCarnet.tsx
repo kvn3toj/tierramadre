@@ -21,7 +21,8 @@ import RenacerLayout, { useRenacerTokens } from './RenacerLayout';
 import { BotonSecundario } from './ui';
 import { leerCarnet, guardarCredencial, type Carnet } from './renacerApi';
 import { copy } from './renacerCopy';
-import { qeFont, renacerFont } from '../../design-system';
+import { renacerFont } from '../../design-system';
+const qeFont = { ui: renacerFont.ui, serif: renacerFont.display };
 
 export default function RenacerCarnet() {
   const { numero = '' } = useParams();
@@ -63,10 +64,7 @@ export default function RenacerCarnet() {
   // Distinguirlos le confirmaría a quien tantea qué carnets existen.
   if (!carnet) {
     return (
-      <RenacerLayout
-        titulo="Este carnet no se puede mostrar"
-        bajada="El carnet se abre con el código QR que se generó al completar el registro. Escanealo desde el teléfono donde se hizo."
-      >
+      <RenacerLayout centrado marca titulo="Este carnet no se puede mostrar" bajada={copy.carnet.noSeMuestra}>
         <BotonSecundario onClick={() => navegar('/renacer')}>Volver al inicio</BotonSecundario>
       </RenacerLayout>
     );
@@ -88,7 +86,14 @@ export default function RenacerCarnet() {
           boxShadow: t.shadow,
         }}
       >
-        <Typography sx={{ fontFamily: qeFont.ui, fontSize: 13, color: t.subtle, mb: 0.5 }}>
+        {/* La marca va DENTRO de la tarjeta: la persona la guarda como captura y la muestra al recibir. */}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, pb: 1.5, mb: 2, borderBottom: `1px solid ${t.hairline}` }}>
+          <Box component="img" src={t.logo} alt="" sx={{ width: 22, height: 22, objectFit: 'contain', opacity: 0.9 }} />
+          <Typography sx={{ fontFamily: renacerFont.display, fontWeight: 600, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: t.accent }}>
+            Renacer · carnet
+          </Typography>
+        </Box>
+        <Typography sx={{ fontFamily: qeFont.ui, fontSize: 13, color: t.muted, mb: 0.5 }}>
           Número
         </Typography>
         <Typography
@@ -126,11 +131,11 @@ export default function RenacerCarnet() {
         )}
       </Box>
 
-      <Typography
-        sx={{ fontFamily: qeFont.ui, fontSize: 14.5, color: t.muted, mb: 3, lineHeight: 1.5 }}
-      >
-        Guardá esta pantalla — una captura alcanza. Este número y este código son los que
-        vamos a pedirte cuando llegue la ayuda.
+      <Typography sx={{ fontFamily: qeFont.ui, fontSize: 14.5, color: t.muted, mb: 1.5, lineHeight: 1.5 }}>
+        Guardá esta pantalla: con una captura basta.
+      </Typography>
+      <Typography sx={{ fontFamily: qeFont.ui, fontSize: 14.5, color: t.muted, mb: 3, lineHeight: 1.5 }}>
+        {copy.carnet.queSigue}
       </Typography>
 
       <Box sx={{ display: 'grid', gap: 1.5 }}>
@@ -138,7 +143,10 @@ export default function RenacerCarnet() {
           Conocer las necesidades
         </BotonSecundario>
         <BotonSecundario onClick={() => navegar('/renacer/entorno')}>
-          Muro y meditaciones
+          Mientras esperás: muro y meditaciones
+        </BotonSecundario>
+        <BotonSecundario onClick={() => navegar('/renacer/gracias')}>
+          Dar las gracias
         </BotonSecundario>
       </Box>
     </RenacerLayout>

@@ -75,6 +75,16 @@ export default defineSchema({
     estado: estadoRaiz,
     /** Registros hechos con códigos de este bloque. Cota natural: `tamano - 1`. */
     registrados: v.number(),
+    /**
+     * Token opaco del panel de la raíz (2026-09-01). Mismo argumento que el `cardToken`
+     * del carnet (D-1): `codigoBase` es adivinable a propósito —hay que poder dictarlo—
+     * y el panel LEE (qué códigos quedan, quién ya se registró). Sin token, teclear `100`
+     * abriría el bloque de Pablo a cualquiera.
+     *
+     * Opcional porque es expansión sobre raíces ya emitidas: `panel` exige token, y una
+     * raíz sin token todavía no tiene panel — `raices.emitir` le acuña uno al repetirse.
+     */
+    panelToken: v.optional(v.string()),
     createdAt: v.number(),
   }).index('by_codigoBase', ['codigoBase']),
 
@@ -189,11 +199,6 @@ export default defineSchema({
     isActive: v.boolean(),
   }).index('by_provider', ['providerId']),
 
-  /**
-   * Los muros: desahogo (beneficiarios, §6.9), aliento (aportadores, §4.7) y gratitud
-   * (31-08: quien recibe un símbolo deja las gracias en la web). `hiddenAt` es la
-   * moderación mínima desde el día uno.
-   */
   /** Contadores de campaña: un solo documento, 1 lectura (31-08). El recaudo vive en TM. */
   stats: defineTable({
     key: v.literal('campana'),
@@ -201,9 +206,23 @@ export default defineSchema({
     familias: v.number(),
     necesidadesAbiertas: v.number(),
     voluntarios: v.number(),
+    /**
+     * El día en que arrancó la campaña, para "cuántos días va" (pedido en la reunión
+     * 31-08). **Opcional y sin default a propósito** (D-0901-3): la fecha de arranque es
+     * un hecho del negocio que solo Kevin sabe, y sembrarla con "el primer registro" o
+     * con `Date.now()` sería un dato inventado con forma de dato — a las 24 horas ya no
+     * se distingue de uno medido. Mientras esté ausente, el contador no se pinta.
+     * Se fija con `stats.fijarInicio` (ops).
+     */
+    iniciadaEn: v.optional(v.number()),
     updatedAt: v.number(),
   }).index('by_key', ['key']),
 
+  /**
+   * Los muros: desahogo (beneficiarios, §6.9), aliento (aportadores, §4.7) y gratitud
+   * (31-08: quien recibe ayuda deja las gracias en la web). `hiddenAt` es la moderación
+   * mínima desde el día uno.
+   */
   wallMessages: defineTable({
     wall: v.union(v.literal('desahogo'), v.literal('aliento'), v.literal('gratitud')),
     authorId: v.string(),

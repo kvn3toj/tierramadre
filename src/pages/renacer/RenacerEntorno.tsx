@@ -70,7 +70,7 @@ export default function RenacerEntorno() {
         }}
       >
         <Typography sx={{ fontFamily: qeFont.ui, fontSize: 14.5, color: t.subtle, lineHeight: 1.5 }}>
-          Las respiraciones conscientes y la música medicina todavía se están preparando.
+          Todavía estamos preparando las meditaciones y la música. Cuando estén, van a aparecer acá.
           Cuando estén, van a aparecer acá.
         </Typography>
       </Box>
@@ -84,7 +84,7 @@ export default function RenacerEntorno() {
       {credencial ? (
         <Box sx={{ mb: 3 }}>
           <Campo
-            etiqueta="¿Cómo venís?"
+            etiqueta="¿Cómo vas?"
             valor={borrador}
             onChange={setBorrador}
             placeholder="Escribí lo que quieras dejar acá"
@@ -105,7 +105,12 @@ export default function RenacerEntorno() {
       {mensajes === 'cargando' && <CircularProgress size={20} sx={{ color: t.accent }} />}
 
       {mensajes === 'error' && (
-        <BotonSecundario onClick={cargar}>No pudimos cargar el muro. Reintentar</BotonSecundario>
+        <>
+          <Typography sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.muted, mb: 1.5 }}>
+            No pudimos cargar el muro. Puede ser la conexión.
+          </Typography>
+          <BotonSecundario onClick={cargar}>Reintentar</BotonSecundario>
+        </>
       )}
 
       {Array.isArray(mensajes) &&
@@ -125,7 +130,7 @@ export default function RenacerEntorno() {
               {m.body}
             </Typography>
             <Typography sx={{ fontFamily: qeFont.ui, fontSize: 13, color: t.subtle }}>
-              {m.authorName}
+              {m.authorName ?? 'Alguien de la tribu'}
             </Typography>
           </Box>
         ))}
@@ -137,7 +142,9 @@ export default function RenacerEntorno() {
       )}
 
       <Box sx={{ mt: 2 }}>
-        <BotonSecundario onClick={() => navegar('/renacer')}>Volver</BotonSecundario>
+        <BotonSecundario onClick={() => navegar(credencial ? `/renacer/b/${credencial.cardNumber}?t=${credencial.cardToken}` : '/renacer')}>
+          {credencial ? 'Volver a mi carnet' : 'Volver'}
+        </BotonSecundario>
       </Box>
     </RenacerLayout>
   );

@@ -367,6 +367,14 @@ const RenacerTablero = lazyWithRetry(
   () => import('./pages/renacer/RenacerTablero'),
   'RenacerTablero',
 );
+// `/renacer/r/:codigo` — el panel de la raíz (2026-09-01). El enlace se entrega UNA vez,
+// al emitir el bloque, y lleva el token en el query string; no va impreso, así que puede
+// renombrarse. `/renacer/gracias` — el muro de gratitud, tampoco impreso.
+const RenacerRaiz = lazyWithRetry(() => import('./pages/renacer/RenacerRaiz'), 'RenacerRaiz');
+const RenacerGracias = lazyWithRetry(
+  () => import('./pages/renacer/RenacerGracias'),
+  'RenacerGracias',
+);
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'treasure' | 'ambassadors';
@@ -1170,6 +1178,22 @@ function InvitationRouter() {
         element={
           <Suspense fallback={<LocalizedLoading messageKey="general" />}>
             <RenacerTablero />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/renacer/r/:codigo"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerRaiz />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/renacer/gracias"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerGracias />
           </Suspense>
         }
       />

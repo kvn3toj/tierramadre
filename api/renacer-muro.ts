@@ -1,11 +1,13 @@
 /**
- * /api/renacer-muro — el muro de desahogo (§6.9).
+ * /api/renacer-muro — los muros de desahogo (§6.9) y de gratitud (31-08).
  *
- *   GET  ?wall=desahogo → los mensajes visibles (los ocultados no salen)
- *   POST                → publicar, con la credencial del carnet
+ *   GET  ?wall=desahogo|gratitud → los mensajes visibles (los ocultados no salen)
+ *   POST { wall, body, cardNumber, cardToken } → publicar, con la credencial del carnet
  *
  * **El autor no viene en el body.** Recibir `authorName` del cliente sería dejar que
- * cualquiera escriba en el muro de desahogo firmando con el nombre de otro damnificado.
+ * cualquiera escriba firmando con el nombre de otro damnificado.
+ *
+ * `wall` por defecto es `desahogo`: los clientes anteriores al 2026-09-01 no lo mandan.
  *
  * El muro de **aliento** (aportadores, §4.7) todavía no se sirve: el aportador no tiene
  * credencial diseñada — eso es el Task 14 del plan. Prefiero que falle a dejar acá un
@@ -25,6 +27,15 @@ import { api } from '../convex-renacer/convex/_generated/api.js';
 
 const MAX_CUERPO = 2000;
 
+/** Los muros que este endpoint sirve. `aliento` no está: no hay credencial de aportador. */
+const MUROS = ['desahogo', 'gratitud'] as const;
+type Muro = (typeof MUROS)[number];
+
+function parseMuro(valor: unknown): Muro | null {
+  if (valor === undefined || valor === null || valor === '') return 'desahogo';
+  return MUROS.includes(valor as Muro) ? (valor as Muro) : null;
+}
+
 export default withApiHandler(
   async (req: VercelRequest, res: VercelResponse) => {
     if (!renacerConfigurado || !renacerClient) {
@@ -32,10 +43,11 @@ export default withApiHandler(
     }
 
     if (req.method === 'GET') {
-      // Solo el de desahogo mientras el de aliento no tenga credencial de aportador.
+      const muro = parseMuro(req.query.wall);
+      if (muro === null) return sendError(res, 400, 'Parámetros inválidos.');
       const mensajes = await renacerClient.query(api.muro.mensajes, {
         secret: tokenDeApp(),
-        wall: 'desahogo',
+        wall: muro,
         limite: 100,
       });
       return sendSuccess(res, { mensajes });
@@ -45,14 +57,16 @@ export default withApiHandler(
     const cardNumber = parseNumeroCarnet(body.cardNumber);
     const cardToken = parseTexto(body.cardToken, 128);
     const cuerpo = parseTexto(body.body, MAX_CUERPO);
+    const muro = parseMuro(body.wall);
 
-    if (cardNumber === null || !cardToken || !cuerpo) {
+    if (cardNumber === null || !cardToken || !cuerpo || muro === null) {
       return sendError(res, 400, 'Parámetros inválidos.');
     }
 
     try {
-      const id = await renacerClient.mutation(api.muro.publicarDesahogo, {
+      const id = await renacerClient.mutation(api.muro.publicar, {
         secret: tokenDeApp(),
+        wall: muro,
         cardNumber,
         cardToken,
         body: cuerpo,

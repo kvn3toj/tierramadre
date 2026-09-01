@@ -51,3 +51,29 @@ export function bloqueValido(b: Bloque): boolean {
     b.codigoBase + b.tamano - 1 <= CODIGO_MAX
   );
 }
+
+/**
+ * Los códigos que una raíz puede repartir: `base+1 … base+tamano-1`.
+ *
+ * **Nunca incluye la base**, que identifica a la raíz misma y no se entrega a nadie
+ * (`raices.resolverCodigo` la rechaza con `motivo: 'es_raiz'`). Que esa exclusión viva
+ * acá y no en la pantalla es el punto: el panel de la raíz y el resolvedor de códigos
+ * comparten la misma definición de "repartible", en vez de repetirla y desincronizarse.
+ */
+export function codigosRepartibles(b: Bloque): number[] {
+  const cs: number[] = [];
+  for (let c = b.codigoBase + 1; c < b.codigoBase + b.tamano; c++) cs.push(c);
+  return cs;
+}
+
+/**
+ * El próximo código libre del bloque, o `null` si el cupo está agotado.
+ *
+ * Devuelve el **más bajo** que nadie usó, no "el siguiente al último": si el 201 quedó
+ * libre porque una persona no terminó el registro, se vuelve a ofrecer. Los huecos no
+ * queman cupo — la raíz tiene un bloque finito y cada código perdido es una familia que
+ * se queda afuera.
+ */
+export function proximoLibre(b: Bloque, usados: ReadonlySet<number>): number | null {
+  return codigosRepartibles(b).find((c) => !usados.has(c)) ?? null;
+}

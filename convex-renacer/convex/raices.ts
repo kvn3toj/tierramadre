@@ -8,8 +8,20 @@
 
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
-import { exigirTokenDeApp, exigirTokenDeOps } from './lib/guardas';
-import { bloqueValido, bloquesSeSolapan, codigoEnBloque, esCodigoDeRaiz } from './lib/codigos';
+import {
+  exigirTokenDeApp,
+  exigirTokenDeOps,
+  nuevoTokenOpaco,
+  tokenCoincide,
+} from './lib/guardas';
+import {
+  bloqueValido,
+  bloquesSeSolapan,
+  codigoEnBloque,
+  codigosRepartibles,
+  esCodigoDeRaiz,
+  proximoLibre,
+} from './lib/codigos';
 import { estadoRaiz } from './schema';
 import { sumarStat } from './stats';
 
@@ -38,7 +50,22 @@ export const emitir = mutation({
       .query('raices')
       .withIndex('by_codigoBase', (q) => q.eq('codigoBase', args.codigoBase))
       .unique();
-    if (existente) return { raizId: existente._id, codigoBase: existente.codigoBase, yaExistia: true };
+    if (existente) {
+      // Una raíz emitida antes del 2026-09-01 no tiene panel. Repetir `emitir` se lo
+      // acuña — es la vía de migración, y por eso el token va en la respuesta: el
+      // operador no puede leerlo de ningún otro lado después.
+      let panelToken = existente.panelToken;
+      if (!panelToken) {
+        panelToken = nuevoTokenOpaco();
+        await ctx.db.patch(existente._id, { panelToken });
+      }
+      return {
+        raizId: existente._id,
+        codigoBase: existente.codigoBase,
+        panelToken,
+        yaExistia: true,
+      };
+    }
 
     const todas = await ctx.db.query('raices').withIndex('by_codigoBase').take(RAICES_MAX);
     const choque = todas.find((r) => bloquesSeSolapan(r, bloque));
@@ -49,6 +76,7 @@ export const emitir = mutation({
       );
     }
 
+    const panelToken = nuevoTokenOpaco();
     const raizId = await ctx.db.insert('raices', {
       codigoBase: args.codigoBase,
       tamano: args.tamano,
@@ -58,10 +86,13 @@ export const emitir = mutation({
       contacto: args.contacto,
       estado: 'activa',
       registrados: 0,
+      panelToken,
       createdAt: Date.now(),
     });
     await sumarStat(ctx, 'raicesActivas', 1);
-    return { raizId, codigoBase: args.codigoBase, yaExistia: false };
+    // El token se devuelve acá y no se vuelve a servir: es lo que el operador le pasa a
+    // la raíz, una vez, como el enlace de su panel.
+    return { raizId, codigoBase: args.codigoBase, panelToken, yaExistia: false };
   },
 });
 
@@ -154,5 +185,81 @@ export const resolverCodigo = query({
     }
 
     return { existe: false as const, motivo: 'no_existe' as const };
+  },
+});
+
+/**
+ * El panel de la raíz (2026-09-01) — la superficie que la reunión del 31-08 pidió primero
+ * y que no existía.
+ *
+ * «Sol me habilita a mí las invitaciones y yo decido a quién le habilito el código.» Eso
+ * es esto: la raíz ve su bloque, cuáles códigos ya se usaron, cuál sigue libre, y se lleva
+ * el mensaje listo para pasárselo a la persona. Hasta hoy repartir un código dependía de
+ * que un operador leyera Convex por ella (D-0831-13 nombra al humano; nadie había hecho la
+ * pantalla).
+ *
+ * **Exige `panelToken`.** `codigoBase` es dictable por teléfono y por lo tanto adivinable;
+ * esta query lee. Es el mismo argumento del carnet (D-1), aplicado a la otra punta.
+ *
+ * **Qué NO devuelve, y por qué:** el nombre de quien se registró sale solo con
+ * `donorVisibilityConsent` (D-0831-5 · §10.3), igual que en la tribu y en el muro. La raíz
+ * no necesita el nombre para hacer su trabajo —`usado: true` ya le impide repartir el
+ * mismo código dos veces— y un token que se filtra no puede convertirse en la lista de
+ * damnificados de una comunidad. Tampoco salen necesidades, ubicación ni teléfono.
+ */
+export const panel = query({
+  args: { secret: v.string(), codigoBase: v.number(), token: v.string() },
+  handler: async (ctx, args) => {
+    exigirTokenDeApp(args.secret);
+
+    const raiz = await ctx.db
+      .query('raices')
+      .withIndex('by_codigoBase', (q) => q.eq('codigoBase', args.codigoBase))
+      .unique();
+
+    // Misma respuesta para "no existe", "sin panel" y "token equivocado": distinguirlas
+    // le confirmaría a quien tantea qué bloques están emitidos.
+    if (!raiz || !tokenCoincide(raiz.panelToken, args.token)) return null;
+
+    // Cota natural: los invitados de una raíz nunca pasan de `tamano - 1`.
+    const invitados = await ctx.db
+      .query('beneficiaries')
+      .withIndex('by_raiz', (q) => q.eq('raizId', raiz._id))
+      .take(raiz.tamano);
+
+    const porCodigo = new Map(
+      invitados.filter((b) => b.codigo !== undefined).map((b) => [b.codigo as number, b]),
+    );
+
+    // `codigosRepartibles` / `proximoLibre` viven en `lib/codigos.ts` y están bajo test
+    // (`tests/renacerPanelRaiz.test.ts`): la regla de qué es repartible la comparte esta
+    // pantalla con el resolvedor de códigos, en vez de repetirla acá.
+    const codigos = codigosRepartibles(raiz).map((c) => {
+      const quien = porCodigo.get(c);
+      return {
+        codigo: c,
+        usado: quien !== undefined,
+        // Nombre de pila SOLO con consentimiento; si no, la fila dice "usado" y nada más.
+        nombre:
+          quien && quien.donorVisibilityConsent
+            ? (quien.name.trim().split(/\s+/)[0] ?? quien.name)
+            : null,
+      };
+    });
+
+    return {
+      nombre: raiz.nombre,
+      comunidad: raiz.comunidad,
+      zona: raiz.zona ?? null,
+      estado: raiz.estado,
+      codigoBase: raiz.codigoBase,
+      desde: raiz.codigoBase + 1,
+      hasta: raiz.codigoBase + raiz.tamano - 1,
+      cupo: raiz.tamano - 1,
+      usados: codigos.filter((c) => c.usado).length,
+      // El siguiente código libre del bloque. `null` = cupo agotado: hay que pedir más.
+      proximoCodigo: proximoLibre(raiz, new Set(porCodigo.keys())),
+      codigos,
+    };
   },
 });

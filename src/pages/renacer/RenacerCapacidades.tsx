@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import RenacerLayout, { useRenacerTokens } from './RenacerLayout';
-import { BotonPrincipal, BotonSecundario, Campo, Consentimiento, SelectorDeEtiquetas } from './ui';
+import { BotonPrincipal, BotonSecundario, Campo, Consentimiento, LoQueFalta, SelectorDeEtiquetas } from './ui';
 import { registrarVoluntario } from './renacerApi';
 import { CAPACIDADES_SUGERIDAS } from '../../../convex-renacer/convex/lib/bolsas';
 import { qeFont } from '../../design-system';
@@ -30,11 +30,12 @@ export default function RenacerCapacidades() {
   const [error, setError] = useState<string | null>(null);
   const [listo, setListo] = useState(false);
 
-  const valido =
-    nombre.trim().length > 0 &&
-    contacto.trim().length > 0 &&
-    capacidades.length > 0 &&
-    habeasData;
+  const faltan: string[] = [];
+  if (capacidades.length === 0) faltan.push('elegir al menos una cosa que sabés hacer');
+  if (!nombre.trim()) faltan.push('tu nombre');
+  if (!contacto.trim()) faltan.push('cómo te contactamos');
+  if (!habeasData) faltan.push('autorizar el uso de tus datos');
+  const valido = faltan.length === 0;
 
   async function enviar() {
     setEnviando(true);
@@ -50,7 +51,7 @@ export default function RenacerCapacidades() {
       });
       setListo(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No pudimos guardar. Intentá de nuevo.');
+      setError(e instanceof Error ? e.message : 'No pudimos guardar el registro. Intentá de nuevo.');
       setEnviando(false);
     }
   }
@@ -58,10 +59,20 @@ export default function RenacerCapacidades() {
   if (listo) {
     return (
       <RenacerLayout
-        titulo="Gracias."
+        centrado
+        marca
+        titulo="Gracias. Te anotamos."
         bajada="Cuando haya un taller que dar, una cocina que atender o un techo que levantar, te escribimos."
       >
-        <BotonSecundario onClick={() => navegar('/renacer/tribu')}>Conocer las necesidades</BotonSecundario>
+        <Box sx={{ border: `1px solid ${t.border}`, bgcolor: t.surface, borderRadius: '16px', p: 2, mb: 2.5 }}>
+          <Typography sx={{ fontFamily: qeFont.ui, fontSize: 13, color: t.subtle }}>Te escribimos a</Typography>
+          <Typography sx={{ fontFamily: qeFont.ui, fontSize: 16, color: t.text }}>{contacto.trim()}</Typography>
+          <Typography sx={{ fontFamily: qeFont.ui, fontSize: 13, color: t.subtle, mt: 0.5 }}>{capacidades.join(' · ')}</Typography>
+        </Box>
+        <BotonSecundario onClick={() => setListo(false)}>Corregir mis datos</BotonSecundario>
+        <Box sx={{ mt: 1.5 }}>
+          <BotonSecundario onClick={() => navegar('/renacer/tribu')}>Conocer las necesidades</BotonSecundario>
+        </Box>
         <Box sx={{ mt: 1.5 }}>
           <BotonSecundario onClick={() => navegar('/renacer')}>Volver al inicio</BotonSecundario>
         </Box>
@@ -75,7 +86,7 @@ export default function RenacerCapacidades() {
       bajada="Todo sirve — desde cocinar hasta dar una consultoría. Elegí de la lista o escribí lo tuyo."
     >
       <SelectorDeEtiquetas
-        etiqueta="Mis capacidades"
+        etiqueta="Lo que sé hacer"
         sugeridas={CAPACIDADES_SUGERIDAS}
         elegidas={capacidades}
         onChange={setCapacidades}
@@ -87,18 +98,19 @@ export default function RenacerCapacidades() {
         valor={detalle}
         onChange={setDetalle}
         multilinea
-        placeholder="Tengo tiempo los fines de semana, puedo moverme hasta Potrerito…"
+        placeholder="Tengo tiempo los fines de semana y puedo moverme dentro de la ciudad…"
       />
 
       <Box sx={{ height: '1px', bgcolor: t.hairline, my: 3 }} />
 
-      <Campo etiqueta="Tu nombre" valor={nombre} onChange={setNombre} requerido />
+      <Campo etiqueta="Tu nombre" valor={nombre} onChange={setNombre} requerido autoComplete="name" />
       <Campo
         etiqueta="Cómo te contactamos"
         razon="WhatsApp o correo. Solo para escribirte cuando tu ayuda haga falta."
         valor={contacto}
         onChange={setContacto}
         requerido
+        autoComplete="tel"
       />
       <Campo
         etiqueta="De dónde venís (opcional)"
@@ -122,14 +134,15 @@ export default function RenacerCapacidades() {
       />
 
       {error && (
-        <Typography role="alert" sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.accent, mb: 2 }}>
+        <Typography role="alert" sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.alert, mb: 2 }}>
           {error}
         </Typography>
       )}
 
       <Box sx={{ mt: 2 }}>
+        <LoQueFalta faltantes={faltan} />
         <BotonPrincipal disabled={!valido || enviando} onClick={enviar}>
-          {enviando ? 'Guardando…' : 'Enlistar mis capacidades'}
+          {enviando ? 'Guardando…' : 'Ofrecer lo que sé hacer'}
         </BotonPrincipal>
       </Box>
       <Box sx={{ mt: 1.5 }}>

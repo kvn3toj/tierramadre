@@ -22,6 +22,8 @@ interface RenacerLayoutProps {
   lead?: ReactNode;
   /** El símbolo de la marca arriba del todo. Va por defecto en la puerta y el hub. */
   marca?: boolean;
+  /** Pantallas terminales (gracias, errores): el bloque se centra en vez de flotar arriba en un vacío. */
+  centrado?: boolean;
   /**
    * Cambiar este valor lleva el scroll arriba. Se usa para los pasos del registro:
    * el router conserva el offset entre renders, así que sin esto el paso siguiente
@@ -75,6 +77,7 @@ export default function RenacerLayout({
   bajada,
   lead,
   marca,
+  centrado,
   resetScrollKey,
   children,
 }: RenacerLayoutProps) {
@@ -128,6 +131,7 @@ export default function RenacerLayout({
           maxWidth: 520,
           position: 'relative',
           zIndex: 1,
+          ...(centrado ? { alignSelf: 'center', pb: { xs: 8, sm: 10 } } : {}),
           // Entrada escalonada: cada bloque directo sube y aparece, uno tras otro.
           '& > *': { animation: 'renacerSube 560ms cubic-bezier(.2,.7,.2,1) both' },
           '& > *:nth-of-type(1)': { animationDelay: '0ms' },

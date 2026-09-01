@@ -155,24 +155,61 @@ export function sumarseA(
 
 export interface MensajeMuro {
   id: string;
-  authorName: string;
+  /** Nombre de pila solo con consentimiento de visibilidad; si no, `null`. */
+  authorName: string | null;
   body: string;
   createdAt: number;
 }
 
-export async function leerMuro(): Promise<MensajeMuro[]> {
-  const { mensajes } = await pedir<{ mensajes: MensajeMuro[] }>('/api/renacer-muro');
+/**
+ * Los dos muros que se sirven hoy. `aliento` (aportadores, §4.7) sigue afuera: el
+ * aportador no tiene credencial, y un muro que cualquiera puede firmar no es un muro.
+ */
+export type Muro = 'desahogo' | 'gratitud';
+
+export async function leerMuro(muro: Muro = 'desahogo'): Promise<MensajeMuro[]> {
+  const { mensajes } = await pedir<{ mensajes: MensajeMuro[] }>(
+    `/api/renacer-muro?wall=${muro}`,
+  );
   return mensajes;
 }
 
 export function publicarEnMuro(
   body: string,
   credencial: CredencialCarnet,
+  muro: Muro = 'desahogo',
 ): Promise<{ id: string }> {
   return pedir<{ id: string }>('/api/renacer-muro', {
     method: 'POST',
-    body: JSON.stringify({ body, ...credencial }),
+    body: JSON.stringify({ body, wall: muro, ...credencial }),
   });
+}
+
+/** El panel de la raíz: su bloque, qué códigos quedan y cuál sigue. */
+export interface PanelRaiz {
+  nombre: string;
+  comunidad: string;
+  zona: string | null;
+  estado: 'activa' | 'pausada' | 'cerrada';
+  codigoBase: number;
+  desde: number;
+  hasta: number;
+  cupo: number;
+  usados: number;
+  /** El siguiente código libre. `null` = cupo agotado. */
+  proximoCodigo: number | null;
+  /** `nombre` solo con consentimiento de visibilidad (D-0831-5); si no, `null`. */
+  codigos: Array<{ codigo: number; usado: boolean; nombre: string | null }>;
+}
+
+export async function leerPanelRaiz(
+  codigo: string | number,
+  token: string,
+): Promise<PanelRaiz | null> {
+  const { panel } = await pedir<{ panel: PanelRaiz | null }>(
+    `/api/renacer-raiz?codigo=${encodeURIComponent(String(codigo))}&t=${encodeURIComponent(token)}`,
+  );
+  return panel ?? null;
 }
 
 /**
@@ -205,6 +242,8 @@ export interface Contadores {
   familias: number;
   necesidadesAbiertas: number;
   voluntarios: number;
+  /** `null` mientras nadie haya fijado el arranque de la campaña (D-0901-3). */
+  diasDeCampana: number | null;
   updatedAt: number | null;
 }
 
@@ -214,7 +253,13 @@ export async function leerContadores(): Promise<Contadores> {
 }
 
 export interface Tablero {
-  totales: { familias: number; necesidadesAbiertas: number; raicesActivas: number; voluntarios: number };
+  totales: {
+    familias: number;
+    necesidadesAbiertas: number;
+    raicesActivas: number;
+    voluntarios: number;
+    diasDeCampana: number | null;
+  };
   bolsas: Array<{ nombre: string; abiertas: number; resueltas: number; apoyos: number }>;
   comunidades: Array<{ comunidad: string; zona: string | null; registrados: number; cupo: number; activa: boolean }>;
   capacidades: Array<{ titulo: string; total: number; voluntarios: number; beneficiarios: number }>;

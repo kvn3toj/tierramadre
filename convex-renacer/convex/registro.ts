@@ -13,16 +13,14 @@
 
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
-import { exigirTokenDeApp } from './lib/guardas';
+import { exigirTokenDeApp, nuevoTokenOpaco } from './lib/guardas';
 import { normalizarBolsa } from './lib/bolsas';
 import { esCodigoDeRaiz } from './lib/codigos';
 import { raizDeCodigo } from './raices';
 import { sumarStat } from './stats';
 
-/** Token opaco del carnet (D-1). Dos UUID v4 concatenados: adivinarlo no es un camino. */
-function nuevoCardToken(): string {
-  return (crypto.randomUUID() + crypto.randomUUID()).replace(/-/g, '');
-}
+/** Token opaco del carnet (D-1). El mismo generador que usa el panel de la raíz. */
+const nuevoCardToken = nuevoTokenOpaco;
 
 async function siguienteDeSecuencia(
   ctx: { db: any },

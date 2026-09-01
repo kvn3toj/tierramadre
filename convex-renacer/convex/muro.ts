@@ -1,15 +1,22 @@
 /**
- * Los dos muros: desahogo (beneficiarios, §6.9) y aliento (aportadores, §4.7).
+ * Los muros: desahogo (beneficiarios, §6.9), gratitud (31-08) y aliento (aportadores,
+ * §4.7 — todavía sin credencial).
  *
  * Moderación mínima **desde el día uno** (§8.3): poder ocultar. Un muro de desahogo de
  * damnificados sin manera de ocultar un mensaje es una decisión, y sería la equivocada.
+ *
+ * **Desahogo y gratitud son dos muros, no dos etiquetas del mismo.** La reunión del 31-08
+ * los pidió con públicos distintos: el desahogo lo lee quien está pasando lo mismo
+ * («ayudar a esperar organizadamente»); la gratitud la lee quien aportó — es lo único que
+ * vuelve del otro lado. Mezclarlos pondría un «no tengo qué comer» debajo de un «gracias».
  */
 
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
 import { exigirTokenDeApp, exigirTokenDeOps, resolverBeneficiario } from './lib/guardas';
 
-const wall = v.union(v.literal('desahogo'), v.literal('aliento'));
+/** Los muros legibles hoy. `aliento` sigue afuera: el aportador no tiene credencial. */
+const wall = v.union(v.literal('desahogo'), v.literal('gratitud'));
 
 export const mensajes = query({
   args: { wall, limite: v.optional(v.number()), secret: v.string() },
@@ -21,8 +28,21 @@ export const mensajes = query({
       .order('desc')
       .take(args.limite ?? 100);
 
-    return filas
-      .filter((m) => m.hiddenAt === undefined)
+    const visibles = filas.filter((m) => m.hiddenAt === undefined);
+    // Consentimiento por autor, una lectura por autor distinto (D-0831-5 / §10.3).
+    const consent = new Map<string, boolean>();
+    for (const m of visibles) {
+      if (consent.has(m.authorId)) continue;
+      let ok = false;
+      try {
+        const autor = await ctx.db.get(m.authorId as never);
+        ok = (autor as { donorVisibilityConsent?: boolean } | null)?.donorVisibilityConsent === true;
+      } catch {
+        ok = false;
+      }
+      consent.set(m.authorId, ok);
+    }
+    return visibles
       .map((m) => ({
         id: m._id,
         /**
@@ -39,7 +59,7 @@ export const mensajes = query({
          *
          * El nombre completo sigue guardado: moderar sin saber quién escribió no se puede.
          */
-        authorName: m.authorName.trim().split(/\s+/)[0] ?? m.authorName,
+        authorName: consent.get(m.authorId) ? (m.authorName.trim().split(/\s+/)[0] ?? m.authorName) : null,
         body: m.body,
         createdAt: m.createdAt,
       }));
@@ -47,19 +67,21 @@ export const mensajes = query({
 });
 
 /**
- * Publica en el muro de desahogo.
+ * Publica en un muro, con la credencial del carnet.
  *
  * **El autor NO viene en el body.** Recibir `authorId`/`authorName` del cliente es dejar
- * que cualquiera escriba en el muro de desahogo firmando con el nombre de otro
- * damnificado. Sale de la credencial del carnet.
+ * que cualquiera escriba firmando con el nombre de otro damnificado. Sale de la
+ * credencial del carnet, que es lo único que prueba quién actúa.
  *
- * El muro de **aliento** (aportadores, §4.7) todavía no se sirve: el aportador no tiene
- * credencial diseñada —eso es el Task 14—. Prefiero que falle a dejar acá un camino
- * suplantable "por ahora".
+ * Quien escribe es siempre un beneficiario — en los dos muros. Que la gratitud la escriba
+ * quien RECIBIÓ es el punto: «esa gratitud la deja en la web» (reunión 31-08). El muro de
+ * **aliento** (aportadores, §4.7) sigue sin servirse porque el aportador todavía no tiene
+ * credencial diseñada; prefiero que falte a dejar acá un camino suplantable "por ahora".
  */
-export const publicarDesahogo = mutation({
+export const publicar = mutation({
   args: {
     secret: v.string(),
+    wall,
     cardNumber: v.number(),
     cardToken: v.string(),
     body: v.string(),
@@ -72,6 +94,33 @@ export const publicarDesahogo = mutation({
     if (body.length === 0) throw new Error('Un mensaje vacío no se publica.');
     if (body.length > 2000) throw new Error('El mensaje excede 2000 caracteres.');
 
+    return ctx.db.insert('wallMessages', {
+      wall: args.wall,
+      authorId: yo._id,
+      authorName: yo.name,
+      body,
+      createdAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * Alias del camino viejo. `api/renacer-muro.ts` lo llamaba por nombre y las raíces ya
+ * desplegadas también; se mantiene para no romper un cliente en vuelo.
+ */
+export const publicarDesahogo = mutation({
+  args: {
+    secret: v.string(),
+    cardNumber: v.number(),
+    cardToken: v.string(),
+    body: v.string(),
+  },
+  handler: async (ctx, args) => {
+    exigirTokenDeApp(args.secret);
+    const yo = await resolverBeneficiario(ctx, args.cardNumber, args.cardToken);
+    const body = args.body.trim();
+    if (body.length === 0) throw new Error('Un mensaje vacío no se publica.');
+    if (body.length > 2000) throw new Error('El mensaje excede 2000 caracteres.');
     return ctx.db.insert('wallMessages', {
       wall: 'desahogo',
       authorId: yo._id,

@@ -98,9 +98,16 @@ export default withApiHandler(
     if (needsCrudo.length === 0 || needsCrudo.length > MAX_NECESIDADES) {
       return sendError(res, 400, 'Se requiere al menos una necesidad.');
     }
-    const needs = needsCrudo.map((n) => parsePar(n, 'whatINeed', 'whyItMatters'));
+    // "Por qué importa" es opcional desde el 01-09: solo el qué es obligatorio.
+    const needs = needsCrudo.map((n) => {
+      if (typeof n !== 'object' || n === null) return null;
+      const obj = n as Record<string, unknown>;
+      const a = parseTexto(obj.whatINeed, 1000);
+      if (!a) return null;
+      return { a, b: parseTexto(obj.whyItMatters, 1000) ?? '', categoria: parseTexto(obj.categoria, 60) ?? undefined };
+    });
     if (needs.some((n) => n === null)) {
-      return sendError(res, 400, 'Alguna necesidad viene incompleta.');
+      return sendError(res, 400, 'Alguna necesidad viene sin el qué.');
     }
 
     const capsCrudo = Array.isArray(body.capacities) ? body.capacities : [];
