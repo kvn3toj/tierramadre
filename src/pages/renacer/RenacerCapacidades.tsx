@@ -90,7 +90,7 @@ export default function RenacerCapacidades() {
         placeholder="Tengo tiempo los fines de semana, puedo moverme hasta Potrerito…"
       />
 
-      <Box sx={{ height: 1, bgcolor: t.hairline, my: 3 }} />
+      <Box sx={{ height: '1px', bgcolor: t.hairline, my: 3 }} />
 
       <Campo etiqueta="Tu nombre" valor={nombre} onChange={setNombre} requerido />
       <Campo

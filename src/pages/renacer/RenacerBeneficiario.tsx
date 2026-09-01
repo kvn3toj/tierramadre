@@ -326,7 +326,7 @@ export default function RenacerBeneficiario() {
           tipo="email"
         />
 
-        <Box sx={{ height: 1, bgcolor: t.hairline, my: 3 }} />
+        <Box sx={{ height: '1px', bgcolor: t.hairline, my: 3 }} />
 
         <Consentimiento
           texto="Alguien me está ayudando a hacer este registro"
@@ -338,7 +338,7 @@ export default function RenacerBeneficiario() {
           <Campo etiqueta="Nombre de quien te está ayudando" valor={facilitador} onChange={setFacilitador} requerido />
         )}
 
-        <Box sx={{ height: 1, bgcolor: t.hairline, my: 3 }} />
+        <Box sx={{ height: '1px', bgcolor: t.hairline, my: 3 }} />
 
         {/* §10.1 — el consentimiento se recoge EN PRESENCIA, guiado por el facilitador,
             ANTES del registro digital. ⚠️ TEXTO PROVISORIO — [PENDIENTE revisión legal
