@@ -61,7 +61,7 @@ export const PriceDisplay = ({
 }: PriceDisplayProps) => {
   const theme = useTheme();
   const { shouldShowPrices } = usePriceShare();
-  const { currency, convertPrice, trmRate } = useCurrency();
+  const { currency, convertPrice, trmRate, isTrmStale } = useCurrency();
 
   // Use precioCOP (regular price) as primary, precioInternacional only as fallback
   const rawPrice = price || precioInternacional || 0;
@@ -183,6 +183,7 @@ export const PriceDisplay = ({
               }}
             >
               TRM: {trmRate.toLocaleString('es-CO')}
+              {isTrmStale && ' · sin conexión'}
             </Typography>
           )}
         </Box>

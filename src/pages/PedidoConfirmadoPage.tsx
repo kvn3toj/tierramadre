@@ -29,12 +29,8 @@ import {
   legacyGradients as gradients,
   legacyTypography as typography,
 } from '../design-system';
+import { houseWhatsAppLink as whatsappHref } from '../constants/contact';
 
-const HOUSE_WHATSAPP = '573113052755';
-
-function whatsappHref(text: string): string {
-  return `https://wa.me/${HOUSE_WHATSAPP}?text=${encodeURIComponent(text)}`;
-}
 
 function Shell({ children }: { children: React.ReactNode }) {
   const theme = useTheme();

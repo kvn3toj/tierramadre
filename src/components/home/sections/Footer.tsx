@@ -16,15 +16,15 @@ import { defaultShadows } from '../../../design-system/tokens/shadows';
 import { whiteAlpha, blackAlpha } from '../../../design-system/utils/colorUtils';
 import { blurValues } from '../../../design-system';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import { houseWhatsAppLink, INSTAGRAM_URL, WEBSITE_URL } from '../../../constants/contact';
 
 // =============================================================================
 // CONSTANTS
 // =============================================================================
 
-const WHATSAPP_NUMBER = '+573113052755';
-const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER.replace('+', '')}`;
-const INSTAGRAM_LINK = 'https://www.instagram.com/tierramadre.co?igsh=dnJ3djRkOGIwdHhy';
-const WEBSITE_LINK = 'https://www.tierramadre.co';
+const WHATSAPP_LINK = houseWhatsAppLink();
+const INSTAGRAM_LINK = INSTAGRAM_URL;
+const WEBSITE_LINK = WEBSITE_URL;
 
 const SOCIAL_LINKS = [
   { icon: WhatsApp, href: WHATSAPP_LINK, label: 'WhatsApp', color: emeraldCore.primary },

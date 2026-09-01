@@ -553,6 +553,12 @@ export const en = {
     sendWhatsApp: 'Send Inquiry via WhatsApp',
   },
 
+  // Contact
+  contact: {
+    whatsapp: 'Message us on WhatsApp',
+    whatsappAria: 'Open a WhatsApp conversation with Tierra Madre',
+  },
+
   // Provider
   provider: {
     sold: 'Sold',

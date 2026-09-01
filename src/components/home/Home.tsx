@@ -27,6 +27,7 @@ import {
 import { useAnalytics } from './hooks';
 import { SectionSkeleton, ErrorFallback } from './common';
 import { NotificationPermission } from '../pwa';
+import WhatsAppButton from '../contact/WhatsAppButton';
 import { useNewProductNotification } from '../../hooks/useNewProductNotification';
 
 import {
@@ -185,6 +186,9 @@ const Home: React.FC = () => {
           </Box>
         </Box>
       </Box>
+
+      {/* WhatsApp - House line, always one tap away */}
+      <WhatsAppButton delay={ANIMATION_DELAYS.whatsappButton} />
 
       {/* Notification Permission - Floating tooltip */}
       <NotificationPermission variant="tooltip" />

@@ -58,8 +58,9 @@ import {
   legacyGradients as gradients,
   legacyTypography as typography,
 } from '../../design-system';
+import { HOUSE_WHATSAPP } from '../../constants/contact';
 
-const HOUSE_WHATSAPP = '573113052755';
+
 
 /** A bare item-number or dash/comma-separated list — the stateless form. */
 const ID_LIST_RE = /^\d+([-,]\d+)*$/;

@@ -555,6 +555,12 @@ export const es = {
     sendWhatsApp: 'Enviar Consulta por WhatsApp',
   },
 
+  // Contact
+  contact: {
+    whatsapp: 'Escríbenos por WhatsApp',
+    whatsappAria: 'Abrir conversación de WhatsApp con Tierra Madre',
+  },
+
   // Provider
   provider: {
     sold: 'Vendidas',

@@ -58,7 +58,7 @@ export const LotePriceBreakdown: React.FC<LotePriceBreakdownProps> = ({
   const theme = useTheme();
   const isLight = theme.palette.mode === "light";
   const { shouldShowPrices } = usePriceShare();
-  const { currency, convertPrice, trmRate } = useCurrency();
+  const { currency, convertPrice, trmRate, isTrmStale } = useCurrency();
 
   const isUSD = currency === "USD";
   const secondaryTextColor = isLight
@@ -149,6 +149,7 @@ export const LotePriceBreakdown: React.FC<LotePriceBreakdownProps> = ({
             }}
           >
             TRM: {trmRate.toLocaleString("es-CO")}
+            {isTrmStale && " · sin conexión"}
           </Typography>
         )}
       </Box>

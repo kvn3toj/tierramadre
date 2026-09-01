@@ -35,6 +35,8 @@ interface CurrencyContextType {
   convertPrice: (precioCOP: number) => number;
   trmRate: number;
   isTrmLoading: boolean;
+  /** True when trmRate is not a live reading (expired cache or hardcoded constant). */
+  isTrmStale: boolean;
   multiplier: UsdMultiplier;
   setMultiplier: (value: UsdMultiplier) => void;
 }
@@ -84,7 +86,7 @@ interface CurrencyProviderProps {
 export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) => {
   const { user } = useGoogleAuth();
   const { accessLevel, isAuthenticated } = useAuthContext();
-  const { trmRate, isLoading: isTrmLoading } = useTRM();
+  const { trmRate, isLoading: isTrmLoading, isStale: isTrmStale } = useTRM();
 
   const userEmail = user?.email?.toLowerCase() ?? '';
   const isGuest = accessLevel === 'guest';
@@ -248,9 +250,10 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
     convertPrice,
     trmRate,
     isTrmLoading,
+    isTrmStale,
     multiplier,
     setMultiplier,
-  }), [currency, toggleCurrency, canToggleCurrency, convertPrice, trmRate, isTrmLoading, multiplier, setMultiplier]);
+  }), [currency, toggleCurrency, canToggleCurrency, convertPrice, trmRate, isTrmLoading, isTrmStale, multiplier, setMultiplier]);
 
   return (
     <CurrencyContext.Provider value={value}>

@@ -687,6 +687,12 @@ export const fr = {
     sendWhatsApp: 'Envoyer une demande par WhatsApp',
   },
 
+  // Contact
+  contact: {
+    whatsapp: 'Écrivez-nous sur WhatsApp',
+    whatsappAria: 'Ouvrir une conversation WhatsApp avec Tierra Madre',
+  },
+
   // Provider
   provider: {
     sold: 'Vendues',

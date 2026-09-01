@@ -548,6 +548,12 @@ export const zh = {
     sendWhatsApp: '通过WhatsApp发送咨询',
   },
 
+  // Contact
+  contact: {
+    whatsapp: '通过 WhatsApp 联系我们',
+    whatsappAria: '打开与 Tierra Madre 的 WhatsApp 对话',
+  },
+
   // Provider
   provider: {
     sold: '已售',

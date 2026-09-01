@@ -682,6 +682,12 @@ export const it = {
     sendWhatsApp: 'Invia richiesta via WhatsApp',
   },
 
+  // Contact
+  contact: {
+    whatsapp: 'Scrivici su WhatsApp',
+    whatsappAria: 'Apri una conversazione WhatsApp con Tierra Madre',
+  },
+
   // Provider
   provider: {
     sold: 'Venduti',
