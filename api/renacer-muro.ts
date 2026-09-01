@@ -24,6 +24,7 @@ import {
   parseTexto,
 } from './_lib/renacer-convex.js';
 import { api } from '../convex-renacer/convex/_generated/api.js';
+import { ipDe, permitir, LIMITES } from './_lib/renacer-ratelimit.js';
 
 const MAX_CUERPO = 2000;
 
@@ -54,6 +55,23 @@ export default withApiHandler(
     }
 
     const body = (req.body ?? {}) as Record<string, unknown>;
+
+    // Reportar un mensaje (consola 01-09): público, sin credencial — señala, no oculta.
+    // La respuesta es la misma exista o no el id: nada que confirmarle a quien tantea.
+    if (body.accion === 'reportar') {
+      if (!permitir('renacer-muro-reporte', ipDe(req), LIMITES.reporte)) {
+        return sendError(res, 429, 'Demasiados reportes. Esperá un minuto.');
+      }
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      if (!id || id.length > 64) return sendError(res, 400, 'Parámetros inválidos.');
+      try {
+        await renacerClient.mutation(api.muro.reportar, { secret: tokenDeApp(), id: id as never });
+      } catch {
+        /* id con formato ajeno a Convex: mismo silencio que un id inexistente */
+      }
+      return sendSuccess(res, { ok: true });
+    }
+
     const cardNumber = parseNumeroCarnet(body.cardNumber);
     const cardToken = parseTexto(body.cardToken, 128);
     const cuerpo = parseTexto(body.body, MAX_CUERPO);

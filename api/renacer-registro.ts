@@ -134,6 +134,7 @@ export default withApiHandler(
         donorVisibilityConsent: body.donorVisibilityConsent === true,
         imageConsent: body.imageConsent === true,
         assistedBy: parseTexto(body.assistedBy, 120) ?? undefined,
+        clientToken: parseTexto(body.clientToken, 80) ?? undefined,
         needs: needs.map((n) => ({ whatINeed: n!.a, whyItMatters: n!.b, categoria: n!.categoria })),
         capacities: capacities.map((c) => ({ title: c!.a, description: c!.b })),
       });

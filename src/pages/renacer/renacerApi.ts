@@ -39,6 +39,8 @@ export interface Carnet {
   primerNombre: string;
   codigo: number | null;
   raiz: { nombre: string; comunidad: string } | null;
+  /** El carnet como página de estado (01-09): cada pedido y en qué va. */
+  necesidades: { whatINeed: string; estado: 'pendiente' | 'en_camino' | 'entregada'; resolvedAt: number | null }[];
 }
 
 /** La credencial que el registro entrega UNA vez. El cliente la guarda; el servidor no la repite. */
@@ -107,6 +109,8 @@ export interface DatosRegistro {
   donorVisibilityConsent: boolean;
   imageConsent: boolean;
   assistedBy?: string;
+  /** Idempotencia: acuñado por intento de envío, repetido en cada reintento. */
+  clientToken?: string;
   needs: NecesidadNueva[];
   capacities?: Array<{ title: string; description: string }>;
 }
@@ -172,6 +176,17 @@ export async function leerMuro(muro: Muro = 'desahogo'): Promise<MensajeMuro[]> 
     `/api/renacer-muro?wall=${muro}`,
   );
   return mensajes;
+}
+
+/**
+ * Reportar un mensaje del muro (01-09). Sin credencial: señalar algo que hace daño no
+ * puede exigir carnet. El servidor responde igual exista o no el id.
+ */
+export function reportarMensaje(id: string): Promise<unknown> {
+  return pedir('/api/renacer-muro', {
+    method: 'POST',
+    body: JSON.stringify({ accion: 'reportar', id }),
+  });
 }
 
 export function publicarEnMuro(

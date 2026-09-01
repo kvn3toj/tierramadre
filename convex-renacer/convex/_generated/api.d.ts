@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as admin from "../admin.js";
 import type * as kits from "../kits.js";
 import type * as lib_bolsas from "../lib/bolsas.js";
 import type * as lib_campana from "../lib/campana.js";
@@ -27,6 +28,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
   kits: typeof kits;
   "lib/bolsas": typeof lib_bolsas;
   "lib/campana": typeof lib_campana;

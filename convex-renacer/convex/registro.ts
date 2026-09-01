@@ -61,6 +61,8 @@ export const registrarBeneficiario = mutation({
     donorVisibilityConsent: v.boolean(),
     imageConsent: v.boolean(),
     assistedBy: v.optional(v.string()),
+    /** Idempotencia: mismo token en cada reintento del MISMO envío (ver schema). */
+    clientToken: v.optional(v.string()),
     needs: v.array(
       v.object({
         whatINeed: v.string(),
@@ -82,6 +84,18 @@ export const registrarBeneficiario = mutation({
     }
     if (args.needs.length === 0) {
       throw new Error('Un registro sin necesidades no toma turno (§9). Al menos una.');
+    }
+
+    // ── Replay: si este envío YA se confirmó y la respuesta se perdió, devolver la
+    // credencial existente en vez de quemar el "código ya usado" contra la misma persona.
+    if (args.clientToken) {
+      const previo = await ctx.db
+        .query('beneficiaries')
+        .withIndex('by_clientToken', (q) => q.eq('clientToken', args.clientToken))
+        .first();
+      if (previo) {
+        return { cardNumber: previo.cardNumber, cardToken: previo.cardToken, beneficiaryId: previo._id };
+      }
     }
 
     // ── Resolver el código: raíz primero, kit legado después ──────────────────
@@ -133,6 +147,7 @@ export const registrarBeneficiario = mutation({
       donorVisibilityConsent: args.donorVisibilityConsent,
       imageConsent: args.imageConsent,
       assistedBy: args.assistedBy,
+      clientToken: args.clientToken,
     });
 
     /**
@@ -201,11 +216,23 @@ export const carnet = query({
 
     const raiz = persona.raizId ? await ctx.db.get(persona.raizId) : null;
 
+    // El carnet como página de estado (consola 01-09): la persona ve sus pedidos y en qué
+    // van — pendiente / en camino / entregada — sin que nadie tenga que llamarla.
+    const necesidades = await ctx.db
+      .query('needs')
+      .withIndex('by_reporter', (q) => q.eq('reporterId', persona._id))
+      .take(20);
+
     return {
       cardNumber: persona.cardNumber,
       primerNombre: persona.name.trim().split(/\s+/)[0] ?? persona.name,
       codigo: persona.codigo ?? persona.kitCode ?? null,
       raiz: raiz ? { nombre: raiz.nombre, comunidad: raiz.comunidad } : null,
+      necesidades: necesidades.map((n) => ({
+        whatINeed: n.whatINeed,
+        estado: n.status === 'resolved' ? 'entregada' : (n.estadoEntrega ?? 'pendiente'),
+        resolvedAt: n.resolvedAt ?? null,
+      })),
     };
   },
 });

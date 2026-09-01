@@ -18,14 +18,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import RenacerLayout, { useRenacerTokens } from './RenacerLayout';
-import { BotonPrincipal, BotonSecundario, Campo } from './ui';
-import { leerCredencial, leerMuro, publicarEnMuro, type MensajeMuro } from './renacerApi';
+import { BotonPrincipal, BotonSecundario, Campo, anilloFoco } from './ui';
+import { leerCredencial, leerMuro, publicarEnMuro, reportarMensaje, type MensajeMuro } from './renacerApi';
 import { qeFont } from '../../design-system';
 
 export default function RenacerEntorno() {
   const t = useRenacerTokens();
   const navegar = useNavigate();
   const [mensajes, setMensajes] = useState<MensajeMuro[] | 'cargando' | 'error'>('cargando');
+  // Ids ya reportados en esta visita: el botón se vuelve confirmación, no se repite.
+  const [reportados, setReportados] = useState<Set<string>>(new Set());
   const [borrador, setBorrador] = useState('');
   const [enviando, setEnviando] = useState(false);
   const credencial = leerCredencial();
@@ -129,9 +131,30 @@ export default function RenacerEntorno() {
             >
               {m.body}
             </Typography>
-            <Typography sx={{ fontFamily: qeFont.ui, fontSize: 13, color: t.subtle }}>
-              {m.authorName ?? 'Alguien de la tribu'}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 1.5 }}>
+              <Typography sx={{ fontFamily: qeFont.ui, fontSize: 13, color: t.subtle }}>
+                {m.authorName ?? 'Alguien de la tribu'}
+              </Typography>
+              {reportados.has(m.id) ? (
+                <Typography role="status" sx={{ fontFamily: qeFont.ui, fontSize: 12.5, color: t.subtle }}>
+                  Gracias por avisar. Alguien lo va a revisar.
+                </Typography>
+              ) : (
+                <Box
+                  component="button"
+                  type="button"
+                  onClick={() => {
+                    setReportados((prev) => new Set(prev).add(m.id));
+                    // Sin await: el reporte es señal, no transacción — si falla, la bandeja
+                    // del equipo no lo ve, pero a quien reporta no se le castiga con un error.
+                    void reportarMensaje(m.id).catch(() => {});
+                  }}
+                  sx={{ fontFamily: qeFont.ui, fontSize: 12.5, color: t.subtle, background: 'none', border: 0, p: 0.5, m: -0.5, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3, borderRadius: 999, ...anilloFoco(t) }}
+                >
+                  Reportar
+                </Box>
+              )}
+            </Box>
           </Box>
         ))}
 

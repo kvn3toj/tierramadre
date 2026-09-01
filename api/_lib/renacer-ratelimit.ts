@@ -89,4 +89,6 @@ export const LIMITES = {
    * códigos, está probando tokens, y no hay uso legítimo que necesite 30 por minuto.
    */
   panelRaiz: 10,
+  /** Reportar un mensaje del muro: público y sin credencial, así que corto. */
+  reporte: 10,
 } as const;

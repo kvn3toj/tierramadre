@@ -52,6 +52,9 @@ export default function RenacerCapacidades() {
       setListo(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No pudimos guardar el registro. Intentá de nuevo.');
+    } finally {
+      // En `finally`, no solo en el catch: si quedaba solo en el error, el botón no
+      // volvía a habilitarse nunca tras un éxito (aviso de tierramadre-b1, 01-09).
       setEnviando(false);
     }
   }

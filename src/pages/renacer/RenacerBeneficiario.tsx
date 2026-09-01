@@ -328,7 +328,7 @@ export default function RenacerBeneficiario() {
         />
         <Campo
           etiqueta="Teléfono (opcional)"
-          razon="Para avisarte por WhatsApp cuando la ayuda esté en camino."
+          razon="Para avisarte cuando la ayuda esté en camino."
           valor={telefono}
           onChange={(v) => setTelefono(v.replace(/[^0-9+()\s-]/g, '').slice(0, 40))}
           autoComplete="tel"

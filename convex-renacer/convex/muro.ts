@@ -131,6 +131,24 @@ export const publicarDesahogo = mutation({
   },
 });
 
+/**
+ * El botón público "Reportar" (consola 01-09): cualquiera con la página abierta puede
+ * señalar un mensaje; NO lo oculta — lo pone en la bandeja de anomalías para que una
+ * persona decida. Token de app (superficie pública), sin credencial: reportar no exige
+ * carnet, y el rate limit del endpoint acota el abuso.
+ */
+export const reportar = mutation({
+  args: { id: v.id('wallMessages'), secret: v.string() },
+  handler: async (ctx, args) => {
+    exigirTokenDeApp(args.secret);
+    const m = await ctx.db.get(args.id);
+    // Silencio deliberado sobre inexistentes u ocultos: no confirmarle nada a quien tantea ids.
+    if (!m || m.hiddenAt) return { ok: true };
+    await ctx.db.patch(args.id, { reportedAt: Date.now(), reportCount: (m.reportCount ?? 0) + 1 });
+    return { ok: true };
+  },
+});
+
 export const ocultar = mutation({
   args: { id: v.id('wallMessages'), secret: v.string() },
   handler: async (ctx, args) => {

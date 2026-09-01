@@ -86,6 +86,8 @@ export default defineSchema({
      */
     panelToken: v.optional(v.string()),
     createdAt: v.number(),
+    /** Consola (01-09): cada ampliación del bloque, con quién la hizo. */
+    ampliaciones: v.optional(v.array(v.object({ tamanoAnterior: v.number(), tamanoNuevo: v.number(), actorEmail: v.string(), at: v.number() }))),
   }).index('by_codigoBase', ['codigoBase']),
 
   /**
@@ -143,8 +145,20 @@ export default defineSchema({
     donorVisibilityConsent: v.boolean(),
     imageConsent: v.boolean(),
     assistedBy: v.optional(v.string()),
+    /** Consola (01-09): rastro de rectificación (habeas data, derecho de corrección). */
+    updatedAt: v.optional(v.number()),
+    updatedBy: v.optional(v.string()),
+    /**
+     * Idempotencia del registro (01-09, patrón de `convex/migrations.ts`): el cliente
+     * acuña un token por INTENTO DE ENVÍO y lo repite en cada reintento. Si el servidor
+     * ya confirmó y la respuesta se perdió en la señal del albergue, el reintento
+     * devuelve la credencial existente en vez de "código ya usado" — sin esto la persona
+     * queda registrada y sin carnet para siempre, con la pantalla pidiéndole reintentar.
+     */
+    clientToken: v.optional(v.string()),
   })
     .index('by_cardNumber', ['cardNumber'])
+    .index('by_clientToken', ['clientToken'])
     .index('by_codigo', ['codigo'])
     .index('by_raiz', ['raizId'])
     .index('by_kitCode', ['kitCode'])
@@ -165,8 +179,14 @@ export default defineSchema({
     status: v.union(v.literal('open'), v.literal('resolved')),
     createdAt: v.number(),
     supportCount: v.number(),
+    /** Consola (01-09): estado de entrega visible en el carnet, y rastro de quién resolvió. */
+    estadoEntrega: v.optional(v.union(v.literal('en_camino'), v.literal('entregada'))),
+    resolvedAt: v.optional(v.number()),
+    resolvedBy: v.optional(v.string()),
+    hiddenAt: v.optional(v.number()),
   })
     .index('by_createdAt', ['createdAt'])
+    .index('by_status_and_createdAt', ['status', 'createdAt'])
     .index('by_categoria', ['categoria', 'createdAt'])
     .index('by_reporter', ['reporterId']),
 
@@ -219,6 +239,54 @@ export default defineSchema({
   }).index('by_key', ['key']),
 
   /**
+   * Consola de operación (01-09). Toda mutación de un administrador deja una línea acá con
+   * su correo verificado: bajo habeas data, "quién borró / ocultó / corrigió" tiene que
+   * poder responderse. Nunca guarda los datos borrados — solo que se borraron y por quién.
+   */
+  auditoria: defineTable({
+    actorEmail: v.string(),
+    accion: v.string(),
+    objetivo: v.string(),
+    detalle: v.optional(v.string()),
+    at: v.number(),
+  })
+    .index('by_at', ['at'])
+    .index('by_objetivo', ['objetivo']),
+
+  /**
+   * Conexiones necesidad ↔ capacidad/voluntario/aportador, comprometidas por una persona
+   * (decisión B, 01-09: la consola propone candidatos, nunca empareja sola).
+   * propuesta → aceptada → entregada (→ cancelada). Solo `entregada` resuelve la necesidad.
+   */
+  conexiones: defineTable({
+    needId: v.id('needs'),
+    capacityId: v.optional(v.id('capacities')),
+    voluntarioId: v.optional(v.id('voluntarios')),
+    aportadorRef: v.optional(v.string()),
+    estado: v.union(v.literal('propuesta'), v.literal('aceptada'), v.literal('entregada'), v.literal('cancelada')),
+    notas: v.optional(v.string()),
+    actorEmail: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index('by_need', ['needId'])
+    .index('by_estado_and_updatedAt', ['estado', 'updatedAt']),
+
+  /** Registro de avisos: a quién, por qué canal, si llegó. El carnet es un canal (no envía nada: se ve). */
+  notificaciones: defineTable({
+    beneficiaryId: v.optional(v.id('beneficiaries')),
+    voluntarioId: v.optional(v.id('voluntarios')),
+    canal: v.union(v.literal('carnet'), v.literal('email'), v.literal('whatsapp')),
+    mensaje: v.string(),
+    estado: v.union(v.literal('registrada'), v.literal('enviada'), v.literal('fallida')),
+    detalle: v.optional(v.string()),
+    actorEmail: v.string(),
+    at: v.number(),
+  })
+    .index('by_beneficiary', ['beneficiaryId'])
+    .index('by_at', ['at']),
+
+  /**
    * Los muros: desahogo (beneficiarios, §6.9), aliento (aportadores, §4.7) y gratitud
    * (31-08: quien recibe ayuda deja las gracias en la web). `hiddenAt` es la moderación
    * mínima desde el día uno.
@@ -230,5 +298,10 @@ export default defineSchema({
     body: v.string(),
     createdAt: v.number(),
     hiddenAt: v.optional(v.number()),
+    /** Consola (01-09): quién lo ocultó y cuándo se volvió a mostrar; reportes del lado público. */
+    hiddenBy: v.optional(v.string()),
+    shownAt: v.optional(v.number()),
+    reportedAt: v.optional(v.number()),
+    reportCount: v.optional(v.number()),
   }).index('by_wall_and_createdAt', ['wall', 'createdAt']),
 });

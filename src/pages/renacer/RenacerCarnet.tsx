@@ -131,6 +131,24 @@ export default function RenacerCarnet() {
         )}
       </Box>
 
+      {/* El carnet como página de estado (01-09): la persona ve en qué va cada pedido
+          sin que nadie tenga que llamarla. El color señala; el texto informa. */}
+      {carnet.necesidades.length > 0 && (
+        <Box sx={{ border: `1px solid ${t.controlBorder}`, bgcolor: t.surface, backdropFilter: 'blur(10px)', borderRadius: '18px', p: 2, mb: 3 }}>
+          <Typography sx={{ fontFamily: renacerFont.display, fontWeight: 700, fontSize: 15, color: t.text, mb: 1 }}>
+            Lo que pediste
+          </Typography>
+          {carnet.necesidades.map((n, i) => (
+            <Box key={i} sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 1.5, py: 0.75, borderTop: i > 0 ? `1px solid ${t.hairline}` : 0 }}>
+              <Typography sx={{ fontFamily: qeFont.ui, fontSize: 14.5, color: t.text, minWidth: 0 }}>{n.whatINeed}</Typography>
+              <Typography sx={{ fontFamily: renacerFont.mono, fontSize: 12.5, whiteSpace: 'nowrap', color: n.estado === 'pendiente' ? t.muted : t.accent }}>
+                {n.estado === 'entregada' ? 'Entregada ✓' : n.estado === 'en_camino' ? 'En camino' : 'En turno'}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      )}
+
       <Typography sx={{ fontFamily: qeFont.ui, fontSize: 14.5, color: t.muted, mb: 1.5, lineHeight: 1.5 }}>
         Guardá esta pantalla: con una captura basta.
       </Typography>

@@ -371,6 +371,12 @@ const RenacerTablero = lazyWithRetry(
 // al emitir el bloque, y lleva el token en el query string; no va impreso, así que puede
 // renombrarse. `/renacer/gracias` — el muro de gratitud, tampoco impreso.
 const RenacerRaiz = lazyWithRetry(() => import('./pages/renacer/RenacerRaiz'), 'RenacerRaiz');
+// `/admin/renacer` — la consola de operación de la campaña (01-09). Vive DENTRO del shell
+// y detrás de `AdminRoute` + verificación de correo en el servidor: dos llaves, no una.
+const RenacerConsola = lazyWithRetry(
+  () => import('./pages/admin/renacer/RenacerConsola'),
+  'RenacerConsola',
+);
 const RenacerGracias = lazyWithRetry(
   () => import('./pages/renacer/RenacerGracias'),
   'RenacerGracias',
@@ -617,6 +623,16 @@ function AppContent() {
                       fallback={<LocalizedLoading messageKey="receipts" />}
                     >
                       <ReceiptGenerator />
+                    </Suspense>
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/renacer"
+                element={
+                  <AdminRoute>
+                    <Suspense fallback={null}>
+                      <RenacerConsola />
                     </Suspense>
                   </AdminRoute>
                 }
