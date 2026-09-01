@@ -1,0 +1,14 @@
+{
+  "name": "renacer-backend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Backend Convex de la campaña Renacer. Deployment PROPIO — ver §8.1 del spec: cero carga de campaña sobre el team Skyline del MVP ni sobre el Convex de producción de Tierra Mädre.",
+  "scripts": {
+    "dev": "convex dev",
+    "deploy": "convex deploy"
+  },
+  "dependencies": {
+    "convex": "^1.35.1"
+  }
+}

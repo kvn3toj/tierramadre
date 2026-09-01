@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vite",
     "dev:api": "vercel dev",
+    "dev:renacer": "tsx scripts/renacer-dev.mjs",
     "build": "node scripts/update-version.mjs && node scripts/generate-thumbnails-seed.mjs && tsc -b && vite build",
     "build:vercel": "node scripts/update-version.mjs && node scripts/generate-thumbnails-seed.mjs && node scripts/build-app.mjs",
     "preview": "vite preview",

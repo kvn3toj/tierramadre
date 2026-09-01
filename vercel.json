@@ -99,6 +99,30 @@
     },
     "api/mp-webhook.ts": {
       "maxDuration": 15
+    },
+    "api/renacer-kit.ts": {
+      "maxDuration": 15
+    },
+    "api/renacer-registro.ts": {
+      "maxDuration": 15
+    },
+    "api/renacer-carnet.ts": {
+      "maxDuration": 15
+    },
+    "api/renacer-tribu.ts": {
+      "maxDuration": 15
+    },
+    "api/renacer-muro.ts": {
+      "maxDuration": 15
+    },
+    "api/renacer-voluntario.ts": {
+      "maxDuration": 15
+    },
+    "api/renacer-contadores.ts": {
+      "maxDuration": 15
+    },
+    "api/renacer-tablero.ts": {
+      "maxDuration": 15
     }
   },
   "headers": [
@@ -208,7 +232,7 @@
       ]
     },
     {
-      "source": "/assets/:path*",
+      "source": "/assets/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -217,7 +241,7 @@
       ]
     },
     {
-      "source": "/images/:path*",
+      "source": "/images/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -228,14 +252,14 @@
   ],
   "rewrites": [
     {
-      "source": "/:path*",
+      "source": "/(.*)",
       "has": [
         {
           "type": "host",
           "value": "(?<handle>[^.]+)\\.tierramadre\\.app"
         }
       ],
-      "destination": "/api/ambassador-subdomain?handle=:handle&path=:path*"
+      "destination": "/api/ambassador-subdomain?handle=:handle&path=$1"
     },
     {
       "source": "/cotizacion-soul",
@@ -246,8 +270,8 @@
       "destination": "/cotizacion-soul-plan.html"
     },
     {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
     },
     {
       "source": "/product/:itemNumber",

@@ -1,4 +1,12 @@
 /**
+ * ⚠️ RETIRADO DEL CAMINO PRINCIPAL (2026-08-31).
+ *
+ * Este registro local (`scripts/.data/renacer-registro-codigos.json`) era la tabla madre
+ * de códigos por kit del diseño del 25-08. Con el pivote del 31-08 los códigos los emite
+ * una raíz (líder comunitario) desde Convex: ver `convex-renacer/README.md` → "Operación".
+ * Este script queda como referencia del camino legado; no escribe en Convex y nada lo lee.
+ */
+/**
  * Registro de códigos de kit de la campaña Renacer — la "tabla madre" del §7.3
  * de `docs/superpowers/specs/2026-08-25-renacer-qr-flow-design.md`.
  *

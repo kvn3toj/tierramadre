@@ -327,6 +327,61 @@ const PedidoConfirmadoPage = lazyWithRetry(
   'PedidoConfirmadoPage',
 );
 
+// Campaña Renacer — públicas, sin shell y sin auth.
+// `/renacer/k/:codigo` es la URL IMPRESA en cada estuche y `/renacer/b/:numero` la del
+// carnet: son CONTRATOS PERMANENTES desde el 2026-08-25 (compuerta §3.4 · G-A.1 del spec
+// `docs/superpowers/specs/2026-08-25-renacer-qr-flow-design.md`). Son la URL de todo
+// código de invitación y del carnet — no se renombran, no se reusan y no se borran, ni
+// siquiera cuando lo que sirven cambie por completo (como pasó el 31-08).
+const RenacerPuerta = lazyWithRetry(
+  () => import('./pages/renacer/RenacerPuerta'),
+  'RenacerPuerta',
+);
+const RenacerBeneficiario = lazyWithRetry(
+  () => import('./pages/renacer/RenacerBeneficiario'),
+  'RenacerBeneficiario',
+);
+const RenacerCarnet = lazyWithRetry(
+  () => import('./pages/renacer/RenacerCarnet'),
+  'RenacerCarnet',
+);
+const RenacerAportador = lazyWithRetry(
+  () => import('./pages/renacer/RenacerAportador'),
+  'RenacerAportador',
+);
+// `/renacer/tribu` y `/renacer/entorno` NO van impresas: a diferencia de `/renacer/k/*`
+// y `/renacer/b/*`, estas dos pueden cambiar de nombre cuando haga falta (§3.4 · G-A.1).
+const RenacerTribu = lazyWithRetry(
+  () => import('./pages/renacer/RenacerTribu'),
+  'RenacerTribu',
+);
+const RenacerEntorno = lazyWithRetry(
+  () => import('./pages/renacer/RenacerEntorno'),
+  'RenacerEntorno',
+);
+const RenacerCapacidades = lazyWithRetry(
+  () => import('./pages/renacer/RenacerCapacidades'),
+  'RenacerCapacidades',
+);
+const RenacerTablero = lazyWithRetry(
+  () => import('./pages/renacer/RenacerTablero'),
+  'RenacerTablero',
+);
+// `/renacer/r/:codigo` — el panel de la raíz (2026-09-01). El enlace se entrega UNA vez,
+// al emitir el bloque, y lleva el token en el query string; no va impreso, así que puede
+// renombrarse. `/renacer/gracias` — el muro de gratitud, tampoco impreso.
+const RenacerRaiz = lazyWithRetry(() => import('./pages/renacer/RenacerRaiz'), 'RenacerRaiz');
+// `/admin/renacer` — la consola de operación de la campaña (01-09). Vive DENTRO del shell
+// y detrás de `AdminRoute` + verificación de correo en el servidor: dos llaves, no una.
+const RenacerConsola = lazyWithRetry(
+  () => import('./pages/admin/renacer/RenacerConsola'),
+  'RenacerConsola',
+);
+const RenacerGracias = lazyWithRetry(
+  () => import('./pages/renacer/RenacerGracias'),
+  'RenacerGracias',
+);
+
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'treasure' | 'ambassadors';
 
@@ -568,6 +623,16 @@ function AppContent() {
                       fallback={<LocalizedLoading messageKey="receipts" />}
                     >
                       <ReceiptGenerator />
+                    </Suspense>
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/renacer"
+                element={
+                  <AdminRoute>
+                    <Suspense fallback={null}>
+                      <RenacerConsola />
                     </Suspense>
                   </AdminRoute>
                 }
@@ -1063,6 +1128,88 @@ function InvitationRouter() {
         element={
           <Suspense fallback={<LocalizedLoading messageKey="general" />}>
             <PedidoConfirmadoPage />
+          </Suspense>
+        }
+      />
+      {/* Campaña Renacer. `/renacer/k/:codigo` y `/renacer/b/:numero` son contratos
+          permanentes: van impresos / en el QR del carnet (§3.4 · G-A.1). */}
+      <Route
+        path="/renacer"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerPuerta />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/renacer/k/:codigo"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerBeneficiario />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/renacer/ayudar"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerAportador />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/renacer/b/:numero"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerCarnet />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/renacer/tribu"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerTribu />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/renacer/entorno"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerEntorno />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/renacer/capacidades"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerCapacidades />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/renacer/tablero"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerTablero />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/renacer/r/:codigo"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerRaiz />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/renacer/gracias"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerGracias />
           </Suspense>
         }
       />

@@ -327,3 +327,7 @@ export type {
 // =============================================================================
 export { ds3, getDS3, ds3Motion, ds3Status, ds3States, ds3Shell } from './v3';
 export type { DS3, DS3Mode, DS3Surfaces } from './v3';
+
+// Renacer — piel de campaña (ver tokens/renacer-campaign.ts)
+export { renacerTokens, renacerTokensLight, renacerFont, renacerPalette, renacerRadius } from './tokens/renacer-campaign';
+export type { RenacerTokens } from './tokens/renacer-campaign';
