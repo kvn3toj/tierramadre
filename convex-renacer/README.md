@@ -71,3 +71,28 @@ Riesgo aceptado (misma postura que la compuerta §3.4 del 25-08): el código es
 adivinable — un tercero puede teclear 105 y quemar ese lugar del bloque. Lo mitiga la
 entrega en presencia y la lista de la raíz; si aparece fraude, `resolverCodigo` es el
 único punto donde entrarían códigos opacos.
+
+## Correr el flujo entero en localhost (sin Vercel)
+
+```sh
+# en la raíz del repo — app en :3000, API local de renacer-* en :3999
+npm run dev:renacer
+```
+
+`scripts/renacer-dev.mjs` monta los handlers reales de `api/renacer-*.ts` en un servidor
+Node y lanza Vite con `vite.local.config.ts` (mismo `vite.config.ts`, pero el proxy `/api`
+apunta al servidor local en vez de a producción). Necesita en `.env.local` (gitignored):
+
+```
+RENACER_CONVEX_URL=https://savory-malamute-505.convex.cloud
+RENACER_APP_TOKEN=<npx convex env get RENACER_APP_TOKEN, desde convex-renacer/>
+```
+
+`vercel dev` **no** sirve para esto: su compilador de rutas rechaza los patrones del preset
+de Vite (`PATH TO REGEXP ERROR … ":path*"`, medido 2026-09-01 con las CLI 54 y 59) y todo
+`/api/*` cae en 404. Por eso el script. Los patrones `:path*` de `vercel.json` se cambiaron
+igual por su equivalente `(.*)`/`$1` — idéntico en producción — para no dejar la mina puesta.
+
+Datos de prueba en el dev deployment (2026-09-01): raíces `100` Pablo · Casamangles y `200`
+Mitchell · Sevilla y Potrerito (bloques 101–199 / 201–299, sin registros), y `900` PRUEBA.
+Los registros hechos desde localhost quedan ahí — es dev, se limpian desde el dashboard.
