@@ -130,9 +130,11 @@ export const tablero = query({
     const raices = await ctx.db.query('raices').withIndex('by_codigoBase').take(TABLERO_MAX);
     const comunidades = raices
       // Solo las activas: una raíz en pausa (o de prueba) no es un dato público de la campaña.
+      // Sin cupo y en orden alfabético (01-09): "3 de 99" en la pantalla más pública era un marco
+      // de escasez y competencia entre barrios. Se cuenta quién se registró; no se compara.
       .filter((r) => r.estado === 'activa')
-      .map((r) => ({ comunidad: r.comunidad, zona: r.zona ?? null, registrados: r.registrados, cupo: r.tamano - 1, activa: true }))
-      .sort((a, b) => b.registrados - a.registrados);
+      .map((r) => ({ comunidad: r.comunidad, zona: r.zona ?? null, registrados: r.registrados }))
+      .sort((a, b) => a.comunidad.localeCompare(b.comunidad, 'es'));
 
     const caps = await ctx.db.query('capacities').take(TABLERO_MAX);
     const porCapacidad = new Map<string, { total: number; voluntarios: number; beneficiarios: number; titulo: string }>();

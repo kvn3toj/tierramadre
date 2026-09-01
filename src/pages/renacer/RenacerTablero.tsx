@@ -138,13 +138,21 @@ export default function RenacerTablero() {
         )}
       </Seccion>
 
-      <Seccion titulo="Comunidades" nota="Familias registradas del cupo que cada comunidad tiene para invitar. Cada barra va sobre su propio cupo.">
+      <Seccion titulo="Comunidades" nota="Las comunidades que ya están invitando, y cuántas familias se registraron por cada una. No es una carrera: se cuenta, no se compara.">
         {datos.comunidades.length === 0 ? (
           <Typography sx={{ fontFamily: renacerFont.ui, fontSize: 14, color: t.subtle }}>Aún no hay comunidades activas.</Typography>
         ) : (
           <Box role="list">
-            {datos.comunidades.map((c) => (
-              <Barra key={c.comunidad} etiqueta={c.zona ? `${c.comunidad} · ${c.zona}` : c.comunidad} valor={c.registrados} max={c.cupo} detalle={`de ${c.cupo} cupos${c.activa ? '' : ' · en pausa'}`} tono={c.activa ? 'acento' : 'suave'} />
+            {datos.comunidades.map((c, i) => (
+              <Box key={c.comunidad} role="listitem" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 2, py: 1.25, borderTop: i === 0 ? 'none' : `1px solid ${t.hairline}` }}>
+                <Typography sx={{ fontFamily: renacerFont.ui, fontSize: 15, color: t.text }}>
+                  {c.comunidad}
+                  {c.zona && <Box component="span" sx={{ color: t.subtle }}> · {c.zona}</Box>}
+                </Typography>
+                <Typography sx={{ fontFamily: renacerFont.mono, fontSize: 13.5, color: t.text, whiteSpace: 'nowrap' }}>
+                  {c.registrados === 1 ? '1 familia' : `${c.registrados} familias`}
+                </Typography>
+              </Box>
             ))}
           </Box>
         )}

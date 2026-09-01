@@ -261,7 +261,7 @@ export interface Tablero {
     diasDeCampana: number | null;
   };
   bolsas: Array<{ nombre: string; abiertas: number; resueltas: number; apoyos: number }>;
-  comunidades: Array<{ comunidad: string; zona: string | null; registrados: number; cupo: number; activa: boolean }>;
+  comunidades: Array<{ comunidad: string; zona: string | null; registrados: number }>;
   capacidades: Array<{ titulo: string; total: number; voluntarios: number; beneficiarios: number }>;
   ultimos: Array<{ whatINeed: string; categoria: string | null; createdAt: number; supportCount: number }>;
   truncado: boolean;
