@@ -21,7 +21,7 @@ import RenacerLayout, { useRenacerTokens } from './RenacerLayout';
 import { BotonSecundario } from './ui';
 import { leerCarnet, guardarCredencial, type Carnet } from './renacerApi';
 import { copy } from './renacerCopy';
-import { qeFont } from '../../design-system';
+import { qeFont, renacerFont } from '../../design-system';
 
 export default function RenacerCarnet() {
   const { numero = '' } = useParams();
@@ -80,17 +80,19 @@ export default function RenacerCarnet() {
         sx={{
           border: `1px solid ${t.border}`,
           bgcolor: t.surface,
-          borderRadius: 3,
+          backdropFilter: 'blur(12px)',
+          borderRadius: '24px',
           p: 3,
           mb: 3,
           textAlign: 'center',
+          boxShadow: t.shadow,
         }}
       >
         <Typography sx={{ fontFamily: qeFont.ui, fontSize: 13, color: t.subtle, mb: 0.5 }}>
           Número
         </Typography>
         <Typography
-          sx={{ fontFamily: qeFont.serif, fontSize: 56, lineHeight: 1, color: t.text, mb: 2.5 }}
+          sx={{ fontFamily: renacerFont.display, fontWeight: 800, fontSize: 60, lineHeight: 1, letterSpacing: '-0.03em', color: t.text, mb: 2.5 }}
         >
           {carnet.cardNumber}
         </Typography>
@@ -109,11 +111,11 @@ export default function RenacerCarnet() {
           <QRCodeSVG value={urlDelCarnet} size={180} level="M" />
         </Box>
 
-        <Typography sx={{ fontFamily: qeFont.serif, fontSize: 26, color: t.text }}>
+        <Typography sx={{ fontFamily: renacerFont.display, fontWeight: 700, fontSize: 24, color: t.text }}>
           {carnet.primerNombre}
         </Typography>
         {carnet.codigo !== null && (
-          <Typography sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.subtle, mt: 0.5 }}>
+          <Typography sx={{ fontFamily: renacerFont.mono, fontSize: 14, letterSpacing: '0.08em', color: t.accent, mt: 0.75 }}>
             {copy.carnet.codigo(carnet.codigo)}
           </Typography>
         )}

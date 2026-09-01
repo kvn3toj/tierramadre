@@ -212,3 +212,18 @@ export async function leerContadores(): Promise<Contadores> {
   const { contadores } = await pedir<{ contadores: Contadores }>('/api/renacer-contadores');
   return contadores;
 }
+
+export interface Tablero {
+  totales: { familias: number; necesidadesAbiertas: number; raicesActivas: number; voluntarios: number };
+  bolsas: Array<{ nombre: string; abiertas: number; resueltas: number; apoyos: number }>;
+  comunidades: Array<{ comunidad: string; zona: string | null; registrados: number; cupo: number; activa: boolean }>;
+  capacidades: Array<{ titulo: string; total: number; voluntarios: number; beneficiarios: number }>;
+  ultimos: Array<{ whatINeed: string; categoria: string | null; createdAt: number; supportCount: number }>;
+  truncado: boolean;
+  updatedAt: number;
+}
+
+export async function leerTablero(): Promise<Tablero> {
+  const { tablero } = await pedir<{ tablero: Tablero }>('/api/renacer-tablero');
+  return tablero;
+}

@@ -13,7 +13,8 @@
 import { useState, type ReactNode } from 'react';
 import { Box, Button, Checkbox, TextField, Typography } from '@mui/material';
 import { useRenacerTokens } from './RenacerLayout';
-import { qeFont } from '../../design-system';
+import { renacerFont, renacerRadius } from '../../design-system';
+const qeFont = { ui: renacerFont.ui, serif: renacerFont.display };
 
 export function BotonPrincipal({
   children,
@@ -37,12 +38,19 @@ export function BotonPrincipal({
       sx={{
         bgcolor: t.accent,
         color: t.onAccent,
-        fontFamily: qeFont.ui,
-        fontSize: 16,
-        py: 1.75,
-        minHeight: 48,
-        '&:hover': { bgcolor: t.accentStrong },
-        '&.Mui-disabled': { bgcolor: t.surface2, color: t.subtle },
+        fontFamily: renacerFont.display,
+        fontWeight: 700,
+        fontSize: 15.5,
+        letterSpacing: '0.01em',
+        textTransform: 'none',
+        py: 1.6,
+        minHeight: 52,
+        borderRadius: renacerRadius.pill,
+        boxShadow: t.glow,
+        transition: 'transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease',
+        '&:hover': { bgcolor: t.accentStrong, transform: 'translateY(-1px)' },
+        '&:active': { transform: 'translateY(0)' },
+        '&.Mui-disabled': { bgcolor: t.surface2, color: t.subtle, boxShadow: 'none' },
       }}
     >
       {children}
@@ -66,10 +74,16 @@ export function BotonSecundario({
       sx={{
         border: `1px solid ${t.border}`,
         color: t.text,
-        fontFamily: qeFont.ui,
-        fontSize: 16,
+        fontFamily: renacerFont.display,
+        fontWeight: 600,
+        fontSize: 15,
+        textTransform: 'none',
         py: 1.5,
-        minHeight: 48,
+        minHeight: 52,
+        borderRadius: renacerRadius.pill,
+        bgcolor: 'transparent',
+        transition: 'background-color 160ms ease, border-color 160ms ease',
+        '&:hover': { bgcolor: t.glass, borderColor: t.muted },
       }}
     >
       {children}
@@ -139,9 +153,18 @@ export function Campo({
           inputMode: tipo === 'number' ? 'numeric' : undefined,
         }}
         sx={{
-          '& .MuiOutlinedInput-root': { bgcolor: t.surface },
+          '& .MuiOutlinedInput-root': {
+            bgcolor: t.glass,
+            borderRadius: `${renacerRadius.field}px`,
+            backdropFilter: 'blur(10px)',
+            transition: 'box-shadow 160ms ease, background-color 160ms ease',
+            '&.Mui-focused': { bgcolor: t.glassStrong, boxShadow: t.focus },
+          },
           '& input, & textarea': { fontFamily: qeFont.ui, fontSize: 16, color: t.text },
+          '& input::placeholder, & textarea::placeholder': { color: t.subtle, opacity: 1 },
           '& fieldset': { borderColor: t.border },
+          '& .MuiOutlinedInput-root:hover fieldset': { borderColor: t.muted },
+          '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: t.accent },
         }}
       />
     </Box>
@@ -171,7 +194,7 @@ export function Consentimiento({
         checked={marcado}
         onChange={(e) => onChange(e.target.checked)}
         inputProps={{ 'aria-label': texto }}
-        sx={{ color: t.border, p: 1, '&.Mui-checked': { color: t.accent } }}
+        sx={{ color: t.muted, p: 1, '&.Mui-checked': { color: t.accent }, '& .MuiSvgIcon-root': { fontSize: 24 } }}
       />
       <Box sx={{ pt: 1 }}>
         <Typography
@@ -202,10 +225,12 @@ export function Pasos({ actual, total }: { actual: number; total: number }) {
         <Box
           key={i}
           sx={{
-            height: 3,
+            height: 4,
             flex: 1,
             borderRadius: 2,
             bgcolor: i < actual ? t.accent : t.surface2,
+            boxShadow: i < actual ? '0 0 12px rgba(127,224,127,0.45)' : 'none',
+            transition: 'background-color 300ms ease',
           }}
         />
       ))}
@@ -231,20 +256,36 @@ export function HuecoDeVideo({ nota }: { nota: string }) {
         // video exista, este componente vuelve a reservar 16/9 —que ahí sí evita el
         // salto de layout al cargar (regla anti-parpadeo del CLAUDE.md)—.
         width: '100%',
-        borderRadius: 2,
-        border: `1px dashed ${t.border}`,
-        bgcolor: t.surface,
+        borderRadius: `${renacerRadius.card}px`,
+        border: `1px solid ${t.glassBorder}`,
+        bgcolor: t.glass,
+        backdropFilter: 'blur(12px)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        px: 3,
-        py: 3,
-        mb: 3,
+        gap: 2,
+        px: 2.5,
+        py: 2.25,
+        mb: 3.5,
       }}
     >
-      <Typography
-        sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.subtle, textAlign: 'center' }}
+      <Box
+        aria-hidden
+        sx={{
+          width: 44,
+          height: 44,
+          flexShrink: 0,
+          borderRadius: '50%',
+          border: `1px solid ${t.border}`,
+          display: 'grid',
+          placeItems: 'center',
+          color: t.accent,
+          fontSize: 16,
+          pl: '3px',
+        }}
       >
+        ▶
+      </Box>
+      <Typography sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.subtle, lineHeight: 1.45 }}>
         {nota}
       </Typography>
     </Box>
@@ -329,12 +370,15 @@ export function SelectorDeEtiquetas({
                 fontFamily: qeFont.ui,
                 fontSize: 14,
                 minHeight: 40,
-                px: 1.5,
-                borderRadius: 999,
+                px: 1.75,
+                borderRadius: renacerRadius.chip,
                 cursor: 'pointer',
                 border: `1px solid ${activa ? t.accent : t.border}`,
-                bgcolor: activa ? t.accent : t.surface,
+                bgcolor: activa ? t.accent : t.glass,
                 color: activa ? t.onAccent : t.text,
+                fontWeight: activa ? 600 : 400,
+                transition: 'background-color 140ms ease, border-color 140ms ease',
+                '&:hover': { borderColor: activa ? t.accent : t.muted },
               }}
             >
               {valor}
@@ -358,16 +402,18 @@ export function SelectorDeEtiquetas({
           placeholder={placeholderLibre ?? 'Otra…'}
           inputProps={{ 'aria-label': `${etiqueta} — otra` }}
           sx={{
-            '& .MuiOutlinedInput-root': { bgcolor: t.surface },
+            '& .MuiOutlinedInput-root': { bgcolor: t.glass, borderRadius: renacerRadius.pill },
             '& input': { fontFamily: qeFont.ui, fontSize: 15, color: t.text },
+            '& input::placeholder': { color: t.subtle, opacity: 1 },
             '& fieldset': { borderColor: t.border },
+            '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: t.accent },
           }}
         />
         <Button
           type="button"
           onClick={agregarLibre}
           disabled={!libre.trim()}
-          sx={{ fontFamily: qeFont.ui, color: t.accent, minHeight: 40, whiteSpace: 'nowrap' }}
+          sx={{ fontFamily: renacerFont.display, fontWeight: 600, textTransform: 'none', color: t.accent, minHeight: 40, whiteSpace: 'nowrap', borderRadius: renacerRadius.pill }}
         >
           Agregar
         </Button>
@@ -400,17 +446,20 @@ export function OpcionCard({
       sx={{
         width: '100%',
         textAlign: 'left',
-        border: `1px solid ${t.border}`,
-        bgcolor: t.surface,
-        borderRadius: 3,
-        p: 2.5,
+        border: `1px solid ${t.glassBorder}`,
+        bgcolor: t.glass,
+        backdropFilter: 'blur(12px)',
+        borderRadius: `${renacerRadius.card}px`,
+        p: 2.75,
         mb: 1.5,
+        color: t.text,
         cursor: deshabilitada ? 'default' : 'pointer',
-        opacity: deshabilitada ? 0.7 : 1,
-        '&:hover': deshabilitada ? undefined : { borderColor: t.accent },
+        opacity: deshabilitada ? 0.62 : 1,
+        transition: 'transform 180ms ease, border-color 180ms ease, background-color 180ms ease',
+        '&:hover': deshabilitada ? undefined : { borderColor: t.accent, bgcolor: t.glassStrong, transform: 'translateY(-2px)' },
       }}
     >
-      <Typography sx={{ fontFamily: qeFont.serif, fontSize: 22, color: t.text, mb: 0.5 }}>
+      <Typography sx={{ fontFamily: renacerFont.display, fontWeight: 700, fontSize: 20, letterSpacing: '-0.01em', color: t.text, mb: 0.75 }}>
         {titulo}
       </Typography>
       <Typography sx={{ fontFamily: qeFont.ui, fontSize: 14.5, color: t.muted, lineHeight: 1.5 }}>

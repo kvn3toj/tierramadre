@@ -363,6 +363,10 @@ const RenacerCapacidades = lazyWithRetry(
   () => import('./pages/renacer/RenacerCapacidades'),
   'RenacerCapacidades',
 );
+const RenacerTablero = lazyWithRetry(
+  () => import('./pages/renacer/RenacerTablero'),
+  'RenacerTablero',
+);
 
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'treasure' | 'ambassadors';
@@ -1158,6 +1162,14 @@ function InvitationRouter() {
         element={
           <Suspense fallback={<LocalizedLoading messageKey="general" />}>
             <RenacerCapacidades />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/renacer/tablero"
+        element={
+          <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+            <RenacerTablero />
           </Suspense>
         }
       />

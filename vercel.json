@@ -120,6 +120,9 @@
     },
     "api/renacer-contadores.ts": {
       "maxDuration": 15
+    },
+    "api/renacer-tablero.ts": {
+      "maxDuration": 15
     }
   },
   "headers": [

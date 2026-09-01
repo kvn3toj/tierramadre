@@ -16,7 +16,7 @@ import RenacerLayout, { useRenacerTokens } from './RenacerLayout';
 import { BotonSecundario, HuecoDeVideo, OpcionCard } from './ui';
 import { RUTA_SIMBOLO } from './flujo';
 import { leerContadores, type Contadores } from './renacerApi';
-import { qeFont } from '../../design-system';
+import { qeFont, renacerFont } from '../../design-system';
 
 /**
  * Los contadores solo se pintan si llegaron y hay algo que contar: un "0 familias" el
@@ -25,8 +25,8 @@ import { qeFont } from '../../design-system';
 function Contador({ valor, etiqueta }: { valor: number; etiqueta: string }) {
   const t = useRenacerTokens();
   return (
-    <Box sx={{ flex: 1, minWidth: 96, border: `1px solid ${t.border}`, bgcolor: t.surface, borderRadius: 2, p: 1.5 }}>
-      <Typography sx={{ fontFamily: qeFont.serif, fontSize: 28, lineHeight: 1, color: t.text }}>{valor}</Typography>
+    <Box sx={{ flex: 1, minWidth: 96, border: `1px solid ${t.border}`, bgcolor: t.surface, backdropFilter: 'blur(10px)', borderRadius: '16px', p: 1.75 }}>
+      <Typography sx={{ fontFamily: renacerFont.display, fontWeight: 800, fontSize: 30, lineHeight: 1, letterSpacing: '-0.02em', color: t.text }}>{valor}</Typography>
       <Typography sx={{ fontFamily: qeFont.ui, fontSize: 12.5, color: t.subtle, mt: 0.5 }}>{etiqueta}</Typography>
     </Box>
   );
@@ -34,6 +34,7 @@ function Contador({ valor, etiqueta }: { valor: number; etiqueta: string }) {
 
 export default function RenacerAportador() {
   const navegar = useNavigate();
+  const t = useRenacerTokens();
   const [contadores, setContadores] = useState<Contadores | null>(null);
 
   useEffect(() => {
@@ -52,16 +53,27 @@ export default function RenacerAportador() {
 
   return (
     <RenacerLayout
+      marca
       titulo="Ayudar es comprar. Y también es ofrecer lo que sabés hacer."
       bajada="Cada compra en Tierra Mädre aporta a una bolsa común para las familias damnificadas. Acá hay tres formas de sumarte."
     >
       <HuecoDeVideo nota="Acá va el video sobre el poder de ayudar." />
 
       {hayNumeros && contadores && (
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 3 }} aria-label="Cómo va la campaña">
-          <Contador valor={contadores.familias} etiqueta="familias inscritas" />
-          <Contador valor={contadores.necesidadesAbiertas} etiqueta="necesidades abiertas" />
-          <Contador valor={contadores.raicesActivas} etiqueta="comunidades" />
+        <Box sx={{ mb: 3 }}>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }} aria-label="Cómo va la campaña">
+            <Contador valor={contadores.familias} etiqueta="familias inscritas" />
+            <Contador valor={contadores.necesidadesAbiertas} etiqueta="necesidades abiertas" />
+            <Contador valor={contadores.raicesActivas} etiqueta="comunidades" />
+          </Box>
+          <Typography
+            component="button"
+            type="button"
+            onClick={() => navegar('/renacer/tablero')}
+            sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.accent, background: 'none', border: 0, p: 0.5, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}
+          >
+            Ver cómo va la campaña →
+          </Typography>
         </Box>
       )}
 

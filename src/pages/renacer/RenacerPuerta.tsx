@@ -12,7 +12,7 @@ import { Box, TextField, Typography } from '@mui/material';
 import RenacerLayout, { useRenacerTokens } from './RenacerLayout';
 import { BotonPrincipal, BotonSecundario, HuecoDeVideo } from './ui';
 import { copy } from './renacerCopy';
-import { qeFont } from '../../design-system';
+import { qeFont, renacerFont } from '../../design-system';
 
 /** Mismo formato que valida el servidor (`convex-renacer/convex/lib/codigos.ts`). */
 export const FORMATO_CODIGO = /^[1-9][0-9]{2,3}$/;
@@ -26,7 +26,20 @@ export default function RenacerPuerta() {
   const codigoValido = FORMATO_CODIGO.test(codigo.trim());
 
   return (
-    <RenacerLayout titulo={copy.puerta.titulo} bajada={copy.puerta.bajada}>
+    <RenacerLayout
+      marca
+      lead={
+        <>
+          Porque después de esta gran tragedia, la{' '}
+          <Box component="strong" sx={{ color: t.text, fontWeight: 600 }}>
+            única
+          </Box>{' '}
+          pregunta que podemos hacernos es…
+        </>
+      }
+      titulo="¿Cómo vamos a renacer?"
+      bajada={copy.puerta.bajada}
+    >
       {!tecleando ? (
         <Box sx={{ display: 'grid', gap: 1.5 }}>
           <HuecoDeVideo nota="Acá va el video de contexto de la campaña." />
@@ -49,7 +62,12 @@ export default function RenacerPuerta() {
             onChange={(e) => setCodigo(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))}
             placeholder="101"
             inputProps={{ inputMode: 'numeric', 'aria-label': copy.puerta.ariaCodigo }}
-            sx={{ '& input': { fontFamily: qeFont.ui, fontSize: 28, letterSpacing: '0.2em' } }}
+            sx={{
+              '& .MuiOutlinedInput-root': { bgcolor: t.glass, borderRadius: 3 },
+              '& input': { fontFamily: renacerFont.mono, fontSize: 30, letterSpacing: '0.25em', color: t.text, textAlign: 'center' },
+              '& fieldset': { borderColor: t.border },
+              '& .MuiOutlinedInput-root.Mui-focused fieldset': { borderColor: t.accent },
+            }}
           />
 
           <BotonPrincipal
