@@ -28,14 +28,33 @@ describe('useTRM — source selection', () => {
     vi.unstubAllGlobals();
   });
 
-  it('prefers the official Superfinanciera TRM', async () => {
+  it('prefers /api/trm, the shared CDN-cached endpoint', async () => {
+    const fetchSpy = vi.fn((url: string) =>
+      url.startsWith('/api/trm')
+        ? jsonOk({ rate: 3213.97, source: 'official', validThrough: '2099-01-01' })
+        : jsonOk(officialResponse('9999')),
+    );
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const useTRM = await loadHook();
+    const { result } = renderHook(() => useTRM());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.trmRate).toBe(3213.97);
+    expect(result.current.source).toBe('official');
+    // The government API is never touched directly when the endpoint answers.
+    expect(fetchSpy.mock.calls.every(([u]) => String(u).startsWith('/api/trm'))).toBe(true);
+  });
+
+  it('falls back to calling datos.gov.co directly when /api/trm is down', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn((url: string) =>
-        url.includes('datos.gov.co')
+      vi.fn((url: string) => {
+        if (url.startsWith('/api/trm')) return Promise.reject(new Error('502'));
+        return url.includes('datos.gov.co')
           ? jsonOk(officialResponse('3213.97'))
-          : jsonOk({ rates: { COP: 9999 } }),
-      ),
+          : jsonOk({ rates: { COP: 9999 } });
+      }),
     );
 
     const useTRM = await loadHook();
@@ -51,9 +70,12 @@ describe('useTRM — source selection', () => {
   it('falls back to the market rate when the official feed returns nothing', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn((url: string) =>
-        url.includes('datos.gov.co') ? jsonOk([]) : jsonOk({ rates: { COP: 3190.5 } }),
-      ),
+      vi.fn((url: string) => {
+        if (url.startsWith('/api/trm')) return Promise.reject(new Error('502'));
+        return url.includes('datos.gov.co')
+          ? jsonOk([])
+          : jsonOk({ rates: { COP: 3190.5 } });
+      }),
     );
 
     const useTRM = await loadHook();

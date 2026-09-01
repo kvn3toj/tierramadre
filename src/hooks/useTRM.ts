@@ -2,10 +2,14 @@
  * useTRM - The official COP/USD TRM (Tasa Representativa del Mercado)
  *
  * Sources, in order of preference:
- *   1. Superfinanciera TRM published on datos.gov.co  -> 'official'
- *   2. exchangerate-api market mid-rate                -> 'market' (close to TRM, not it)
- *   3. A cached value that has gone stale              -> 'stale'
- *   4. LAST_RESORT_RATE                                -> 'fallback'
+ *   1. /api/trm — our own endpoint, CDN-cached and shared by every visitor
+ *   2. Superfinanciera TRM on datos.gov.co  -> 'official'   (direct, if 1 is down)
+ *   3. exchangerate-api market mid-rate     -> 'market'     (close to TRM, not it)
+ *   4. A cached value that has gone stale   -> 'stale'
+ *   5. LAST_RESORT_RATE                     -> 'fallback'
+ *
+ * Steps 2-3 duplicate what the endpoint does, on purpose: a function outage
+ * should degrade to the old browser-side path, not break pricing.
  *
  * A real rate that is a few days old beats a hardcoded constant, so an expired
  * cache is always preferred over LAST_RESORT_RATE. Consumers get `source` back
@@ -18,6 +22,9 @@
 
 import { useSyncExternalStore, useEffect } from 'react';
 import { STORAGE_KEYS } from '../constants/storage-keys';
+
+/** Our own resolver: one shared origin fetch per region, see api/trm.ts. */
+const PROXY_URL = '/api/trm';
 
 /** Superfinanciera TRM, daily. `valor` is a string, validity is a date range. */
 const OFFICIAL_URL = 'https://www.datos.gov.co/resource/32sa-8pi3.json';
@@ -98,6 +105,23 @@ async function fetchJson(url: string): Promise<unknown> {
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** Preferred path: our endpoint already picked a source and the CDN holds it. */
+async function fetchProxied(): Promise<TRMCache | null> {
+  const data = (await fetchJson(PROXY_URL)) as {
+    rate?: number;
+    source?: 'official' | 'market';
+    validThrough?: string | null;
+  };
+  const rate = Number(data?.rate);
+  if (!Number.isFinite(rate) || rate <= 0) return null;
+  return {
+    rate,
+    timestamp: Date.now(),
+    source: data.source === 'market' ? 'market' : 'official',
+    validThrough: data.validThrough ?? null,
+  };
 }
 
 /** The TRM row whose validity window covers today in Bogota. */
@@ -185,7 +209,7 @@ export function refreshTRM(force = false): Promise<void> {
 
   inflight = (async () => {
     emit({ isLoading: true });
-    for (const attempt of [fetchOfficial, fetchMarket]) {
+    for (const attempt of [fetchProxied, fetchOfficial, fetchMarket]) {
       try {
         const entry = await attempt();
         if (entry) {
