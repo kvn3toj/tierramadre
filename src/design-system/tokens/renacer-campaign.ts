@@ -60,6 +60,46 @@ export const renacerTokens = {
   /** Grano fino: textura, no ruido. Se pinta encima con opacidad baja. */
   grain:
     "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.06'/></svg>\")",
+  logo: '/logo-symbol-white.png',
+  modo: 'oscuro' as const,
 } as const;
 
-export type RenacerTokens = typeof renacerTokens;
+/**
+ * La versión clara — "amanecer esmeralda". Misma estructura, misma luz desde arriba, pero
+ * sobre papel menta: tinta bosque, acciones en esmeralda profunda (el brote sobre claro no
+ * contrasta), vidrio en tinta al 5%. Es la misma marca a otra hora del día.
+ */
+export const renacerTokensLight = {
+  bg: '#F5F5F1',
+  surface: 'rgba(255,255,255,0.78)',
+  surface2: 'rgba(10,42,30,0.08)',
+  border: 'rgba(10,42,30,0.14)',
+  hairline: 'rgba(10,42,30,0.09)',
+  text: renacerPalette.forest,
+  muted: 'rgba(10,42,30,0.72)',
+  subtle: 'rgba(10,42,30,0.52)',
+  accent: '#0E7A4E',
+  accentStrong: '#0B6640',
+  onAccent: '#FFFFFF',
+  accentPure: renacerPalette.sprout,
+  shadow: '0 16px 40px rgba(10,42,30,0.12)',
+  deep: renacerPalette.deep,
+  forest: renacerPalette.forest,
+  emerald: renacerPalette.emerald,
+  glass: 'rgba(255,255,255,0.78)',
+  glassStrong: 'rgba(255,255,255,0.96)',
+  glassBorder: 'rgba(10,42,30,0.12)',
+  glow: '0 0 0 1px rgba(14,122,78,0.22), 0 10px 26px rgba(14,122,78,0.20)',
+  focus: '0 0 0 3px rgba(14,122,78,0.26)',
+  /**
+   * Papel de lino con apenas un resplandor brote en el borde superior — se apaga en el
+   * primer tercio. La identidad la llevan el símbolo y el acento, no el fondo.
+   */
+  heroGradient: `radial-gradient(110% 38% at 50% -18%, rgba(127,224,127,0.22) 0%, rgba(127,224,127,0.07) 45%, rgba(245,245,241,0) 100%)`,
+  grain:
+    "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0.2 0 0 0 0 0.1 0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.04'/></svg>\")",
+  logo: '/logo-symbol.png',
+  modo: 'claro' as const,
+} as const;
+
+export type RenacerTokens = typeof renacerTokens | typeof renacerTokensLight;

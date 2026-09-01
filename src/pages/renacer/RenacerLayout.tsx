@@ -12,8 +12,8 @@
 
 import { useEffect, useRef, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Box, GlobalStyles, Typography } from '@mui/material';
-import { renacerFont, renacerTokens } from '../../design-system';
+import { Box, GlobalStyles, Typography, useMediaQuery } from '@mui/material';
+import { renacerFont, renacerTokens, renacerTokensLight, type RenacerTokens } from '../../design-system';
 
 interface RenacerLayoutProps {
   titulo: string;
@@ -31,8 +31,29 @@ interface RenacerLayoutProps {
   children: ReactNode;
 }
 
-export function useRenacerTokens() {
-  return renacerTokens;
+const CLAVE_TEMA = 'renacer:tema';
+
+/**
+ * Oscuro o claro. Sigue al dispositivo (`prefers-color-scheme`); `?tema=claro|oscuro` en la URL
+ * lo fija y lo recuerda en localStorage — para pruebas, capturas y para quien prefiera leer en
+ * claro bajo el sol. No depende del ThemeContext de la app: estas páginas viven fuera del shell.
+ */
+export function useRenacerTokens(): RenacerTokens {
+  const sistemaOscuro = useMediaQuery('(prefers-color-scheme: dark)');
+  let forzado: string | null = null;
+  try {
+    const q = new URLSearchParams(window.location.search).get('tema');
+    if (q === 'claro' || q === 'oscuro') {
+      localStorage.setItem(CLAVE_TEMA, q);
+      forzado = q;
+    } else {
+      forzado = localStorage.getItem(CLAVE_TEMA);
+    }
+  } catch {
+    // sin storage: sigue al sistema
+  }
+  const oscuro = forzado ? forzado === 'oscuro' : sistemaOscuro;
+  return oscuro ? renacerTokens : renacerTokensLight;
 }
 
 const estilosGlobales = (
@@ -93,7 +114,7 @@ export default function RenacerLayout({
           inset: 0,
           backgroundImage: t.grain,
           pointerEvents: 'none',
-          mixBlendMode: 'overlay',
+          mixBlendMode: t.modo === 'oscuro' ? 'overlay' : 'multiply',
           zIndex: 0,
         },
       }}
@@ -121,7 +142,7 @@ export default function RenacerLayout({
           {marca && (
             <Box
               component="img"
-              src="/logo-symbol-white.png"
+              src={t.logo}
               alt="Tierra Mädre"
               sx={{ width: 40, height: 40, objectFit: 'contain', opacity: 0.95 }}
             />
