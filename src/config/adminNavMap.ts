@@ -15,6 +15,7 @@
 import type { AccessLevel } from '../types/auth';
 
 export type NavGroup =
+  | 'Campaña'
   | 'Inventario'
   | 'Ventas'
   | 'Analítica'
@@ -25,6 +26,7 @@ export type NavGroup =
 
 /** Fixed display order for grouped rendering in the nav map. */
 export const GROUP_ORDER: readonly NavGroup[] = [
+  'Campaña',
   'Inventario',
   'Ventas',
   'Analítica',
@@ -726,6 +728,31 @@ export const ADMIN_NAV_MAP: readonly AdminRouteEntry[] = [
     ],
     dynamic: true,
     showInMap: false,
+  },
+  // ── Campaña · Renacer ──────────────────────────────────────────────────────
+  {
+    id: 'renacer.consola',
+    path: '/admin/renacer',
+    label: 'Renacer · Consola de operación',
+    group: 'Campaña',
+    iconName: 'HeartHandshake',
+    description:
+      'Operar la campaña Renacer: despacho de necesidades, personas, raíces, muros, voluntarios y conexiones',
+    keywords: [
+      'renacer',
+      'campaña',
+      'campana',
+      'consola',
+      'despacho',
+      'necesidades',
+      'raices',
+      'raíces',
+      'muros',
+      'voluntarios',
+      'terremoto',
+    ],
+    roles: ADMIN,
+    dynamic: false,
   },
 ];
 

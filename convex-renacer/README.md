@@ -47,7 +47,14 @@ npx convex dev            # la primera vez: elegir el proyecto `renacer`
 
 Desde el 31-08 los códigos no nacen de una compra sino de una **raíz** (el líder
 comunitario que invita). A cada raíz se le habilita un bloque numérico; ella reparte los
-códigos uno por persona, de una lista en papel si hace falta. Todo con `RENACER_OPS_TOKEN`:
+códigos uno por persona, de una lista en papel si hace falta.
+
+> **Desde el 2026-09-01 existe la consola: `/admin/renacer`** (detrás de `ADMIN_EMAILS`,
+> con auditoría por correo). Emitir y ampliar raíces, pausar, copiar el enlace del panel,
+> despachar necesidades, moderar los muros (ocultar Y des-ocultar) y ver voluntarios se
+> hace ahí, sin terminal. Todo lo de abajo sigue funcionando como **respaldo de emergencia**
+> — y es el único camino si la consola aún no está desplegada en el entorno donde estás.
+> Todo con `RENACER_OPS_TOKEN`:
 
 ### De dónde sale el token de operador
 
@@ -99,10 +106,10 @@ npx convex run --prod muro:ocultar '{"secret":"'$OPS'","id":"<id del paso 1>"}'
 > **Esto es un procedimiento de emergencia, no una herramienta.** Exige laptop, repo,
 > auth de Convex y leer JSON a ojo — y **no tiene vuelta atrás**: `hiddenAt` se escribe
 > en un solo lugar y no se limpia en ninguno, así que un mensaje ocultado por error solo
-> se recupera desde el dashboard de Convex. La consola de operaciones (ventana aparte,
-> 2026-09-01) se lleva esto a una pantalla con des-ocultar incluido. Mientras tanto: el
-> cuello de botella real no son estos dos comandos, es que **nadie está mirando el muro**
-> — no hay botón de reportar ni aviso a nadie.
+> se recupera desde el dashboard de Convex — o, desde el 01-09, con "Volver a mostrar"
+> en la pestaña Muros de `/admin/renacer`, que además muestra los mensajes **reportados**:
+> los muros públicos ya tienen botón de reportar, y los reportes sin revisar aparecen en
+> la bandeja de anomalías de la consola. El comando de acá queda para emergencias.
 
 ### 🔑 El enlace del panel de la raíz — ENTRÉGALO, o el panel no existe para nadie
 
@@ -113,7 +120,9 @@ Con él se arma la URL que la raíz usa para repartir sus códigos:
 https://tierramadre.app/renacer/r/{codigoBase}?t={panelToken}
 ```
 
-Eso es lo que se le manda por WhatsApp. **Sin ese enlace la raíz no tiene panel**: la
+Eso es lo que se le manda por WhatsApp — y desde el 01-09 la consola lo hace en un
+clic: **"Copiar enlace del panel"** en la pestaña Raíces (genera el token si la raíz no
+lo tenía). **Sin ese enlace la raíz no tiene panel**: la
 ruta existe desde el 2026-09-01 y nada en el repo la construía —era huérfana—, así que
 este párrafo es la única cosa que la hace alcanzable.
 

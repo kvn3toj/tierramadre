@@ -19,7 +19,7 @@ import { Box, CircularProgress, Typography } from '@mui/material';
 import { QRCodeSVG } from 'qrcode.react';
 import RenacerLayout, { useRenacerTokens } from './RenacerLayout';
 import { BotonSecundario } from './ui';
-import { leerCarnet, guardarCredencial, type Carnet } from './renacerApi';
+import { leerCarnet, guardarCredencial, olvidarCredencial, type Carnet } from './renacerApi';
 import { copy } from './renacerCopy';
 import { renacerFont } from '../../design-system';
 const qeFont = { ui: renacerFont.ui, serif: renacerFont.display };
@@ -166,6 +166,22 @@ export default function RenacerCarnet() {
         <BotonSecundario onClick={() => navegar('/renacer/gracias')}>
           Dar las gracias
         </BotonSecundario>
+      </Box>
+
+      {/* El teléfono compartido del refugio: abrir un carnet lo deja guardado en el
+          aparato (efecto del guardarCredencial de arriba), y quien sigue en la fila no
+          tiene por qué heredarlo. Esto lo saca SOLO de este dispositivo; el carnet y su
+          QR siguen vivos. */}
+      <Box
+        component="button"
+        type="button"
+        onClick={() => {
+          olvidarCredencial(carnet.cardNumber);
+          navegar('/renacer');
+        }}
+        sx={{ fontFamily: qeFont.ui, fontSize: 13, color: t.subtle, background: 'none', border: 0, p: 1, mt: 2, mx: 'auto', display: 'block', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}
+      >
+        Este no es mi teléfono — cerrar mi carnet en este aparato
       </Box>
     </RenacerLayout>
   );
