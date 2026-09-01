@@ -26,7 +26,16 @@ import {
   SelectorDeEtiquetas,
   anilloFoco,
 } from './ui';
-import { guardarCredencial, leerCredencial, registrar, resolverCodigo, type CodigoResuelto } from './renacerApi';
+import {
+  borrarBorrador,
+  guardarBorrador,
+  guardarCredencial,
+  leerBorrador,
+  leerCredencial,
+  registrar,
+  resolverCodigo,
+  type CodigoResuelto,
+} from './renacerApi';
 import { ORDEN_PASOS, type PasoId } from './flujo';
 import { copy } from './renacerCopy';
 import { BOLSAS_SUGERIDAS } from '../../../convex-renacer/convex/lib/bolsas';
@@ -44,6 +53,41 @@ interface NecesidadBorrador {
 }
 
 const necesidadVacia = (): NecesidadBorrador => ({ whatINeed: '', whyItMatters: '', categoria: [] });
+
+/**
+ * La llave de idempotencia de ESTE registro, estable a través de los reintentos.
+ *
+ * Vive en el mismo borrador que la entrevista, así que sobrevive a un refresh y a un
+ * cierre de pestaña: si el servidor confirmó y la respuesta se perdió, el reintento —hoy
+ * o dentro de diez minutos— vuelve con la misma llave y el backend devuelve la credencial
+ * que ya existe en vez de «ese código ya fue usado».
+ */
+function tokenDeIntento(codigo: string): string {
+  const guardado = leerBorrador<{ clientToken?: string }>(codigo);
+  if (guardado?.clientToken) return guardado.clientToken;
+  const token = crypto.randomUUID().replace(/-/g, '');
+  guardarBorrador(codigo, { ...(guardado ?? {}), clientToken: token });
+  return token;
+}
+
+/**
+ * ¿Este fallo se arregla reintentando, o no?
+ *
+ * Se clasifica por el texto porque es lo que el proxy entrega hoy (`api/renacer-registro`
+ * traduce el error del backend a un 409/429 con su mensaje). Si alguna vez el endpoint
+ * devuelve un código de error estructurado, esto se reemplaza por él — pero mientras
+ * tanto es preferible a mandar a todo el mundo a «intentá de nuevo».
+ */
+function esErrorTerminal(mensaje: string): boolean {
+  const m = mensaje.toLowerCase();
+  return (
+    m.includes('ya fue usado') ||
+    m.includes('ya no está activa') ||
+    m.includes('no existe') ||
+    m.includes('código de quien invita') ||
+    m.includes('demasiados intentos')
+  );
+}
 
 export default function RenacerBeneficiario() {
   const { codigo = '' } = useParams();
@@ -75,6 +119,69 @@ export default function RenacerBeneficiario() {
 
   const [enviando, setEnviando] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
+  /**
+   * Un error TERMINAL no se reintenta: el código ya se usó, la raíz se pausó, o el
+   * servidor cortó por límite. Antes los tres caían bajo «No pudimos guardar. Intentá de
+   * nuevo», que es una falla permanente disfrazada de transitoria — la persona reintenta
+   * para siempre contra una puerta que no se va a abrir.
+   */
+  const [errorTerminal, setErrorTerminal] = useState(false);
+  /** Se avisa una vez si la entrevista se recuperó de un borrador. */
+  const [restaurado, setRestaurado] = useState(false);
+
+  /**
+   * El borrador: restaurar al montar, guardar en cada cambio.
+   *
+   * La entrevista entera vivía en `useState`. Un refresh, una llamada entrante o el botón
+   * físico de Atrás en Android borraban todo lo que la persona acababa de contar — y en un
+   * refugio con señal mala eso no es el caso raro, es el caso normal. Se guarda por CÓDIGO
+   * para que una mesa de registro asistido pueda tener varias entrevistas a medias sin
+   * pisarse entre ellas.
+   *
+   * Lo que NO se guarda: los tres consentimientos. Se recogen en presencia (§10.1) y
+   * restaurar una casilla marcada convertiría un acto deliberado en un default heredado
+   * de otra sesión — que es exactamente lo que fail-closed existe para impedir.
+   */
+  useEffect(() => {
+    const b = leerBorrador<Record<string, unknown>>(codigo);
+    if (!b || typeof b !== 'object') return;
+    let algo = false;
+    const tomar = <T,>(k: string, set: (v: T) => void, vacio: (v: T) => boolean) => {
+      const v = b[k] as T | undefined;
+      if (v !== undefined && !vacio(v)) {
+        set(v);
+        algo = true;
+      }
+    };
+    tomar<NecesidadBorrador[]>('necesidades', setNecesidades, (v) => !Array.isArray(v) || v.length === 0);
+    tomar<string>('nombre', setNombre, (v) => !v);
+    tomar<string>('ubicacion', setUbicacion, (v) => !v);
+    tomar<string>('telefono', setTelefono, (v) => !v);
+    tomar<string>('edad', setEdad, (v) => !v);
+    tomar<string[]>('genero', setGenero, (v) => !Array.isArray(v) || v.length === 0);
+    tomar<string>('email', setEmail, (v) => !v);
+    tomar<string>('facilitador', setFacilitador, (v) => !v);
+    tomar<Array<{ title: string; description: string }>>('capacidades', setCapacidades, (v) => !Array.isArray(v) || v.length === 0);
+    if (algo) setRestaurado(true);
+    // Solo al montar, y solo para este código: después manda lo que la persona escriba.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [codigo]);
+
+  useEffect(() => {
+    const previo = leerBorrador<{ clientToken?: string }>(codigo);
+    guardarBorrador(codigo, {
+      clientToken: previo?.clientToken,
+      necesidades,
+      nombre,
+      ubicacion,
+      telefono,
+      edad,
+      genero,
+      email,
+      facilitador,
+      capacidades,
+    });
+  }, [codigo, necesidades, nombre, ubicacion, telefono, edad, genero, email, facilitador, capacidades]);
 
   useEffect(() => {
     let vigente = true;
@@ -110,9 +217,22 @@ export default function RenacerBeneficiario() {
   // salida. Nunca un 404 crudo, nunca la pantalla de bienvenida del catálogo.
   const miCarnet = leerCredencial();
   if (!resuelto.existe) {
+    // Una raíz tecleando su propio código NO se equivocó: escribió exactamente el número
+    // que le dimos. El backend siempre lo supo (`motivo: 'es_raiz'`); acá se le responde
+    // como lo que es, en vez de mandarla a "escribirlo de nuevo" a un callejón.
+    const esRaiz = resuelto.motivo === 'es_raiz';
     return (
-      <RenacerLayout centrado marca titulo={copy.beneficiario.codigoNoReconocido} bajada={copy.beneficiario.codigoNoReconocidoBajada}>
-        <BotonPrincipal onClick={() => navegar('/renacer')}>Escribirlo de nuevo</BotonPrincipal>
+      <RenacerLayout
+        centrado
+        marca
+        titulo={esRaiz ? copy.beneficiario.codigoEsDeRaiz : copy.beneficiario.codigoNoReconocido}
+        bajada={
+          esRaiz ? copy.beneficiario.codigoEsDeRaizBajada : copy.beneficiario.codigoNoReconocidoBajada
+        }
+      >
+        <BotonPrincipal onClick={() => navegar('/renacer')}>
+          {esRaiz ? 'Volver al inicio' : 'Escribirlo de nuevo'}
+        </BotonPrincipal>
       </RenacerLayout>
     );
   }
@@ -161,6 +281,12 @@ export default function RenacerBeneficiario() {
     try {
       const credencial = await registrar({
         codigo: Number(codigo),
+        // La llave de idempotencia, ESTABLE a través de los reintentos de este registro
+        // (se acuña una vez por código y vive en el borrador). Sin ella, un servidor que
+        // confirma y una respuesta que se pierde —señal de refugio— dejaban a la persona
+        // registrada, con el código quemado y sin `cardToken`: en la base de datos y sin
+        // carnet, para siempre. Con ella el reintento devuelve la MISMA credencial.
+        clientToken: tokenDeIntento(codigo),
         name: nombre.trim(),
         ubicacion: ubicacion.trim(),
         telefono: telefono.trim() || undefined,
@@ -183,11 +309,14 @@ export default function RenacerBeneficiario() {
       // El token se entrega UNA vez. Se guarda antes de navegar: si la navegación
       // falla, la credencial ya está a salvo y la persona no pierde su carnet.
       guardarCredencial(credencial);
+      // La entrevista llegó a destino: el borrador y su llave ya no hacen falta.
+      borrarBorrador(codigo);
       navegar(`/renacer/b/${credencial.cardNumber}?t=${credencial.cardToken}`, { replace: true });
     } catch (e) {
-      setErrorEnvio(
-        e instanceof Error ? e.message : 'No pudimos guardar el registro. Intentá de nuevo.',
-      );
+      const mensaje = e instanceof Error ? e.message : '';
+      const terminal = esErrorTerminal(mensaje);
+      setErrorTerminal(terminal);
+      setErrorEnvio(mensaje || copy.beneficiario.envioFalloTransitorio);
       setEnviando(false);
     }
   }
@@ -206,6 +335,14 @@ export default function RenacerBeneficiario() {
         bajada={copy.beneficiario.bienvenidaBajada}
       >
         <Pasos actual={indice + 1} total={TOTAL_PASOS} />
+        {restaurado && (
+          <Typography
+            role="status"
+            sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.accent, mb: 2, lineHeight: 1.45 }}
+          >
+            {copy.beneficiario.borradorRestaurado}
+          </Typography>
+        )}
         <HuecoDeVideo nota="Pronto, un video corto de bienvenida." />
         <Box
           sx={{ border: `1px solid ${t.border}`, bgcolor: t.surface, borderRadius: 2, p: 2, mb: 3 }}
@@ -447,14 +584,29 @@ export default function RenacerBeneficiario() {
 
       {errorEnvio && (
         <Typography role="alert" sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.alert, mb: 2, lineHeight: 1.45 }}>
-          No pudimos guardar el registro. Intentá de nuevo. <Box component="span" sx={{ color: t.subtle }}>({errorEnvio})</Box>
+          {/* Terminal: se dice el motivo y se ofrece una salida. Transitorio: se dice que
+              nada se perdió y el botón de reintentar sigue ahí. Antes los dos casos
+              compartían un «Intentá de nuevo» que, en el terminal, era una instrucción
+              para golpear una puerta cerrada. */}
+          {errorTerminal ? errorEnvio : copy.beneficiario.envioFalloTransitorio}
+          {!errorTerminal && errorEnvio && (
+            <Box component="span" sx={{ color: t.subtle }}> ({errorEnvio})</Box>
+          )}
         </Typography>
       )}
 
-      <LoQueFalta faltantes={listoParaEnviar ? [] : [...(necesidadesValidas.length === 0 ? ['al menos una necesidad'] : []), ...faltanDatos]} />
-      <BotonPrincipal disabled={enviando || !listoParaEnviar} onClick={enviar}>
-        {enviando ? 'Guardando…' : 'Terminar mi registro'}
-      </BotonPrincipal>
+      {errorTerminal ? (
+        <BotonPrincipal onClick={() => navegar('/renacer')}>
+          {copy.beneficiario.envioFalloTerminalSalida}
+        </BotonPrincipal>
+      ) : (
+        <>
+          <LoQueFalta faltantes={listoParaEnviar ? [] : [...(necesidadesValidas.length === 0 ? ['al menos una necesidad'] : []), ...faltanDatos]} />
+          <BotonPrincipal disabled={enviando || !listoParaEnviar} onClick={enviar}>
+            {enviando ? 'Guardando…' : 'Terminar mi registro'}
+          </BotonPrincipal>
+        </>
+      )}
       <Box sx={{ mt: 1.5 }}>
         <BotonSecundario onClick={retroceder}>Atrás</BotonSecundario>
       </Box>

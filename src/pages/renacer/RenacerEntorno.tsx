@@ -20,6 +20,7 @@ import { Box, CircularProgress, Typography } from '@mui/material';
 import RenacerLayout, { useRenacerTokens } from './RenacerLayout';
 import { BotonPrincipal, BotonSecundario, Campo, anilloFoco } from './ui';
 import { leerCredencial, leerMuro, publicarEnMuro, reportarMensaje, type MensajeMuro } from './renacerApi';
+import { copy } from './renacerCopy';
 import { qeFont } from '../../design-system';
 
 export default function RenacerEntorno() {
@@ -30,6 +31,7 @@ export default function RenacerEntorno() {
   const [reportados, setReportados] = useState<Set<string>>(new Set());
   const [borrador, setBorrador] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
   const credencial = leerCredencial();
 
   const cargar = useCallback(() => {
@@ -43,10 +45,17 @@ export default function RenacerEntorno() {
   async function publicar() {
     if (!credencial || !borrador.trim()) return;
     setEnviando(true);
+    setErrorEnvio(null);
     try {
       await publicarEnMuro(borrador.trim(), credencial);
       setBorrador('');
       cargar();
+    } catch {
+      // Sin este `catch` el fallo era MUDO: el borrador quedaba escrito, no aparecía
+      // nada en el muro y no se decía nada. La persona no puede distinguir "no se
+      // publicó" de "se publicó y no lo veo", y en el muro de desahogo eso se lee como
+      // que a nadie le importó. El borrador NO se borra: es lo que ella escribió.
+      setErrorEnvio(copy.muro.noSePudo);
     } finally {
       setEnviando(false);
     }
@@ -95,6 +104,14 @@ export default function RenacerEntorno() {
           <BotonPrincipal disabled={enviando || !borrador.trim()} onClick={publicar}>
             {enviando ? 'Publicando…' : 'Publicar'}
           </BotonPrincipal>
+          {errorEnvio && (
+            <Typography
+              role="alert"
+              sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.alert, mt: 1.25, lineHeight: 1.5 }}
+            >
+              {errorEnvio}
+            </Typography>
+          )}
         </Box>
       ) : (
         <Typography

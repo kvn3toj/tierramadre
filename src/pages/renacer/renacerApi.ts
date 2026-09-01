@@ -228,27 +228,119 @@ export async function leerPanelRaiz(
 }
 
 /**
- * La credencial del carnet vive en `localStorage`: sobrevive al cierre del navegador,
- * que en campo es lo normal. No es PII: es un número de carnet y un token opaco.
+ * Las credenciales de carnet viven en `localStorage`: sobreviven al cierre del navegador,
+ * que en campo es lo normal. No son PII: son un número de carnet y un token opaco.
+ *
+ * **Es una LISTA, y esa es la corrección del 2026-09-01.** Hasta hoy había una sola clave
+ * y `guardarCredencial` la sobrescribía en cada registro exitoso. En una mesa de registro
+ * asistido —una raíz con UN teléfono inscribiendo a seis familias— la familia 2 borraba
+ * el carnet de la familia 1, y así hasta la sexta. El `cardToken` se entrega UNA vez
+ * (`registro.ts`) y no hay consulta del lado del servidor que lo devuelva: no lo puede
+ * recuperar ni la raíz, ni operaciones, ni Kevin. Cinco de seis familias quedaban
+ * registradas y sin carnet, para siempre.
+ *
+ * Y caía justo sobre el registro asistido, que es la mitigación de equidad del §9 — la
+ * que existe para quien NO tiene teléfono propio. El defecto golpeaba exactamente a quien
+ * el mecanismo pretendía proteger.
+ *
+ * La lista se ordena por recencia (la última registrada primero), que es lo que quiere
+ * tanto el dueño del teléfono como la facilitadora en la mesa.
  */
-const CLAVE = 'renacer:credencial';
+const CLAVE = 'renacer:credenciales';
+/** La clave vieja, de una sola credencial. Se migra al leer y no se vuelve a escribir. */
+const CLAVE_LEGADO = 'renacer:credencial';
+/** Techo defensivo: un teléfono de campo no acumula más carnets que esto en una jornada. */
+const MAX_CREDENCIALES = 50;
+
+function esCredencial(c: unknown): c is CredencialCarnet {
+  const x = c as CredencialCarnet | null;
+  return typeof x?.cardNumber === 'number' && typeof x?.cardToken === 'string';
+}
+
+/** Todas las credenciales de este dispositivo, la más reciente primero. */
+export function leerCredenciales(): CredencialCarnet[] {
+  try {
+    const crudo = localStorage.getItem(CLAVE);
+    if (crudo) {
+      const lista = JSON.parse(crudo) as unknown;
+      if (Array.isArray(lista)) return lista.filter(esCredencial);
+    }
+    // Migración del formato viejo: un teléfono que ya tenía una credencial no la pierde.
+    const legado = localStorage.getItem(CLAVE_LEGADO);
+    if (legado) {
+      const c = JSON.parse(legado) as unknown;
+      if (esCredencial(c)) return [c];
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
 
 export function guardarCredencial(c: CredencialCarnet): void {
   try {
-    localStorage.setItem(CLAVE, JSON.stringify(c));
+    const previas = leerCredenciales().filter((x) => x.cardNumber !== c.cardNumber);
+    const lista = [c, ...previas].slice(0, MAX_CREDENCIALES);
+    localStorage.setItem(CLAVE, JSON.stringify(lista));
+    // El formato viejo se retira recién cuando el nuevo quedó escrito, no antes.
+    localStorage.removeItem(CLAVE_LEGADO);
   } catch {
     // Modo privado o almacenamiento bloqueado. La sesión sigue; se pierde al recargar.
   }
 }
 
+/** La credencial "actual": la última registrada en este dispositivo. */
 export function leerCredencial(): CredencialCarnet | null {
+  return leerCredenciales()[0] ?? null;
+}
+
+/**
+ * Saca una credencial de este dispositivo. Existe por el teléfono prestado y por el
+ * teléfono compartido de un refugio: quien terminó su registro tiene que poder dejar de
+ * dejar su carnet abierto para el siguiente que agarre el aparato.
+ */
+export function olvidarCredencial(cardNumber: number): void {
   try {
-    const crudo = localStorage.getItem(CLAVE);
-    if (!crudo) return null;
-    const c = JSON.parse(crudo) as CredencialCarnet;
-    return typeof c?.cardNumber === 'number' && typeof c?.cardToken === 'string' ? c : null;
+    const lista = leerCredenciales().filter((c) => c.cardNumber !== cardNumber);
+    localStorage.setItem(CLAVE, JSON.stringify(lista));
+    localStorage.removeItem(CLAVE_LEGADO);
+  } catch {
+    /* nada que hacer si el almacenamiento está bloqueado */
+  }
+}
+
+/**
+ * El borrador del registro en curso, por código de invitación.
+ *
+ * El formulario vivía entero en `useState`: un refresh, una llamada entrante o el botón
+ * físico de Atrás en Android borraban la entrevista completa. En un refugio con señal
+ * mala eso no es el caso raro, es el caso normal. Se guarda por código para que una mesa
+ * de registro asistido pueda tener más de una entrevista a medias sin pisarlas.
+ */
+const CLAVE_BORRADOR = 'renacer:borrador:';
+
+export function guardarBorrador(codigo: string | number, datos: unknown): void {
+  try {
+    localStorage.setItem(CLAVE_BORRADOR + codigo, JSON.stringify(datos));
+  } catch {
+    /* sin almacenamiento el flujo sigue: se pierde al recargar, como antes */
+  }
+}
+
+export function leerBorrador<T>(codigo: string | number): T | null {
+  try {
+    const crudo = localStorage.getItem(CLAVE_BORRADOR + codigo);
+    return crudo ? (JSON.parse(crudo) as T) : null;
   } catch {
     return null;
+  }
+}
+
+export function borrarBorrador(codigo: string | number): void {
+  try {
+    localStorage.removeItem(CLAVE_BORRADOR + codigo);
+  } catch {
+    /* idem */
   }
 }
 

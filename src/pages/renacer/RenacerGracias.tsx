@@ -35,6 +35,7 @@ export default function RenacerGracias() {
   const [borrador, setBorrador] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [listo, setListo] = useState(false);
+  const [errorEnvio, setErrorEnvio] = useState<string | null>(null);
   const credencial = leerCredencial();
 
   const cargar = useCallback(() => {
@@ -48,11 +49,17 @@ export default function RenacerGracias() {
   async function publicar() {
     if (!credencial || !borrador.trim()) return;
     setEnviando(true);
+    setErrorEnvio(null);
     try {
       await publicarEnMuro(borrador.trim(), credencial, 'gratitud');
       setBorrador('');
       setListo(true);
       cargar();
+    } catch {
+      // Peor que en el desahogo: `setListo(true)` estaba DESPUÉS del await, así que un
+      // fallo no dejaba ni confirmación ni error — la pantalla quedaba idéntica a antes
+      // de tocar el botón. El borrador se conserva.
+      setErrorEnvio(copy.muro.noSePudo);
     } finally {
       setEnviando(false);
     }
@@ -76,6 +83,14 @@ export default function RenacerGracias() {
           <BotonPrincipal onClick={publicar} disabled={enviando || borrador.trim().length === 0}>
             {copy.gracias.enviar}
           </BotonPrincipal>
+          {errorEnvio && (
+            <Typography
+              role="alert"
+              sx={{ fontFamily: qeFont.ui, fontSize: 14, color: t.alert, mt: 1.25, lineHeight: 1.5 }}
+            >
+              {errorEnvio}
+            </Typography>
+          )}
           {listo && (
             <Typography
               role="status"

@@ -45,6 +45,22 @@ export const copy = {
     bienvenidaBoton: 'Contar qué necesito',
     etiquetaCodigo: 'Tu código de invitación',
     teInvito: (nombre: string, comunidad: string) => `Te invitó ${nombre} · ${comunidad}`,
+    /**
+     * El código de la raíz misma (2026-09-01). El backend siempre lo distinguió
+     * (`motivo: 'es_raiz'`) y la pantalla lo trataba como un número mal escrito: le decía
+     * «puede que falte un número o sobre alguno» a la persona con MÁS probabilidad de
+     * teclear ese código — la raíz, probando su propio bloque. Decirle que se equivocó
+     * cuando escribió exactamente lo que le dimos es la peor manera de recibirla.
+     */
+    envioFalloTransitorio:
+      'No pudimos guardar el registro. Nada se perdió: lo que escribiste sigue acá.',
+    /** Se muestra cuando reintentar NO va a servir. */
+    envioFalloTerminalSalida: 'Volver al inicio',
+    borradorRestaurado:
+      'Retomamos donde ibas. Lo que ya habías escrito quedó guardado en este teléfono.',
+    codigoEsDeRaiz: 'Ese es tu código de raíz',
+    codigoEsDeRaizBajada:
+      'Con ese número te identificamos a vos, así que no se reparte. Los que entregás son los que siguen — el 101, el 102, y así. Están todos en tu panel, en el enlace que te enviamos.',
     codigoNoReconocido: 'No reconocemos ese código',
     codigoNoReconocidoBajada:
       'Puede que le falte o le sobre un número. Es el que te dio quien te invitó.',
@@ -71,6 +87,11 @@ export const copy = {
     boton: 'A mí también me hace falta',
     yaEstabas: 'Ya te habías sumado.',
     sumaron: (n: number) => (n === 1 ? '1 familia más lo necesita' : `${n} familias más lo necesitan`),
+  },
+  /** Los dos muros comparten el aviso de fallo: el mismo hecho, dicho igual. */
+  muro: {
+    noSePudo:
+      'No pudimos publicar tu mensaje. Sigue escrito acá abajo — probá de nuevo en un momento.',
   },
   /** El panel de quien invita (2026-09-01). Término de trabajo "raíz" — D-0831-9. */
   raiz: {
