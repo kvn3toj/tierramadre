@@ -230,11 +230,13 @@ export function useVitrinaSelection({
   // que hace `replaceState` en cada cambio de filtro y borraría la marca. Un
   // ref es la única señal fiable de si la entrada es nuestra y sigue viva.
   const pushedRef = useRef(false);
+  const pushedPathRef = useRef<string | null>(null);
   useEffect(() => {
     if (!selectionMode) return;
 
     window.history.pushState({ vitrinaSelection: true }, '');
     pushedRef.current = true;
+    pushedPathRef.current = window.location.pathname;
 
     const onPopState = () => {
       // El navegador YA consumió nuestra entrada: desenrollarla otra vez
@@ -246,8 +248,18 @@ export function useVitrinaSelection({
 
     return () => {
       window.removeEventListener('popstate', onPopState);
-      if (pushedRef.current) {
-        pushedRef.current = false;
+      if (!pushedRef.current) return;
+      pushedRef.current = false;
+      // SÓLO si seguimos en la misma página. Si el asesor tocó «Inicio» o el
+      // carrito estando en modo, React Router ya empujó su entrada y este
+      // componente se está desmontando por eso: un `back()` acá desharía LA
+      // NAVEGACIÓN DEL USUARIO y lo devolvería al catálogo. Medido en Chrome
+      // contra el catálogo real (2026-09-01): pushState(/cart) → history.back
+      // → popstate → pushState → popstate, y el historial quedaba sucio.
+      //
+      // Los cambios de filtro usan replaceState sobre la MISMA ruta, así que
+      // una salida legítima del modo sigue desenrollando su entrada.
+      if (window.location.pathname === pushedPathRef.current) {
         window.history.back();
       }
     };

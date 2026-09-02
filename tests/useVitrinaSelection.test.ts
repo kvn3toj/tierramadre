@@ -343,6 +343,35 @@ describe('useVitrinaSelection · Escape y el gesto de atrás', () => {
     }
   });
 
+  it('NO desenrolla si la app navegó a otra página — si no, rebota al usuario', () => {
+    // El defecto que esto fija, visto en Chrome contra el catálogo real: el
+    // asesor está en modo selección y toca «Inicio». React Router empuja la
+    // entrada nueva, TreasureBrowser se desmonta, y la limpieza del efecto
+    // llamaba history.back() — que deshacía LA NAVEGACIÓN DEL USUARIO y lo
+    // devolvía al catálogo. En el log de historia se veía la pelea:
+    // pushState(/cart) → history.back → popstate → pushState → popstate.
+    //
+    // La entrada se desenrolla sólo si seguimos en la misma página. No se
+    // puede mirar `history.state` para esto: useUrlFilterSync lo pisa con
+    // null en cada tecla del buscador.
+    const back = vi.spyOn(window.history, 'back').mockImplementation(() => {});
+    const rutaInicial = window.location.pathname;
+    try {
+      const { result, unmount } = renderHook(() =>
+        useVitrinaSelection({ treasureMap: CATALOGO, enabled: true }),
+      );
+      act(() => result.current.enter());
+      act(() => {
+        window.history.pushState({}, '', '/cart');
+      });
+      unmount();
+      expect(back).not.toHaveBeenCalled();
+    } finally {
+      back.mockRestore();
+      window.history.replaceState({}, '', rutaInicial);
+    }
+  });
+
   it('el popstate NO desenrolla de más — la entrada ya la consumió el navegador', () => {
     const back = vi.spyOn(window.history, 'back').mockImplementation(() => {});
     try {
