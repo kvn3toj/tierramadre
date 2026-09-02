@@ -1,6 +1,6 @@
 import { Box, ButtonBase, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { CheckSquare, LayoutGrid, List } from 'lucide-react';
-import { getQuietEmerald, layoutConstants, qeFont } from '../../../design-system';
+import { getQuietEmerald, qeFont } from '../../../design-system';
 import SavedFiltersDropdown from '../SavedFiltersDropdown';
 import type { FilterPreset, FilterState } from '../../../hooks/useSavedFilters';
 import type { TreasureItem } from '../../../types';

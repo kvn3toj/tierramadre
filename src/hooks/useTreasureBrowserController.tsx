@@ -42,6 +42,8 @@ import { useCurrencyFormat } from '../contexts/CurrencyContext';
 import { createLogger } from '../utils/logger';
 import { readLoadedPages, saveLoadedPages } from '../utils/scrollMemory';
 import { useLiveRegion } from '../components/shared/LiveRegion';
+import { useCanShareVitrina } from './usePermissions';
+import { useVitrinaSelection } from './useVitrinaSelection';
 import type { FilterContentProps } from '../components/treasure/FilterContent';
 import GridCard from '../components/treasure/GridCard';
 
@@ -209,6 +211,16 @@ export function useTreasureBrowserController({
     [allTreasure],
   );
 
+  // Quién puede armar una vitrina para un cliente. El modo proveedor queda
+  // fuera aunque el rol diera permiso: esa superficie esconde precios a
+  // propósito, y compartir una vitrina es publicar precios.
+  const canShareVitrina = useCanShareVitrina();
+  const canSelect = canShareVitrina && !isProviderMode;
+  const vitrinaSelection = useVitrinaSelection({
+    treasureMap,
+    enabled: canSelect,
+  });
+
   const recentlyViewedItems = useMemo(() => {
     return recentItems
       .map((id) => treasureMap.get(id))
@@ -313,6 +325,13 @@ export function useTreasureBrowserController({
 
   const { toggleComparison, canAddMore: canAddToComparison } = comparison;
 
+  // Por REF, no por dependencia: `renderCard` viaja a `VirtualGrid.cellProps`,
+  // y una identidad nueva de `renderCard` en cada toque recalcularía cellProps
+  // y repintaría la grilla entera. El estado que SÍ tiene que llegar a la celda
+  // (`selectionMode`, `isSelected`) viaja como prop de la grilla, no acá.
+  const vitrinaToggleRef = useRef(vitrinaSelection.toggle);
+  vitrinaToggleRef.current = vitrinaSelection.toggle;
+
   const renderCard = useCallback(
     (props: {
       item: TreasureItem;
@@ -324,6 +343,8 @@ export function useTreasureBrowserController({
       priority?: boolean;
       isSelectedForComparison?: boolean;
       canAddToComparison?: boolean;
+      selectionMode?: boolean;
+      isSelected?: boolean;
     }) => (
       <GridCard
         item={props.item}
@@ -339,6 +360,9 @@ export function useTreasureBrowserController({
         isSelectedForComparison={props.isSelectedForComparison ?? false}
         onToggleComparison={toggleComparison}
         canAddToComparison={props.canAddToComparison ?? false}
+        selectionMode={props.selectionMode ?? false}
+        isSelected={props.isSelected ?? false}
+        onToggleSelect={vitrinaToggleRef.current}
       />
     ),
     [isAdmin, isLoadingThumbnails, toggleComparison],
@@ -373,6 +397,14 @@ export function useTreasureBrowserController({
       savedFilters,
     ],
   );
+
+  // La vista de lista no tiene tarjetas que tocar: el modo se cierra solo al
+  // cambiar de vista, en vez de quedar encendido sobre filas que no responden.
+  const exitSelection = vitrinaSelection.exit;
+  const selectionMode = vitrinaSelection.selectionMode;
+  useEffect(() => {
+    if (viewMode === 'list' && selectionMode) exitSelection();
+  }, [viewMode, selectionMode, exitSelection]);
 
   const filterContentProps: FilterContentProps = {
     search,
@@ -487,5 +519,7 @@ export function useTreasureBrowserController({
     canAddToComparison,
     getViewCountRef,
     applySavedPreset,
+    canSelect,
+    vitrinaSelection,
   };
 }
