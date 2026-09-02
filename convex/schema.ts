@@ -117,6 +117,28 @@ export default defineSchema({
      * compartir.
      */
     expiraEn: v.optional(v.string()),
+    /**
+     * El idioma en el que el asesor quiere que el cliente lea este enlace.
+     *
+     * **Opcional a propósito, y sin migración**: las vitrinas ya acuñadas no lo
+     * tienen y se leen como `'es'`, que es exactamente lo que eran. Rellenar
+     * las filas viejas con un `'es'` explícito no agregaría información — sólo
+     * borraría la diferencia entre «nadie eligió» y «alguien eligió español»,
+     * que es justo la que hace falta si algún día el default cambia.
+     *
+     * Vive acá y no en la URL para que el enlace siga limpio (`/v/<token>`) y
+     * para que un enlace YA enviado pueda cambiar de idioma sin reenviarse.
+     */
+    lang: v.optional(
+      v.union(
+        v.literal('es'),
+        v.literal('en'),
+        v.literal('fr'),
+        v.literal('it'),
+        v.literal('zh'),
+        v.literal('pt'),
+      ),
+    ),
     // Verified Google email of the staff member who minted the link (audit).
     // Set by the /api/vitrina proxy after it verifies the caller's Google token.
     createdByEmail: v.optional(v.string()),

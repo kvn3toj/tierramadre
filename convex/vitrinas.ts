@@ -11,17 +11,31 @@
  * lookup via a named index).
  */
 
-import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
-import { estaVencida, venceEn } from "./_lib/vencimientoVitrina";
+import { mutation, query } from './_generated/server';
+import { v } from 'convex/values';
+import { estaVencida, venceEn } from './_lib/vencimientoVitrina';
 
 // Unambiguous alphabet (no I/O/0/1), matching api/_lib generateShortCode.
-const TOKEN_LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-const TOKEN_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const TOKEN_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+const TOKEN_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 // 12 chars ≈ log2(24 · 32^11) ≈ 60 bits — a capability URL (knowing the token
 // reveals the client's per-share pricing), so it must be unguessable, not just
 // unique. Enumeration is further bounded by Convex request limits.
 const TOKEN_LENGTH = 12;
+
+/**
+ * Los seis idiomas que la app ya sabe hablar (`src/locales/index.ts`).
+ * Declarado una vez y reusado por `create` y `update`, para que un séptimo
+ * idioma no pueda entrar por una de las dos puertas y no por la otra.
+ */
+const IDIOMA = v.union(
+  v.literal('es'),
+  v.literal('en'),
+  v.literal('fr'),
+  v.literal('it'),
+  v.literal('zh'),
+  v.literal('pt'),
+);
 
 function randomToken(): string {
   // Cryptographically secure (Web Crypto is available in the Convex runtime) —
@@ -48,9 +62,11 @@ function clampMultiplier(m: number): number {
 export const create = mutation({
   args: {
     itemIds: v.array(v.float64()),
-    currency: v.union(v.literal("COP"), v.literal("USD")),
+    currency: v.union(v.literal('COP'), v.literal('USD')),
     multiplier: v.float64(),
     senderSlug: v.optional(v.string()),
+    /** El idioma en el que el cliente leerá el enlace. Ausente = español. */
+    lang: v.optional(IDIOMA),
     // Shared secret proving the call came from the trusted `/api/vitrina` proxy
     // (which verifies the caller's Google identity). The Convex deployment URL
     // is public, so without this any client could mint links directly; requiring
@@ -65,7 +81,7 @@ export const create = mutation({
     // Fail closed: reject unless the secret is configured AND matches.
     const expected = process.env.VITRINA_SHARED_SECRET;
     if (!expected || args.secret !== expected) {
-      throw new Error("No autorizado.");
+      throw new Error('No autorizado.');
     }
 
     // Collision-free token: retry against the by_token index (negligible at
@@ -75,20 +91,21 @@ export const create = mutation({
     while (
       attempts < 5 &&
       (await ctx.db
-        .query("vitrinas")
-        .withIndex("by_token", (q) => q.eq("token", token))
+        .query('vitrinas')
+        .withIndex('by_token', (q) => q.eq('token', token))
         .first())
     ) {
       token = randomToken();
       attempts++;
     }
 
-    await ctx.db.insert("vitrinas", {
+    await ctx.db.insert('vitrinas', {
       token,
       itemIds: args.itemIds,
       currency: args.currency,
       multiplier: clampMultiplier(args.multiplier),
       senderSlug: args.senderSlug,
+      lang: args.lang,
       createdAt: new Date().toISOString(),
       createdByEmail: args.createdByEmail,
     });
@@ -119,8 +136,8 @@ export const getByToken = query({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
     const doc = await ctx.db
-      .query("vitrinas")
-      .withIndex("by_token", (q) => q.eq("token", token.toUpperCase()))
+      .query('vitrinas')
+      .withIndex('by_token', (q) => q.eq('token', token.toUpperCase()))
       .first();
     if (!doc) return null;
 
@@ -136,6 +153,13 @@ export const getByToken = query({
       // comprobación tiene que seguir funcionando sobre una vitrina vencida
       // (si no, vencer un link abriría el agujero que ese chequeo cerró).
       createdByEmail: doc.createdByEmail,
+      // También en las DOS ramas, y por la misma clase de razón: no es precio,
+      // es el idioma en que esta persona sabe leer. La pantalla de «cotización
+      // vencida» se traduce igual que el resto — dejarla en español sería
+      // recibir al cliente, justo cuando volvió por su cuenta, en un idioma que
+      // quizá no entiende. Lo que la rama vencida omite es el precio viejo, y
+      // eso no cambia.
+      lang: doc.lang,
       vencida,
       venceEn: venceEn(doc),
     };
@@ -157,23 +181,24 @@ export const update = mutation({
   args: {
     token: v.string(),
     itemIds: v.optional(v.array(v.float64())),
-    currency: v.optional(v.union(v.literal("COP"), v.literal("USD"))),
+    currency: v.optional(v.union(v.literal('COP'), v.literal('USD'))),
     multiplier: v.optional(v.float64()),
     senderSlug: v.optional(v.string()),
+    lang: v.optional(IDIOMA),
     secret: v.string(),
   },
   handler: async (ctx, args) => {
     const expected = process.env.VITRINA_SHARED_SECRET;
     if (!expected || args.secret !== expected) {
-      throw new Error("No autorizado.");
+      throw new Error('No autorizado.');
     }
 
     const existing = await ctx.db
-      .query("vitrinas")
-      .withIndex("by_token", (q) => q.eq("token", args.token.toUpperCase()))
+      .query('vitrinas')
+      .withIndex('by_token', (q) => q.eq('token', args.token.toUpperCase()))
       .first();
     if (!existing) {
-      throw new Error("Enlace no encontrado.");
+      throw new Error('Enlace no encontrado.');
     }
 
     const patch: Record<string, unknown> = {};
@@ -182,6 +207,9 @@ export const update = mutation({
     if (args.multiplier !== undefined)
       patch.multiplier = clampMultiplier(args.multiplier);
     if (args.senderSlug !== undefined) patch.senderSlug = args.senderSlug;
+    // Omitir `lang` deja el enlace en el idioma que ya tenía — corregir las
+    // piezas de una vitrina en inglés no debe devolverla al español.
+    if (args.lang !== undefined) patch.lang = args.lang;
 
     await ctx.db.patch(existing._id, patch);
     return { success: true, token: existing.token };
