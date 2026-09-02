@@ -100,7 +100,9 @@ describe('DesktopFilterToolbar · interruptor Seleccionar', () => {
     render(<DesktopFilterToolbar {...base} onToggleSelectionMode={noop} />);
     const boton = screen.getByRole('button', { name: ETIQUETA_ENTRAR });
     expect(boton.getAttribute('aria-pressed')).toBe('false');
-    expect(screen.getByText('Seleccionar')).toBeTruthy();
+    // Sólo icono: la banda es de una línea y el rótulo recortaba la tira de
+    // orígenes. El nombre vive en aria-label y en title.
+    expect(boton.getAttribute('title')).toBe(ETIQUETA_ENTRAR);
   });
 
   it('dentro del modo queda presionado y rotula la SALIDA', () => {
@@ -113,7 +115,7 @@ describe('DesktopFilterToolbar · interruptor Seleccionar', () => {
     );
     const boton = screen.getByRole('button', { name: ETIQUETA_SALIR });
     expect(boton.getAttribute('aria-pressed')).toBe('true');
-    expect(screen.getByText('Listo')).toBeTruthy();
+    expect(boton.getAttribute('title')).toBe(ETIQUETA_SALIR);
   });
 
   it('presionarlo llama a su acción', () => {

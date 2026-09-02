@@ -1,6 +1,6 @@
 import { Box, ButtonBase, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { CheckSquare, LayoutGrid, List } from 'lucide-react';
-import { getQuietEmerald, qeFont } from '../../../design-system';
+import { getQuietEmerald } from '../../../design-system';
 import SavedFiltersDropdown from '../SavedFiltersDropdown';
 import type { FilterPreset, FilterState } from '../../../hooks/useSavedFilters';
 import type { TreasureItem } from '../../../types';
@@ -159,7 +159,15 @@ export default function DesktopFilterToolbar({
       </Box>
 
       {/* «Seleccionar» — antes del grupo de vista, porque entra al modo en el
-          que ese grupo deja de tener sentido (el modo es sólo de cuadrícula). */}
+          que ese grupo deja de tener sentido (el modo es sólo de cuadrícula).
+
+          SÓLO ICONO, como el corazón de favoritos que tiene al lado. Con el
+          rótulo medía 120px, y esta banda es de una sola línea por
+          construcción: medido en el catálogo real a 1009px, el botón rotulado
+          desbordaba la tira de orígenes (scrollWidth 98 > clientWidth 82, o
+          sea "Muzo" recortado a "Mu") y encogía el buscador de 195px a 140.
+          El estado encendido se lee por el relleno de acento, y el nombre por
+          `aria-label` + `title`. */}
       {onToggleSelectionMode && (
         <ButtonBase
           onClick={onToggleSelectionMode}
@@ -169,21 +177,22 @@ export default function DesktopFilterToolbar({
               ? 'Salir del modo selección'
               : 'Seleccionar varias piezas'
           }
+          title={
+            selectionMode
+              ? 'Salir del modo selección'
+              : 'Seleccionar varias piezas'
+          }
           disableRipple
           sx={{
-            fontFamily: qeFont.ui,
-            fontSize: 13,
-            fontWeight: selectionMode ? 600 : 500,
             // 40px es el piso de precisión de puntero en escritorio (DS3 §6.3);
             // el teléfono usa 44 en su propia barra.
-            minHeight: 40,
-            px: 1.5,
-            gap: 0.75,
+            width: 40,
+            height: 40,
             borderRadius: 2,
             flexShrink: 0,
             display: 'inline-flex',
             alignItems: 'center',
-            whiteSpace: 'nowrap',
+            justifyContent: 'center',
             color: selectionMode ? qe.onAccent : qe.text,
             backgroundColor: selectionMode ? qe.accent : 'transparent',
             border: `1px solid ${selectionMode ? qe.accent : qe.border}`,
@@ -196,8 +205,7 @@ export default function DesktopFilterToolbar({
             },
           }}
         >
-          <CheckSquare size={16} aria-hidden />
-          {selectionMode ? 'Listo' : 'Seleccionar'}
+          <CheckSquare size={18} aria-hidden />
         </ButtonBase>
       )}
 
