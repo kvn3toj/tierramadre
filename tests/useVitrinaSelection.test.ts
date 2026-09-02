@@ -413,3 +413,62 @@ describe('useVitrinaSelection · a dónde vuelve el foco', () => {
     expect(document.activeElement).toBe(compartir);
   });
 });
+
+describe('useVitrinaSelection · los avisos que se pueden deshacer', () => {
+  it('limpiar ofrece «Deshacer» durante 6 s, y el botón restituye de verdad', () => {
+    // Limpiar es destructivo y no pide confirmación a propósito (es un gesto
+    // de una mano). Lo que lo hace seguro es que se pueda deshacer, no que se
+    // pregunte antes.
+    const { result } = renderHook(() =>
+      useVitrinaSelection({ treasureMap: CATALOGO, enabled: true }),
+    );
+    act(() => result.current.enter());
+    act(() => result.current.toggle(pieza(9, 'Eco')));
+    act(() => result.current.toggle(pieza(7, 'Aura')));
+    act(() => result.current.clear());
+
+    expect(notify).toHaveBeenCalledWith(
+      'Selección limpiada',
+      'info',
+      expect.objectContaining({
+        durationMs: 6000,
+        action: expect.objectContaining({ label: 'Deshacer' }),
+      }),
+    );
+
+    const opciones = notify.mock.calls.at(-1)?.[2] as {
+      action: { onClick: () => void };
+    };
+    act(() => opciones.action.onClick());
+    expect(result.current.ids).toEqual([9, 7]);
+  });
+
+  it('limpiar con la selección ya vacía no avisa de nada', () => {
+    const { result } = renderHook(() =>
+      useVitrinaSelection({ treasureMap: CATALOGO, enabled: true }),
+    );
+    act(() => result.current.enter());
+    notify.mockClear();
+    act(() => result.current.clear());
+    expect(notify).not.toHaveBeenCalled();
+  });
+
+  it('el tope avisa además por snackbar — el anuncio asertivo sólo lo oye un lector', () => {
+    const CINCUENTA = mapa(
+      ...Array.from({ length: 60 }, (_, i) => pieza(i + 1, `P${i + 1}`)),
+    );
+    const { result } = renderHook(() =>
+      useVitrinaSelection({ treasureMap: CINCUENTA, enabled: true }),
+    );
+    act(() => result.current.enter());
+    act(() => {
+      for (let i = 1; i <= 50; i++) result.current.toggle(pieza(i, `P${i}`));
+    });
+    notify.mockClear();
+    act(() => result.current.toggle(pieza(51, 'P51')));
+    expect(notify).toHaveBeenCalledWith(
+      'Máximo 50 piezas por enlace',
+      'warning',
+    );
+  });
+});
