@@ -128,7 +128,15 @@ export default function VitrinaSelectionBar({
         {/* La ÚNICA acción rellena de acento de la pantalla (DS3 §6.3).
             Deshabilitada en cero, nunca oculta: un botón que aparece y
             desaparece mueve los otros dos bajo el dedo. */}
-        <BarButton onClick={onShare} disabled={isEmpty} qe={qe} filled>
+        <BarButton
+          onClick={onShare}
+          disabled={isEmpty}
+          qe={qe}
+          filled
+          // Ancla estable a la que el hook devuelve el foco al cerrar el
+          // diálogo (WCAG 2.4.3) — no es un anzuelo de test.
+          dataAttr="data-vitrina-share"
+        >
           <Share2 size={15} aria-hidden />
           Compartir
         </BarButton>
@@ -146,12 +154,14 @@ function BarButton({
   disabled = false,
   filled = false,
   qe,
+  dataAttr,
   children,
 }: {
   onClick: () => void;
   disabled?: boolean;
   filled?: boolean;
   qe: ReturnType<typeof getQuietEmerald>;
+  dataAttr?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -159,6 +169,7 @@ function BarButton({
       onClick={onClick}
       disabled={disabled}
       disableRipple
+      {...(dataAttr ? { [dataAttr]: '' } : {})}
       sx={{
         fontFamily: qeFont.ui,
         fontSize: 13,

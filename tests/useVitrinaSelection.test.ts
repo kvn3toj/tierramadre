@@ -272,3 +272,144 @@ describe('useVitrinaSelection · el diálogo de acuñado', () => {
     expect(result.current.selectionMode).toBe(true);
   });
 });
+
+describe('useVitrinaSelection · Escape y el gesto de atrás', () => {
+  it('Escape sale del modo', () => {
+    const { result } = renderHook(() =>
+      useVitrinaSelection({ treasureMap: CATALOGO, enabled: true }),
+    );
+    act(() => result.current.enter());
+    act(() => result.current.toggle(pieza(7, 'Aura')));
+
+    act(() => {
+      document.dispatchEvent(
+        new window.KeyboardEvent('keydown', { key: 'Escape' }),
+      );
+    });
+    expect(result.current.selectionMode).toBe(false);
+    expect(result.current.count).toBe(0);
+  });
+
+  it('Escape fuera del modo no hace nada (no se roba el Escape de un diálogo)', () => {
+    const { result } = renderHook(() =>
+      useVitrinaSelection({ treasureMap: CATALOGO, enabled: true }),
+    );
+    act(() => {
+      document.dispatchEvent(
+        new window.KeyboardEvent('keydown', { key: 'Escape' }),
+      );
+    });
+    expect(result.current.selectionMode).toBe(false);
+  });
+
+  it('entrar EMPUJA una entrada de historia marcada', () => {
+    const { result } = renderHook(() =>
+      useVitrinaSelection({ treasureMap: CATALOGO, enabled: true }),
+    );
+    act(() => result.current.enter());
+    expect(
+      (window.history.state as { vitrinaSelection?: boolean } | null)
+        ?.vitrinaSelection,
+    ).toBe(true);
+  });
+
+  it('el gesto de atrás CIERRA el modo en vez de sacar de la página', () => {
+    // Es la razón entera del pushState: sin él, "atrás" en un teléfono te saca
+    // del catálogo, y el asesor pierde la curaduría y el scroll de golpe.
+    const { result } = renderHook(() =>
+      useVitrinaSelection({ treasureMap: CATALOGO, enabled: true }),
+    );
+    act(() => result.current.enter());
+    act(() => result.current.toggle(pieza(7, 'Aura')));
+
+    act(() => {
+      window.dispatchEvent(new window.PopStateEvent('popstate'));
+    });
+    expect(result.current.selectionMode).toBe(false);
+    expect(result.current.count).toBe(0);
+  });
+
+  it('salir por otra vía DESENROLLA la entrada — atrás no acumula pasos muertos', () => {
+    const back = vi.spyOn(window.history, 'back').mockImplementation(() => {});
+    try {
+      const { result } = renderHook(() =>
+        useVitrinaSelection({ treasureMap: CATALOGO, enabled: true }),
+      );
+      act(() => result.current.enter());
+      act(() => result.current.exit());
+      expect(back).toHaveBeenCalledTimes(1);
+    } finally {
+      back.mockRestore();
+    }
+  });
+
+  it('el popstate NO desenrolla de más — la entrada ya la consumió el navegador', () => {
+    const back = vi.spyOn(window.history, 'back').mockImplementation(() => {});
+    try {
+      const { result } = renderHook(() =>
+        useVitrinaSelection({ treasureMap: CATALOGO, enabled: true }),
+      );
+      act(() => result.current.enter());
+      act(() => {
+        window.dispatchEvent(new window.PopStateEvent('popstate'));
+      });
+      expect(back).not.toHaveBeenCalled();
+    } finally {
+      back.mockRestore();
+    }
+  });
+});
+
+describe('useVitrinaSelection · a dónde vuelve el foco', () => {
+  function montarBotones() {
+    document.body.innerHTML = `
+      <button aria-label="Seleccionar varias piezas">Seleccionar</button>
+      <button data-vitrina-share>Compartir</button>
+      <button id="otro">Otro</button>
+    `;
+    return {
+      toggle: document.querySelector(
+        '[aria-label="Seleccionar varias piezas"]',
+      ) as HTMLButtonElement,
+      compartir: document.querySelector(
+        '[data-vitrina-share]',
+      ) as HTMLButtonElement,
+    };
+  }
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('al salir del modo, el foco vuelve al interruptor (WCAG 2.4.3)', async () => {
+    const { toggle } = montarBotones();
+    const { result } = renderHook(() =>
+      useVitrinaSelection({ treasureMap: CATALOGO, enabled: true }),
+    );
+    act(() => result.current.enter());
+    (document.getElementById('otro') as HTMLButtonElement).focus();
+
+    act(() => result.current.exit());
+    await act(async () => {
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+    });
+    expect(document.activeElement).toBe(toggle);
+  });
+
+  it('al cerrar el diálogo, el foco vuelve a «Compartir», no al principio', async () => {
+    const { compartir } = montarBotones();
+    const { result } = renderHook(() =>
+      useVitrinaSelection({ treasureMap: CATALOGO, enabled: true }),
+    );
+    act(() => result.current.enter());
+    act(() => result.current.toggle(pieza(7, 'Aura')));
+    act(() => result.current.openShare());
+    (document.getElementById('otro') as HTMLButtonElement).focus();
+
+    act(() => result.current.closeShare());
+    await act(async () => {
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+    });
+    expect(document.activeElement).toBe(compartir);
+  });
+});

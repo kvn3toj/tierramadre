@@ -59,6 +59,28 @@ export interface UseVitrinaSelectionResult {
   closeShare: () => void;
 }
 
+/**
+ * Devuelve el foco al control que abrió el estado que se acaba de cerrar
+ * (WCAG 2.4.3). Se busca por SELECTOR y no por ref porque los dos destinos
+ * viven en componentes hermanos que este hook no renderiza —el interruptor
+ * está en la barra de herramientas y «Compartir» en la barra inferior—, y
+ * pasar dos refs por tres niveles para esto sería más frágil que un atributo
+ * estable. En el frame siguiente, para que el DOM ya haya reaccionado al
+ * cambio de estado (si no, el interruptor todavía dice «Listo»).
+ */
+function focusLater(selector: string) {
+  if (typeof window === 'undefined') return;
+  requestAnimationFrame(() => {
+    const el = document.querySelector<HTMLElement>(selector);
+    el?.focus();
+  });
+}
+
+/** Selector del interruptor «Seleccionar», ya fuera del modo. */
+const TOGGLE_SELECTOR = '[aria-label="Seleccionar varias piezas"]';
+/** Selector del botón «Compartir» de la barra inferior. */
+const SHARE_SELECTOR = '[data-vitrina-share]';
+
 /** El nombre como se lee en la tarjeta: sin el prefijo de lote (`L:…`).
  *  Copia deliberada de la regla de `GridCard.tsx` — el anuncio del lector de
  *  pantalla tiene que nombrar lo mismo que el ojo ve, no el dato crudo. */
@@ -102,6 +124,7 @@ export function useVitrinaSelection({
     // curadas para otro cliente adentro.
     setIds([]);
     setShareOpen(false);
+    focusLater(TOGGLE_SELECTOR);
   }, [announce]);
 
   const toggle = useCallback(
@@ -181,11 +204,63 @@ export function useVitrinaSelection({
     [ids, treasureMap],
   );
 
+  // ---- Escape ------------------------------------------------------------
+  // Sólo mientras el modo esté abierto: un listener permanente le robaría el
+  // Escape al primer diálogo que se monte encima.
+  const exitRef = useRef(exit);
+  exitRef.current = exit;
+
+  useEffect(() => {
+    if (!selectionMode) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') exitRef.current();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [selectionMode]);
+
+  // ---- El gesto de atrás --------------------------------------------------
+  // Sin esto, "atrás" en un teléfono te saca del catálogo: el asesor pierde de
+  // golpe la curaduría Y la posición de scroll. Patrón de `ImageLightbox`:
+  // entrar empuja una entrada desechable, atrás la consume y sólo cierra el
+  // modo, y salir por otra vía la desenrolla para no dejar pasos muertos.
+  //
+  // La diferencia con el lightbox: acá NO se puede leer `history.state` para
+  // saber si la entrada sigue puesta. Esta pantalla corre `useUrlFilterSync`,
+  // que hace `replaceState` en cada cambio de filtro y borraría la marca. Un
+  // ref es la única señal fiable de si la entrada es nuestra y sigue viva.
+  const pushedRef = useRef(false);
+  useEffect(() => {
+    if (!selectionMode) return;
+
+    window.history.pushState({ vitrinaSelection: true }, '');
+    pushedRef.current = true;
+
+    const onPopState = () => {
+      // El navegador YA consumió nuestra entrada: desenrollarla otra vez
+      // desharía una navegación real.
+      pushedRef.current = false;
+      exitRef.current();
+    };
+    window.addEventListener('popstate', onPopState);
+
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+      if (pushedRef.current) {
+        pushedRef.current = false;
+        window.history.back();
+      }
+    };
+  }, [selectionMode]);
+
   const openShare = useCallback(() => setShareOpen(true), []);
   // Cerrar CONSERVA la selección y el modo: el asesor típicamente ajusta dos
   // piezas y reenvía, y el flujo de editar-enlace-existente del diálogo
   // necesita exactamente los mismos items.
-  const closeShare = useCallback(() => setShareOpen(false), []);
+  const closeShare = useCallback(() => {
+    setShareOpen(false);
+    focusLater(SHARE_SELECTOR);
+  }, []);
 
   return {
     selectionMode,

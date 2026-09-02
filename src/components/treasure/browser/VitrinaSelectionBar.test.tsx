@@ -95,6 +95,16 @@ describe('VitrinaSelectionBar', () => {
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 
+  it('Compartir lleva el ancla a la que vuelve el foco al cerrar el diálogo', () => {
+    // El hook devuelve el foco por este selector (WCAG 2.4.3). Si el atributo
+    // se cae, el foco se va al principio del documento y quien navega por
+    // teclado tiene que recorrer el catálogo entero para volver.
+    render(<VitrinaSelectionBar {...base} />);
+    expect(
+      screen.getByRole('button', { name: /Compartir/i }),
+    ).toHaveProperty('dataset.vitrinaShare');
+  });
+
   it('Limpiar se deshabilita en cero — no hay nada que limpiar', () => {
     render(<VitrinaSelectionBar {...base} count={0} />);
     expect(
