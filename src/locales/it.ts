@@ -779,4 +779,35 @@ export const it = {
     viewAll: 'Vedi tutto',
     recentViews: 'Visualizzazioni recenti',
   },
+
+  // Vetrina pubblica (/v/<token>) — la cornice che vede un CLIENTE.
+  // Vedi la nota in es.ts: tabella locale, non useLanguage(), e le frasi con
+  // un conteggio arrivano in coppia.
+  vitrina: {
+    caption: 'Selezione per te · {n} pezzi',
+    captionOne: 'Selezione per te · 1 pezzo',
+    expiredTitle: 'Questo preventivo è scaduto',
+    expiredBody:
+      'I prezzi dei nostri pezzi cambiano. Chiedici un preventivo aggiornato e ti rispondiamo con i valori di oggi.',
+    expiredCta: 'Chiedi un preventivo aggiornato',
+    unavailableTitle: 'Link non disponibile',
+    unavailableBody:
+      'Questo link non è più attivo. Scrivici e ti aiutiamo volentieri.',
+    back: 'Indietro',
+    price: 'Prezzo',
+    consultWhatsApp: 'Scrivici su WhatsApp',
+    pay: 'Paga',
+    addToSelection: 'Aggiungi alla mia selezione',
+    inSelection: 'Nella tua selezione',
+    footerTagline: 'Tierra Mädre · Smeraldi colombiani con DNA di pace',
+  },
+
+  vitrinaShare: {
+    languageLabel: 'Lingua',
+    shareTitle: 'Tierra Mädre — Selezione per te',
+    shareText: 'Questi pezzi sono per te 💚 ({n} pezzi)',
+    shareTextOne: 'Questo pezzo è per te 💚',
+    whatsappMessage: 'Questi pezzi sono per te 💚 ({n} pezzi)\n{link}',
+    whatsappMessageOne: 'Questo pezzo è per te 💚\n{link}',
+  },
 };

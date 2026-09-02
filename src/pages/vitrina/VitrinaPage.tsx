@@ -59,8 +59,19 @@ import {
   legacyTypography as typography,
 } from '../../design-system';
 import { HOUSE_WHATSAPP } from '../../constants/contact';
+import { translations } from '../../locales';
+import type { Language, Translations } from '../../locales';
 
-
+/**
+ * La tabla de textos de esta superficie: el marco que ve el CLIENTE.
+ *
+ * **No sale de `LanguageContext` a propósito.** El idioma de esta página es el
+ * que el asesor eligió al acuñar el enlace (`vitrinas.lang`), no el de quien
+ * mira: un asesor que abre su propio enlace en inglés para revisarlo no debe
+ * ver cambiar el idioma de su app. Por eso se arma acá y baja por props, y por
+ * eso este archivo no llama a `setLanguage` en ninguna parte.
+ */
+type TextosVitrina = Translations['vitrina'];
 
 /** A bare item-number or dash/comma-separated list — the stateless form. */
 const ID_LIST_RE = /^\d+([-,]\d+)*$/;
@@ -176,9 +187,11 @@ function LoadingState() {
 function VencidaState({
   productos,
   telefono,
+  tv,
 }: {
   productos: TreasureItem[];
   telefono: string;
+  tv: TextosVitrina;
 }) {
   const href = enlaceCotizacionVencida(
     telefono,
@@ -198,16 +211,18 @@ function VencidaState({
           textAlign: 'center',
         }}
       >
-        <Gem size={44} style={{ color: brand.emerald[300], marginBottom: 14 }} />
+        <Gem
+          size={44}
+          style={{ color: brand.emerald[300], marginBottom: 14 }}
+        />
         <Typography variant="h6" sx={{ mb: 0.5 }}>
-          Esta cotización ya venció
+          {tv.expiredTitle}
         </Typography>
         <Typography
           variant="body2"
           sx={{ color: 'text.secondary', maxWidth: 420, mb: 3 }}
         >
-          Los precios de nuestras piezas cambian. Pedinos una cotización
-          actualizada y te respondemos con los valores de hoy.
+          {tv.expiredBody}
         </Typography>
 
         {productos.length > 0 && (
@@ -282,14 +297,14 @@ function VencidaState({
             '&:hover': { filter: 'brightness(1.06)' },
           }}
         >
-          Pedir cotización actualizada
+          {tv.expiredCta}
         </Box>
       </Box>
     </VitrinaShell>
   );
 }
 
-function NotFoundState() {
+function NotFoundState({ tv }: { tv: TextosVitrina }) {
   return (
     <VitrinaShell>
       <Box
@@ -308,10 +323,10 @@ function NotFoundState() {
           style={{ color: brand.emerald[300], marginBottom: 16 }}
         />
         <Typography variant="h6" sx={{ mb: 0.5 }}>
-          Enlace no disponible
+          {tv.unavailableTitle}
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Este enlace ya no está activo. Escríbenos y con gusto te ayudamos.
+          {tv.unavailableBody}
         </Typography>
       </Box>
     </VitrinaShell>
@@ -354,9 +369,42 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
          */
         currency?: 'COP' | 'USD';
         multiplier?: number;
+        /**
+         * El idioma que eligió el asesor. **Presente también cuando la vitrina
+         * venció** — a diferencia del precio, que `getByToken` sí omite. La
+         * pantalla de «cotización vencida» se traduce igual que el resto.
+         *
+         * Ausente en las vitrinas acuñadas antes de esta rebanada, que se leen
+         * como español sin haber migrado una sola fila.
+         */
+        lang?: Language;
       }
     | null
     | undefined;
+
+  // El idioma del ENLACE, no el de quien mira.
+  //
+  // Una lista de ids (`/v/324-323-370`, y las rutas heredadas `/product/:id` y
+  // `/p/:id`, que resuelven como lista de un id) no tiene registro y por tanto
+  // no tiene idioma elegido: español, que es lo que esos enlaces siempre
+  // fueron. Un registro sin `lang` — toda vitrina acuñada antes de esta
+  // rebanada — también, y por eso no hizo falta migrar ninguna fila.
+  const lang: Language = (!isIdList && tokenDoc?.lang) || 'es';
+  const tv = translations[lang].vitrina;
+
+  // El `lang` del documento: lo que un lector de pantalla usa para elegir la
+  // voz, y el navegador para ofrecer traducción. Se restaura al desmontar
+  // porque esta página comparte documento con la app del asesor, que puede
+  // estar en otro idioma — abrir el enlace de un cliente no debe dejarle el
+  // documento marcado.
+  useEffect(() => {
+    const el = document.documentElement;
+    const previo = el.lang;
+    el.lang = lang;
+    return () => {
+      el.lang = previo;
+    };
+  }, [lang]);
 
   // Derive itemIds + pricing + sender from whichever source applies.
   const itemIds = useMemo<number[]>(() => {
@@ -453,15 +501,21 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
 
   // Token still resolving, or catalog still loading.
   if (!isIdList && tokenDoc === undefined) return <LoadingState />;
-  if (!isIdList && tokenDoc === null) return <NotFoundState />;
+  if (!isIdList && tokenDoc === null) return <NotFoundState tv={tv} />;
   if (isLoadingSheets && products.length === 0) return <LoadingState />;
   // Vencida: se espera al catálogo para poder MOSTRAR las piezas. Sin ellas la
   // pantalla no cumple su función —que el cliente reconozca qué estaba
   // mirando— y sería un 404 con mejor copy.
   if (!isIdList && tokenDoc?.vencida) {
-    return <VencidaState productos={products} telefono={senderPhoneRaw || HOUSE_WHATSAPP} />;
+    return (
+      <VencidaState
+        productos={products}
+        telefono={senderPhoneRaw || HOUSE_WHATSAPP}
+        tv={tv}
+      />
+    );
   }
-  if (products.length === 0) return <NotFoundState />;
+  if (products.length === 0) return <NotFoundState tv={tv} />;
 
   const selected = itemId
     ? products.find((p) => p.item.toString() === itemId) || null
@@ -489,6 +543,7 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
           vitrinaToken={isIdList ? undefined : code}
           onAddToCart={addToCart}
           isInCart={isInCart(selected.item)}
+          tv={tv}
         />
         <CarritoFlotante count={cartCount} />
       </VitrinaShell>
@@ -521,7 +576,9 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
             textTransform: 'uppercase',
           }}
         >
-          Selección para ti · {products.length} piezas
+          {products.length === 1
+            ? tv.captionOne
+            : tv.caption.replace('{n}', String(products.length))}
         </Typography>
       </Box>
       <Box

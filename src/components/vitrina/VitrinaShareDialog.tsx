@@ -29,7 +29,7 @@
  * `UserProfileCard`.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   GoogleLogin,
   GoogleOAuthProvider,
@@ -43,6 +43,8 @@ import {
   Dialog,
   DialogContent,
   IconButton,
+  MenuItem,
+  Select,
   Slider,
   Stack,
   TextField,
@@ -53,6 +55,9 @@ import {
 } from '@mui/material';
 import { Check, Copy, Link2, MessageCircle, Pencil, X } from 'lucide-react';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { translations, LANGUAGE_OPTIONS } from '../../locales';
+import type { Language } from '../../locales';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useTRM } from '../../hooks/useTRM';
 import { VitrinaCurrency, formatVitrinaPrice } from '../../utils/vitrinaPrice';
@@ -158,6 +163,35 @@ function SilentGoogleRenew(props: {
   );
 }
 
+/**
+ * El mensaje que ACOMPAÑA al enlace, en el idioma que eligió el asesor.
+ *
+ * Va aparte y es puro porque es lo primero que el cliente lee — antes que la
+ * página. Un enlace en inglés anunciado por un WhatsApp en español deja al
+ * cliente sin saber si el enlace es para él.
+ *
+ * El singular no sale de una regla de pluralización sino de una clave propia:
+ * el chino no ramifica, y una regla del español impuesta encima produce texto
+ * raro. `{n}` y `{link}` se sustituyen; el enlace es idéntico en los seis
+ * idiomas.
+ */
+export function mensajeCompartir(
+  lang: Language,
+  cantidad: number,
+  link: string,
+): { title: string; text: string; whatsapp: string } {
+  const s = translations[lang].vitrinaShare;
+  const una = cantidad === 1;
+  const n = String(cantidad);
+  return {
+    title: s.shareTitle,
+    text: una ? s.shareTextOne : s.shareText.replace('{n}', n),
+    whatsapp: (una ? s.whatsappMessageOne : s.whatsappMessage)
+      .replace('{n}', n)
+      .replace('{link}', link),
+  };
+}
+
 interface ShareItem {
   item: number;
   precioCOP?: number;
@@ -180,6 +214,11 @@ export default function VitrinaShareDialog({
 }: VitrinaShareDialogProps) {
   const { trmRate } = useTRM();
   const { signIn } = useGoogleAuth();
+  // El idioma de la app del ASESOR: sirve para dos cosas distintas. Etiqueta el
+  // selector (que lee él) y siembra su valor inicial (la apuesta más probable:
+  // quien tiene la app en inglés suele compartir en inglés). No decide el
+  // idioma del enlace — eso lo decide el select.
+  const { language: idiomaApp, t } = useLanguage();
   // Sharing and pricing are different permissions (see puedeFijarMultiplicador
   // in usePermissions.ts). This hides the slider as a courtesy — the request
   // body below is still pinned at 1 for anyone this is false for, and the
@@ -187,6 +226,9 @@ export default function VitrinaShareDialog({
   const { canUseMultiplier } = usePermissions();
 
   const [currency, setCurrency] = useState<VitrinaCurrency>('COP');
+  /** El idioma en que el CLIENTE leerá el enlace. Se graba en el registro. */
+  const [lang, setLang] = useState<Language>(idiomaApp);
+  const idiomaLabelId = useId();
   const [multiplier, setMultiplier] = useState<number>(1);
   const [generating, setGenerating] = useState(false);
   const [link, setLink] = useState<string | null>(null);
@@ -226,6 +268,9 @@ export default function VitrinaShareDialog({
     setNeedsRenew(false);
     setSilentRenewing(false);
     setCurrency('COP');
+    // Vuelve al idioma de la app, NO a español: quien comparte en inglés todo
+    // el día no debería re-elegirlo en cada enlace.
+    setLang(idiomaApp);
     setMultiplier(1);
     setEditingExisting(false);
     setEditTokenInput('');
@@ -287,6 +332,7 @@ export default function VitrinaShareDialog({
           currency,
           multiplier: effectiveMultiplier,
           senderSlug,
+          lang,
         }),
       });
 
@@ -309,9 +355,10 @@ export default function VitrinaShareDialog({
       // Native share on mobile; otherwise the link is shown for manual copy.
       if (typeof navigator !== 'undefined' && 'share' in navigator) {
         try {
+          const mensaje = mensajeCompartir(lang, items.length, url);
           await navigator.share({
-            title: 'Tierra Mädre — Selección para ti',
-            text: `Estas piezas son para ti 💚 (${items.length} ${items.length === 1 ? 'pieza' : 'piezas'})`,
+            title: mensaje.title,
+            text: mensaje.text,
             url,
           });
         } catch {
@@ -345,6 +392,7 @@ export default function VitrinaShareDialog({
           currency,
           multiplier: effectiveMultiplier,
           senderSlug,
+          lang,
         }),
       });
 
@@ -560,6 +608,50 @@ export default function VitrinaShareDialog({
                   <ToggleButton value="COP">COP</ToggleButton>
                   <ToggleButton value="USD">USD</ToggleButton>
                 </ToggleButtonGroup>
+              </Box>
+
+              {/* Idioma — el marco de la página pública Y el mensaje que lleva
+                  el enlace. Seis opciones no caben en un ToggleButtonGroup de
+                  320px, así que va en un Select. La etiqueta imita la de
+                  «Moneda» de arriba para que las dos filas se lean como una
+                  sola cosa, y se asocia por `labelId` para que un lector de
+                  pantalla anuncie «Idioma» y no sólo el valor elegido.
+
+                  Esta etiqueta va en el idioma de la app del ASESOR (`t`), que
+                  es quien la lee; el resto de las cadenas de `vitrinaShare`
+                  salen en el idioma del CLIENTE. */}
+              <Box>
+                <Typography
+                  id={idiomaLabelId}
+                  variant="caption"
+                  sx={{
+                    color: 'text.secondary',
+                    fontWeight: fontWeights.medium,
+                  }}
+                >
+                  {t.vitrinaShare.languageLabel}
+                </Typography>
+                <Select
+                  value={lang}
+                  labelId={idiomaLabelId}
+                  size="small"
+                  fullWidth
+                  onChange={(e) => setLang(e.target.value as Language)}
+                  sx={{ mt: 0.75 }}
+                  renderValue={(code) => {
+                    const opt = LANGUAGE_OPTIONS.find((o) => o.code === code);
+                    return opt ? `${opt.flag}  ${opt.label}` : String(code);
+                  }}
+                >
+                  {LANGUAGE_OPTIONS.map((opt) => (
+                    <MenuItem key={opt.code} value={opt.code}>
+                      <Box component="span" sx={{ mr: 1 }}>
+                        {opt.flag}
+                      </Box>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </Select>
               </Box>
 
               {/* Multiplier — only for roles that may fix the sale price.
@@ -793,7 +885,13 @@ export default function VitrinaShareDialog({
                   startIcon={<MessageCircle size={18} />}
                   onClick={() =>
                     window.open(
-                      `https://wa.me/?text=${encodeURIComponent(link)}`,
+                      // Antes iba sólo el enlace pelado. Ahora va el mensaje
+                      // completo, en el idioma del cliente y con el enlace
+                      // adentro: un enlace en inglés anunciado en español deja
+                      // al cliente sin saber si es para él.
+                      `https://wa.me/?text=${encodeURIComponent(
+                        mensajeCompartir(lang, items.length, link).whatsapp,
+                      )}`,
                       '_blank',
                     )
                   }

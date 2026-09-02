@@ -780,4 +780,35 @@ export const en = {
     viewAll: 'View All',
     recentViews: 'Recent Views',
   },
+
+  // Public vitrina (/v/<token>) — the frame a CLIENT sees, not the asesor.
+  // See the note in es.ts for why these are read from a local table instead
+  // of useLanguage(), and why the counting phrases come in pairs.
+  vitrina: {
+    caption: 'Chosen for you · {n} pieces',
+    captionOne: 'Chosen for you · 1 piece',
+    expiredTitle: 'This quote has expired',
+    expiredBody:
+      'The prices of our pieces change. Ask us for an updated quote and we will reply with today’s values.',
+    expiredCta: 'Ask for an updated quote',
+    unavailableTitle: 'Link unavailable',
+    unavailableBody:
+      'This link is no longer active. Write to us and we will gladly help you.',
+    back: 'Back',
+    price: 'Price',
+    consultWhatsApp: 'Ask on WhatsApp',
+    pay: 'Pay',
+    addToSelection: 'Add to my selection',
+    inSelection: 'In your selection',
+    footerTagline: 'Tierra Mädre · Colombian emeralds with peace in their DNA',
+  },
+
+  vitrinaShare: {
+    languageLabel: 'Language',
+    shareTitle: 'Tierra Mädre — Chosen for you',
+    shareText: 'These pieces are for you 💚 ({n} pieces)',
+    shareTextOne: 'This piece is for you 💚',
+    whatsappMessage: 'These pieces are for you 💚 ({n} pieces)\n{link}',
+    whatsappMessageOne: 'This piece is for you 💚\n{link}',
+  },
 };
