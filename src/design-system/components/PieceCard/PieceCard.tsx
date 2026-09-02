@@ -43,6 +43,14 @@ export interface PieceCardProps {
   itemNumber?: string | number;
   onClick?: () => void;
   ariaLabel?: string;
+  /** Rol ARIA de la raíz. `'article'` (defecto) es la tarjeta de siempre;
+   *  `'checkbox'` la convierte en un control marcable — lo usa el modo
+   *  selección del catálogo, donde el toque alterna en vez de navegar. Sin esta
+   *  prop la tarjeta se comporta exactamente como hoy. */
+  role?: 'article' | 'checkbox';
+  /** Estado marcado, sólo significativo con `role="checkbox"`. Es lo que hace
+   *  que un lector de pantalla diga "casilla, marcada" en vez de "artículo". */
+  ariaChecked?: boolean;
   /** Mobile sizing (smaller name/spacing), matches the caller's own breakpoint. */
   compact?: boolean;
   className?: string;
@@ -65,6 +73,8 @@ export const PieceCard: React.FC<PieceCardProps> = ({
   itemNumber,
   onClick,
   ariaLabel,
+  role = 'article',
+  ariaChecked,
   compact = false,
   className,
   onMouseEnter,
@@ -204,7 +214,10 @@ export const PieceCard: React.FC<PieceCardProps> = ({
             }
           : undefined
       }
-      role={isInteractive ? 'article' : undefined}
+      role={isInteractive ? role : undefined}
+      aria-checked={
+        isInteractive && role === 'checkbox' ? !!ariaChecked : undefined
+      }
       aria-label={ariaLabel}
       tabIndex={isInteractive ? 0 : undefined}
       className={className}
