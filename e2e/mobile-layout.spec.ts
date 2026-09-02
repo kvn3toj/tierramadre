@@ -479,6 +479,23 @@ for (const vp of VIEWPORTS) {
       // cuyos botones no se pueden presionar.
       expect(caja!.y + caja!.height).toBeLessThanOrEqual(vp.height + 1);
       expect(caja!.y).toBeGreaterThan(0);
+      // El conteo y los botones NO se pisan. Es la única frase de la barra y
+      // es el dato por el que el asesor mira ahí. A 390px no cabe junto a los
+      // tres botones —midiéndolo: ~140px de frase contra ~266px de botones en
+      // 358px útiles—, y por eso la barra son DOS filas en el teléfono. Esta
+      // aserción es la que sostiene esa decisión; en una sola fila el conteo
+      // queda debajo de «Limpiar».
+      const conteo = barra.getByText(/pieza/).first();
+      await expect(conteo).toBeVisible();
+      const cajaConteo = (await conteo.boundingBox())!;
+      const cajaLimpiar = (await barra
+        .getByRole('button', { name: 'Limpiar' })
+        .boundingBox())!;
+      const seSolapan =
+        cajaConteo.x + cajaConteo.width > cajaLimpiar.x + 1 &&
+        cajaConteo.y + cajaConteo.height > cajaLimpiar.y + 1;
+      expect(seSolapan, 'el conteo se pisa con los botones').toBe(false);
+
       // 44px de alcance por botón (DS3 §6.3).
       for (const nombre of ['Limpiar', 'Compartir', 'Listo']) {
         const b = await barra

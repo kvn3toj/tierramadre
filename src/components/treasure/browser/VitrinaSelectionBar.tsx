@@ -92,6 +92,12 @@ export default function VitrinaSelectionBar({
         pointerEvents: visible ? 'auto' : 'none',
       }}
     >
+      {/* DOS filas en el teléfono, una sola desde `sm`.
+          Medido a 390px: la frase completa (~140px) más los tres botones con
+          sus separaciones (~266px) no caben en los 358px útiles, y la versión
+          de una fila truncaba el conteo a «3 piezas s…». Un conteo truncado no
+          es un conteo. La segunda fila cuesta ~32px de alto, que la grilla ya
+          paga por su fila espaciadora. */}
       <Box
         sx={{
           maxWidth: 1536,
@@ -99,7 +105,8 @@ export default function VitrinaSelectionBar({
           px: { xs: 2, md: 3 },
           py: 1,
           display: 'flex',
-          alignItems: 'center',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'stretch', sm: 'center' },
           // 8px mínimo entre blancos adyacentes (DS3 §6.3).
           gap: 1,
         }}
@@ -111,39 +118,47 @@ export default function VitrinaSelectionBar({
             fontWeight: 600,
             color: atCap ? qe.accent : qe.text,
             whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
             minWidth: 0,
+            flexShrink: 0,
           }}
         >
           {label}
         </Typography>
 
-        <Box sx={{ flex: 1, minWidth: 8 }} />
-
-        <BarButton onClick={onClear} disabled={isEmpty} qe={qe}>
-          Limpiar
-        </BarButton>
-
-        {/* La ÚNICA acción rellena de acento de la pantalla (DS3 §6.3).
-            Deshabilitada en cero, nunca oculta: un botón que aparece y
-            desaparece mueve los otros dos bajo el dedo. */}
-        <BarButton
-          onClick={onShare}
-          disabled={isEmpty}
-          qe={qe}
-          filled
-          // Ancla estable a la que el hook devuelve el foco al cerrar el
-          // diálogo (WCAG 2.4.3) — no es un anzuelo de test.
-          dataAttr="data-vitrina-share"
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: 1,
+            flex: { sm: 1 },
+            minWidth: 0,
+          }}
         >
-          <Share2 size={15} aria-hidden />
-          Compartir
-        </BarButton>
+          <BarButton onClick={onClear} disabled={isEmpty} qe={qe}>
+            Limpiar
+          </BarButton>
 
-        <BarButton onClick={onDone} qe={qe}>
-          Listo
-        </BarButton>
+          {/* La ÚNICA acción rellena de acento de la pantalla (DS3 §6.3).
+              Deshabilitada en cero, nunca oculta: un botón que aparece y
+              desaparece mueve los otros dos bajo el dedo. */}
+          <BarButton
+            onClick={onShare}
+            disabled={isEmpty}
+            qe={qe}
+            filled
+            // Ancla estable a la que el hook devuelve el foco al cerrar el
+            // diálogo (WCAG 2.4.3) — no es un anzuelo de test.
+            dataAttr="data-vitrina-share"
+          >
+            <Share2 size={15} aria-hidden />
+            Compartir
+          </BarButton>
+
+          <BarButton onClick={onDone} qe={qe}>
+            Listo
+          </BarButton>
+        </Box>
       </Box>
     </Box>
   );

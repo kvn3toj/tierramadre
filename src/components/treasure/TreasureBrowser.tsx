@@ -150,8 +150,10 @@ export default function TreasureBrowser({
   const { asesor } = useCurrentAsesor();
 
   // La barra ocupa alto real sobre la barra de pestañas; la grilla tiene que
-  // pagarlo por su fila espaciadora o la última pieza queda debajo.
-  const SELECTION_BAR_HEIGHT = 60;
+  // pagarlo por su fila espaciadora o la última pieza queda debajo. En el
+  // teléfono son DOS filas (el conteo no cabe junto a los botones a 390px),
+  // así que el despeje es mayor.
+  const selectionBarHeight = isMobile ? 96 : 60;
 
   // Quiet Emerald origin tabs (Todas / Muzo / Chivor / Coscuez). A self-contained
   // quick filter applied on top of the controller's filtered set, keyed off the
@@ -475,7 +477,7 @@ export default function TreasureBrowser({
           comparisonIds={comparisonIds}
           selectedIds={sel.ids}
           selectionMode={sel.selectionMode}
-          bottomInset={sel.selectionMode ? SELECTION_BAR_HEIGHT : 0}
+          bottomInset={sel.selectionMode ? selectionBarHeight : 0}
           canAddToComparison={canAddToComparison}
           onItemClick={handleItemClick}
           onCertClick={handleCertClick}
