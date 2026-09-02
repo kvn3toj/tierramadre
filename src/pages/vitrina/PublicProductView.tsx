@@ -57,6 +57,8 @@ import { VitrinaPricing, formatVitrinaPrice } from '../../utils/vitrinaPrice';
 import CheckoutSheet, {
   CheckoutPieza,
 } from '../../components/checkout/CheckoutSheet';
+import { translations } from '../../locales';
+import type { Translations } from '../../locales';
 
 function cleanName(nombre: string): string {
   return nombre
@@ -107,6 +109,23 @@ interface PublicProductViewProps {
   onAddToCart?: (item: TreasureItem) => void;
   /** Si esta pieza ya está en el carrito. */
   isInCart?: boolean;
+  /**
+   * Los textos del marco, en el idioma que el asesor eligió para el enlace
+   * (`vitrinas.lang`). Lo arma `VitrinaPage` y baja por props — esta vista NO
+   * consulta `LanguageContext`, porque el idioma de esta superficie es el del
+   * CLIENTE y no el de quien mira.
+   *
+   * **Opcional, con el español por defecto.** El catálogo público monta esta
+   * misma vista sin idioma elegido (`/product/:id`, `/p/:id`, listas de ids),
+   * y ahí el español es exactamente lo correcto.
+   *
+   * Alcance: esto traduce el MARCO — botones, precio, pie. Las etiquetas
+   * técnicas de la ficha (`SpecGroups`, `GemStats`, `GemPills`, `TrustCard`,
+   * `RelatoBlock`, `FormulaPanel`) son componentes compartidos con la app
+   * autenticada y siguen en español. Es deliberado y es la rebanada 3: un
+   * cliente en inglés verá botones en inglés y especificaciones en español.
+   */
+  tv?: Translations['vitrina'];
 }
 
 export function PublicProductView({
@@ -119,6 +138,7 @@ export function PublicProductView({
   vitrinaToken,
   onAddToCart,
   isInCart,
+  tv = translations.es.vitrina,
 }: PublicProductViewProps) {
   const { mode } = useThemeMode();
   const qe = getQuietEmerald(mode);
@@ -298,7 +318,9 @@ export function PublicProductView({
     <Box sx={{ py: '10px' }}>
       <IconButton
         onClick={onBack}
-        aria-label="Volver"
+        // Se traduce aunque no se vea: es lo que anuncia un lector de pantalla,
+        // y un cliente que navega por voz merece oírlo en su idioma.
+        aria-label={tv.back}
         sx={{ color: qe.muted, width: 36, height: 36, ml: '-6px' }}
       >
         <ArrowLeft size={18} />
@@ -367,7 +389,7 @@ export function PublicProductView({
           color: qe.subtle,
         }}
       >
-        Precio
+        {tv.price}
       </Typography>
       <Typography
         sx={{
@@ -426,7 +448,7 @@ export function PublicProductView({
         },
       }}
     >
-      Consultar por WhatsApp
+      {tv.consultWhatsApp}
     </Button>
   );
 
@@ -452,7 +474,7 @@ export function PublicProductView({
         },
       }}
     >
-      Pagar
+      {tv.pay}
     </Button>
   ) : null;
 
@@ -488,7 +510,7 @@ export function PublicProductView({
         },
       }}
     >
-      {isInCart ? 'En tu selección' : 'Agregar a mi selección'}
+      {isInCart ? tv.inSelection : tv.addToSelection}
     </Button>
   ) : null;
 
@@ -502,7 +524,7 @@ export function PublicProductView({
         color: qe.subtle,
       }}
     >
-      Tierra Mädre · Esmeraldas colombianas con ADN de paz
+      {tv.footerTagline}
     </Typography>
   );
 
