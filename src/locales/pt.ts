@@ -782,4 +782,35 @@ export const pt = {
     previousImage: 'Imagem anterior',
     nextImage: 'Próxima imagem',
   },
+
+  // Vitrine pública (/v/<token>) — a moldura que um CLIENTE vê.
+  // Ver a nota em es.ts: tabela local, não useLanguage(), e as frases com
+  // contagem vêm em pares.
+  vitrina: {
+    caption: 'Seleção para você · {n} peças',
+    captionOne: 'Seleção para você · 1 peça',
+    expiredTitle: 'Este orçamento venceu',
+    expiredBody:
+      'Os preços das nossas peças mudam. Peça um orçamento atualizado e respondemos com os valores de hoje.',
+    expiredCta: 'Pedir orçamento atualizado',
+    unavailableTitle: 'Link indisponível',
+    unavailableBody:
+      'Este link não está mais ativo. Escreva para nós e teremos prazer em ajudar você.',
+    back: 'Voltar',
+    price: 'Preço',
+    consultWhatsApp: 'Falar pelo WhatsApp',
+    pay: 'Pagar',
+    addToSelection: 'Adicionar à minha seleção',
+    inSelection: 'Na sua seleção',
+    footerTagline: 'Tierra Mädre · Esmeraldas colombianas com DNA de paz',
+  },
+
+  vitrinaShare: {
+    languageLabel: 'Idioma',
+    shareTitle: 'Tierra Mädre — Seleção para você',
+    shareText: 'Estas peças são para você 💚 ({n} peças)',
+    shareTextOne: 'Esta peça é para você 💚',
+    whatsappMessage: 'Estas peças são para você 💚 ({n} peças)\n{link}',
+    whatsappMessageOne: 'Esta peça é para você 💚\n{link}',
+  },
 };

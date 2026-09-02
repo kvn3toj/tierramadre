@@ -784,4 +784,35 @@ export const fr = {
     viewAll: 'Voir tout',
     recentViews: 'Vues récentes',
   },
+
+  // Vitrine publique (/v/<token>) — le cadre que voit un CLIENT.
+  // Voir la note dans es.ts : table locale, pas useLanguage(), et les phrases
+  // avec un compte viennent par paires.
+  vitrina: {
+    caption: 'Sélection pour vous · {n} pièces',
+    captionOne: 'Sélection pour vous · 1 pièce',
+    expiredTitle: 'Ce devis a expiré',
+    expiredBody:
+      'Les prix de nos pièces évoluent. Demandez-nous un devis actualisé et nous vous répondrons avec les valeurs du jour.',
+    expiredCta: 'Demander un devis actualisé',
+    unavailableTitle: 'Lien indisponible',
+    unavailableBody:
+      'Ce lien n’est plus actif. Écrivez-nous et nous vous aiderons avec plaisir.',
+    back: 'Retour',
+    price: 'Prix',
+    consultWhatsApp: 'Nous écrire sur WhatsApp',
+    pay: 'Payer',
+    addToSelection: 'Ajouter à ma sélection',
+    inSelection: 'Dans votre sélection',
+    footerTagline: 'Tierra Mädre · Émeraudes colombiennes à l’ADN de paix',
+  },
+
+  vitrinaShare: {
+    languageLabel: 'Langue',
+    shareTitle: 'Tierra Mädre — Sélection pour vous',
+    shareText: 'Ces pièces sont pour vous 💚 ({n} pièces)',
+    shareTextOne: 'Cette pièce est pour vous 💚',
+    whatsappMessage: 'Ces pièces sont pour vous 💚 ({n} pièces)\n{link}',
+    whatsappMessageOne: 'Cette pièce est pour vous 💚\n{link}',
+  },
 };

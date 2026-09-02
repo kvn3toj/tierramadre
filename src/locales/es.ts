@@ -784,4 +784,46 @@ export const es = {
     viewAll: 'Ver Todas',
     recentViews: 'Vistas Recientes',
   },
+
+  // Vitrina pública (/v/<token>) — el marco que ve un CLIENTE, no el asesor.
+  //
+  // Estas cadenas NO se leen con `useLanguage()`. La página pública construye
+  // una tabla local con el idioma que el asesor eligió al acuñar el enlace
+  // (`vitrinas.lang`), porque un asesor que abre su propio enlace para
+  // revisarlo no debe ver cambiar el idioma de su app.
+  //
+  // Las frases que cuentan piezas vienen de a dos (`caption`/`captionOne`) en
+  // vez de pasar por un motor de pluralización: el chino no ramifica singular
+  // y plural, y una regla del español impuesta sobre él produce texto raro.
+  // Dos claves completas dejan que cada lengua diga lo suyo.
+  vitrina: {
+    caption: 'Selección para ti · {n} piezas',
+    captionOne: 'Selección para ti · 1 pieza',
+    expiredTitle: 'Esta cotización ya venció',
+    expiredBody:
+      'Los precios de nuestras piezas cambian. Pedinos una cotización actualizada y te respondemos con los valores de hoy.',
+    expiredCta: 'Pedir cotización actualizada',
+    unavailableTitle: 'Enlace no disponible',
+    unavailableBody:
+      'Este enlace ya no está activo. Escríbenos y con gusto te ayudamos.',
+    back: 'Volver',
+    price: 'Precio',
+    consultWhatsApp: 'Consultar por WhatsApp',
+    pay: 'Pagar',
+    addToSelection: 'Agregar a mi selección',
+    inSelection: 'En tu selección',
+    footerTagline: 'Tierra Mädre · Esmeraldas colombianas con ADN de paz',
+  },
+
+  // El diálogo con el que el asesor comparte, y el mensaje que lleva el
+  // enlace. `languageLabel` se muestra en el idioma de la APP del asesor; el
+  // resto sale en el idioma que eligió para el cliente.
+  vitrinaShare: {
+    languageLabel: 'Idioma',
+    shareTitle: 'Tierra Mädre — Selección para ti',
+    shareText: 'Estas piezas son para ti 💚 ({n} piezas)',
+    shareTextOne: 'Esta pieza es para ti 💚',
+    whatsappMessage: 'Estas piezas son para ti 💚 ({n} piezas)\n{link}',
+    whatsappMessageOne: 'Esta pieza es para ti 💚\n{link}',
+  },
 };

@@ -745,4 +745,37 @@ export const zh = {
     previousImage: '上一张图片',
     nextImage: '下一张图片',
   },
+
+  // 公开展示页 (/v/<token>) — 客户看到的界面。
+  //
+  // ⚠️ 待人工校对 / PENDING HUMAN REVIEW (2026-09-01). Escritas por `kira` sin
+  // hablante nativo que las valide. El chino no ramifica singular y plural, y
+  // por eso `caption` y `captionOne` dicen lo mismo salvo el número — es
+  // deliberado, no una copia olvidada.
+  vitrina: {
+    caption: '为你挑选 · {n} 件',
+    captionOne: '为你挑选 · 1 件',
+    expiredTitle: '此报价已过期',
+    expiredBody:
+      '我们宝石的价格会变动。请向我们索取最新报价，我们会以今天的价格回复你。',
+    expiredCta: '索取最新报价',
+    unavailableTitle: '链接不可用',
+    unavailableBody: '此链接已失效。请与我们联系，我们很乐意为你提供帮助。',
+    back: '返回',
+    price: '价格',
+    consultWhatsApp: '通过 WhatsApp 咨询',
+    pay: '支付',
+    addToSelection: '加入我的选择',
+    inSelection: '已在你的选择中',
+    footerTagline: 'Tierra Mädre · 拥有和平基因的哥伦比亚祖母绿',
+  },
+
+  vitrinaShare: {
+    languageLabel: '语言',
+    shareTitle: 'Tierra Mädre — 为你挑选',
+    shareText: '这些宝石是为你挑选的 💚（{n} 件）',
+    shareTextOne: '这件宝石是为你挑选的 💚',
+    whatsappMessage: '这些宝石是为你挑选的 💚（{n} 件）\n{link}',
+    whatsappMessageOne: '这件宝石是为你挑选的 💚\n{link}',
+  },
 };
