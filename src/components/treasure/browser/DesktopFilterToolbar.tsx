@@ -1,6 +1,6 @@
-import { Box, ToggleButton, ToggleButtonGroup } from '@mui/material';
-import { LayoutGrid, List } from 'lucide-react';
-import { getQuietEmerald } from '../../../design-system';
+import { Box, ButtonBase, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { CheckSquare, LayoutGrid, List } from 'lucide-react';
+import { getQuietEmerald, layoutConstants, qeFont } from '../../../design-system';
 import SavedFiltersDropdown from '../SavedFiltersDropdown';
 import type { FilterPreset, FilterState } from '../../../hooks/useSavedFilters';
 import type { TreasureItem } from '../../../types';
@@ -44,6 +44,15 @@ interface DesktopFilterToolbarProps {
   recentItems?: TreasureItem[];
   onRecentClick?: (item: TreasureItem) => void;
   onClearRecent?: () => void;
+  /**
+   * Vitrina selection mode toggle. **Its ABSENCE is the permission gate**: the
+   * controller passes it only when `useCanShareVitrina() && !isProviderMode`,
+   * so a provider or a guest never gets the button at all — not a disabled one,
+   * not a hidden one. Nothing to find in the DOM.
+   */
+  onToggleSelectionMode?: () => void;
+  /** Whether the vitrina selection mode is currently on. */
+  selectionMode?: boolean;
 }
 
 export default function DesktopFilterToolbar({
@@ -68,6 +77,8 @@ export default function DesktopFilterToolbar({
   recentItems,
   onRecentClick,
   onClearRecent,
+  onToggleSelectionMode,
+  selectionMode = false,
 }: DesktopFilterToolbarProps) {
   // Theme is data: resolve the Quiet Emerald token set from the mode instead of
   // hand-rolling hex/rgba here.
@@ -146,6 +157,49 @@ export default function DesktopFilterToolbar({
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
         {resultsSummary}
       </Box>
+
+      {/* «Seleccionar» — antes del grupo de vista, porque entra al modo en el
+          que ese grupo deja de tener sentido (el modo es sólo de cuadrícula). */}
+      {onToggleSelectionMode && (
+        <ButtonBase
+          onClick={onToggleSelectionMode}
+          aria-pressed={selectionMode}
+          aria-label={
+            selectionMode
+              ? 'Salir del modo selección'
+              : 'Seleccionar varias piezas'
+          }
+          disableRipple
+          sx={{
+            fontFamily: qeFont.ui,
+            fontSize: 13,
+            fontWeight: selectionMode ? 600 : 500,
+            // 40px es el piso de precisión de puntero en escritorio (DS3 §6.3);
+            // el teléfono usa 44 en su propia barra.
+            minHeight: 40,
+            px: 1.5,
+            gap: 0.75,
+            borderRadius: 2,
+            flexShrink: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            whiteSpace: 'nowrap',
+            color: selectionMode ? qe.onAccent : qe.text,
+            backgroundColor: selectionMode ? qe.accent : 'transparent',
+            border: `1px solid ${selectionMode ? qe.accent : qe.border}`,
+            transition: 'opacity var(--tm-fast) var(--tm-ease)',
+            '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+            '&:active': { opacity: 0.85 },
+            '&:focus-visible': {
+              outline: `2px solid ${qe.accent}`,
+              outlineOffset: 2,
+            },
+          }}
+        >
+          <CheckSquare size={16} aria-hidden />
+          {selectionMode ? 'Listo' : 'Seleccionar'}
+        </ButtonBase>
+      )}
 
       <ToggleButtonGroup
         value={viewMode}
