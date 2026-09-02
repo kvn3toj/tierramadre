@@ -20,9 +20,20 @@ export interface ScrollToTopProps {
    * TreasureBrowser passes that element here. When null, falls back to <main>.
    */
   scrollContainer?: HTMLElement | null;
+  /**
+   * Suppress the button entirely. Used by the catalog's vitrina selection
+   * mode: this Fab sits at `zIndex.float` (1000), ABOVE the selection bar's
+   * `zIndex.fixed` (900), so leaving it up would float it over the bar's
+   * buttons. Hiding beats re-stacking — the bar is the only thing worth
+   * reaching while curating.
+   */
+  hidden?: boolean;
 }
 
-export default function ScrollToTop({ scrollContainer }: ScrollToTopProps = {}) {
+export default function ScrollToTop({
+  scrollContainer,
+  hidden = false,
+}: ScrollToTopProps = {}) {
   const [visible, setVisible] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
@@ -53,7 +64,7 @@ export default function ScrollToTop({ scrollContainer }: ScrollToTopProps = {}) 
   }, [prefersReducedMotion, scrollContainer]);
 
   return (
-    <Zoom in={visible} unmountOnExit>
+    <Zoom in={visible && !hidden} unmountOnExit>
       <Fab
         size="small"
         onClick={handleClick}
