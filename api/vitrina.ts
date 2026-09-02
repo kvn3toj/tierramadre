@@ -59,6 +59,31 @@ export function verifiedSessionEmail(
   return verifySessionToken(token)?.email ?? null;
 }
 
+/** Los seis idiomas que la app sabe hablar (`src/locales/index.ts`). */
+const IDIOMAS = ['es', 'en', 'fr', 'it', 'zh', 'pt'] as const;
+export type IdiomaVitrina = (typeof IDIOMAS)[number];
+
+/** El único default, y es español. */
+export const IDIOMA_POR_DEFECTO: IdiomaVitrina = 'es';
+
+/**
+ * `body.lang` → uno de los seis, o `undefined` si no lo es.
+ *
+ * Mismo patrón que `currency` unas líneas más abajo: lista cerrada, y lo que
+ * no está en la lista NO se propaga. Devuelve `undefined` en vez de `'es'`
+ * porque las dos ramas necesitan cosas distintas del mismo valor ausente —
+ * POST lo convierte en el default (siempre graba un idioma), PATCH lo deja
+ * pasar como «no tocar» (volver al español un enlace acuñado en inglés sería
+ * destructivo). Un solo default, aplicado donde corresponde.
+ *
+ * Exportada para poder probarla sola, como `verifiedSessionEmail`.
+ */
+export function idiomaValido(raw: unknown): IdiomaVitrina | undefined {
+  return typeof raw === 'string' && (IDIOMAS as readonly string[]).includes(raw)
+    ? (raw as IdiomaVitrina)
+    : undefined;
+}
+
 interface AccessLevelLookup {
   accessLevel: string;
   /**
@@ -154,6 +179,7 @@ export default withApiHandler(
       currency?: unknown;
       multiplier?: unknown;
       senderSlug?: unknown;
+      lang?: unknown;
     };
 
     const parseItemIds = (): number[] | undefined =>
@@ -263,6 +289,10 @@ export default withApiHandler(
           currency,
           multiplier,
           senderSlug,
+          // Omitido cuando el body no trajo un idioma de los seis: en una
+          // corrección, «no dijo nada» significa «dejalo como está», no
+          // «devolvelo al español».
+          lang: idiomaValido(body.lang),
           secret,
         });
         return sendSuccess(res, result);
@@ -298,6 +328,9 @@ export default withApiHandler(
       currency,
       multiplier,
       senderSlug,
+      // Al acuñar sí se graba siempre un idioma, y lo que no sea uno de los
+      // seis cae al único default que existe: español.
+      lang: idiomaValido(body.lang) ?? IDIOMA_POR_DEFECTO,
       secret,
       createdByEmail: email,
     });

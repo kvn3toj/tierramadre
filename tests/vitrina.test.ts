@@ -266,3 +266,143 @@ describe('PATCH ownership gate (api/vitrina.ts default handler)', () => {
     expect(res.statusCode).toBe(404);
   });
 });
+
+/**
+ * El idioma del cliente (TM-VITRINA-IDIOMA, 2026-09-01).
+ *
+ * `lang` decide en qué idioma un cliente lee su cotización. El diálogo lo
+ * manda, pero el diálogo es código de cliente: lo que cuenta es lo que el
+ * servidor acepta. La regla es la misma que ya rige a `currency` — se valida
+ * contra una lista cerrada y todo lo demás cae al default — y el default es
+ * **uno solo, español**. Un segundo default (el idioma del navegador, el del
+ * asesor, el último usado) convertiría un valor ausente en un valor inventado
+ * con forma de valor, que es el error que este repo ya pagó una vez con
+ * `normalizeCalidadForSheet` (ver CLAUDE.md, «Candado de pulls»).
+ *
+ * Se inspecciona lo que llegó a Convex, no el código de respuesta: un 200 no
+ * prueba con qué idioma quedó grabado el enlace.
+ */
+describe('idioma (api/vitrina.ts)', () => {
+  /** Lo último que recibió la mutación de Convex en este archivo. */
+  const ultimaMutacion = () => convexMutations[convexMutations.length - 1].args;
+
+  it('POST sin `lang` graba español — el default es uno solo', async () => {
+    mockRosterFetch('admin');
+    const token = mintSessionToken('admin@tierramadre.app');
+    const res = makeRes();
+
+    await vitrinaHandler(
+      {
+        method: 'POST',
+        headers: { authorization: `Bearer ${token}` },
+        body: { itemIds: [101], currency: 'COP', multiplier: 1 },
+      } as never,
+      res as never,
+    );
+
+    expect(res.statusCode).toBe(200);
+    expect(ultimaMutacion().lang).toBe('es');
+  });
+
+  it('POST con un `lang` que no es de los seis cae a español, no lo propaga', async () => {
+    mockRosterFetch('admin');
+    const token = mintSessionToken('admin@tierramadre.app');
+
+    for (const basura of ['xx', 'EN', 'es-CO', '', 42, null, { code: 'en' }]) {
+      const res = makeRes();
+      await vitrinaHandler(
+        {
+          method: 'POST',
+          headers: { authorization: `Bearer ${token}` },
+          body: { itemIds: [101], currency: 'COP', multiplier: 1, lang: basura },
+        } as never,
+        res as never,
+      );
+      expect(res.statusCode, `lang=${JSON.stringify(basura)}`).toBe(200);
+      expect(ultimaMutacion().lang, `lang=${JSON.stringify(basura)}`).toBe('es');
+    }
+  });
+
+  it('POST con `lang: "en"` graba inglés — el control positivo', async () => {
+    mockRosterFetch('admin');
+    const token = mintSessionToken('admin@tierramadre.app');
+    const res = makeRes();
+
+    await vitrinaHandler(
+      {
+        method: 'POST',
+        headers: { authorization: `Bearer ${token}` },
+        body: { itemIds: [101], currency: 'COP', multiplier: 1, lang: 'en' },
+      } as never,
+      res as never,
+    );
+
+    expect(ultimaMutacion().lang).toBe('en');
+  });
+
+  it('los seis idiomas llegan enteros a Convex', async () => {
+    mockRosterFetch('admin');
+    const token = mintSessionToken('admin@tierramadre.app');
+
+    for (const code of ['es', 'en', 'fr', 'it', 'zh', 'pt']) {
+      const res = makeRes();
+      await vitrinaHandler(
+        {
+          method: 'POST',
+          headers: { authorization: `Bearer ${token}` },
+          body: { itemIds: [101], currency: 'COP', multiplier: 1, lang: code },
+        } as never,
+        res as never,
+      );
+      expect(ultimaMutacion().lang, `lang=${code}`).toBe(code);
+    }
+  });
+
+  it('PATCH con `lang: "fr"` lo manda; sin `lang` lo omite — corregir las piezas no cambia el idioma', async () => {
+    vitrinaFixture = { createdByEmail: 'owner@tierramadre.app' };
+    mockRosterFetch('admin');
+    const token = mintSessionToken('owner@tierramadre.app');
+
+    const conIdioma = makeRes();
+    await vitrinaHandler(
+      {
+        method: 'PATCH',
+        headers: { authorization: `Bearer ${token}` },
+        body: { token: 'ABCDEFGHIJKL', itemIds: [101], lang: 'fr' },
+      } as never,
+      conIdioma as never,
+    );
+    expect(ultimaMutacion().lang).toBe('fr');
+
+    const sinIdioma = makeRes();
+    await vitrinaHandler(
+      {
+        method: 'PATCH',
+        headers: { authorization: `Bearer ${token}` },
+        body: { token: 'ABCDEFGHIJKL', itemIds: [101] },
+      } as never,
+      sinIdioma as never,
+    );
+    // `undefined`, NO `'es'`: en PATCH el default de POST sería destructivo —
+    // volvería al español un enlace que el asesor acuñó en inglés.
+    expect(ultimaMutacion().lang).toBeUndefined();
+  });
+
+  it('PATCH con un `lang` inválido tampoco lo propaga', async () => {
+    vitrinaFixture = { createdByEmail: 'owner@tierramadre.app' };
+    mockRosterFetch('admin');
+    const token = mintSessionToken('owner@tierramadre.app');
+    const res = makeRes();
+
+    await vitrinaHandler(
+      {
+        method: 'PATCH',
+        headers: { authorization: `Bearer ${token}` },
+        body: { token: 'ABCDEFGHIJKL', itemIds: [101], lang: 'klingon' },
+      } as never,
+      res as never,
+    );
+
+    expect(ultimaMutacion().lang).toBeUndefined();
+  });
+});
