@@ -24,7 +24,10 @@ import {
   CatalogSkeletonGrid,
   DesktopFilterToolbar,
   TreasureDesktopResultsSummary,
+  VitrinaSelectionBar,
 } from './browser';
+import VitrinaShareDialog from '../vitrina/VitrinaShareDialog';
+import { useCurrentAsesor } from '../../hooks/useCurrentAsesor';
 import TreasureErrorState from './browser/TreasureErrorState';
 import ScrollToTop from '../shared/ScrollToTop';
 import { useTreasureBrowserController } from '../../hooks/useTreasureBrowserController';
@@ -138,7 +141,19 @@ export default function TreasureBrowser({
     setColeccionFilter,
     canAddToComparison,
     applySavedPreset,
+    canSelect,
+    vitrinaSelection: sel,
   } = c;
+
+  // El slug del remitente viaja en el enlace para que el "Consultar" del
+  // cliente llegue a quien se lo mandó. Mismo montaje que CartPage.
+  const { asesor } = useCurrentAsesor();
+
+  // La barra ocupa alto real sobre la barra de pestañas; la grilla tiene que
+  // pagarlo por su fila espaciadora o la última pieza queda debajo. En el
+  // teléfono son DOS filas (el conteo no cabe junto a los botones a 390px),
+  // así que el despeje es mayor.
+  const selectionBarHeight = isMobile ? 96 : 60;
 
   // Quiet Emerald origin tabs (Todas / Muzo / Chivor / Coscuez). A self-contained
   // quick filter applied on top of the controller's filtered set, keyed off the
@@ -236,6 +251,14 @@ export default function TreasureBrowser({
                 onViewModeChange={setViewMode}
                 savedFilters={savedFilters}
                 hasFilters={hasFilters}
+                // La AUSENCIA del prop es la compuerta: sin permiso no hay
+                // botón que encontrar en el DOM.
+                onToggleSelectionMode={
+                  canSelect
+                    ? () => (sel.selectionMode ? sel.exit() : sel.enter())
+                    : undefined
+                }
+                selectionMode={sel.selectionMode}
                 filters={filters}
                 setSearch={setSearch}
                 setColorFilter={setColorFilter}
@@ -297,6 +320,12 @@ export default function TreasureBrowser({
             setShowFavoritesOnly={setShowFavoritesOnly}
             favoritesCount={favoritesCount}
             isProviderMode={providerMode}
+            onToggleSelectionMode={
+              canSelect
+                ? () => (sel.selectionMode ? sel.exit() : sel.enter())
+                : undefined
+            }
+            selectionMode={sel.selectionMode}
             filteredCount={filteredTreasure.length}
             // The header's own count, so the bar can tell whether repeating a
             // number says anything. Same source as CatalogHeader's `count`.
@@ -446,6 +475,9 @@ export default function TreasureBrowser({
           items={gridItems}
           favorites={favoriteIds}
           comparisonIds={comparisonIds}
+          selectedIds={sel.ids}
+          selectionMode={sel.selectionMode}
+          bottomInset={sel.selectionMode ? selectionBarHeight : 0}
           canAddToComparison={canAddToComparison}
           onItemClick={handleItemClick}
           onCertClick={handleCertClick}
@@ -524,7 +556,10 @@ export default function TreasureBrowser({
         />
       )}
 
-      {!providerMode && (
+      {/* Dos barras inferiores a la vez violarían la regla de un solo cromo
+          inferior (DS3 §5.2). Se oculta la de comparación, no se limpia: al
+          salir del modo vuelve con lo que tenía. */}
+      {!providerMode && !sel.selectionMode && (
         <ComparisonBar
           selectedItems={comparison.selectedItems}
           onRemove={(itemId) => comparison.removeFromComparison(itemId)}
@@ -541,8 +576,31 @@ export default function TreasureBrowser({
         />
       )}
 
+      {canSelect && (
+        <>
+          <VitrinaSelectionBar
+            visible={sel.selectionMode}
+            count={sel.count}
+            max={sel.max}
+            atCap={sel.atCap}
+            onShare={sel.openShare}
+            onClear={sel.clear}
+            onDone={sel.exit}
+          />
+          {/* El mismo diálogo que acuña desde el carrito, montado tal cual:
+              es función pura de `items`, sin acoplamiento al carrito. */}
+          <VitrinaShareDialog
+            open={sel.shareOpen}
+            onClose={sel.closeShare}
+            items={sel.shareItems}
+            senderSlug={asesor?.slug}
+          />
+        </>
+      )}
+
       <ScrollToTop
         scrollContainer={viewMode === 'grid' ? gridScrollEl : null}
+        hidden={sel.selectionMode}
       />
     </Box>
   );

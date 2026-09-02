@@ -12,7 +12,14 @@ import {
   Card,
   CardMedia,
 } from '@mui/material';
-import { Search, X, Heart, SlidersHorizontal, Clock } from 'lucide-react';
+import {
+  Search,
+  X,
+  Heart,
+  SlidersHorizontal,
+  Clock,
+  CheckSquare,
+} from 'lucide-react';
 import {
   emeraldCore,
   surfacesLight,
@@ -85,6 +92,14 @@ export interface MobileSearchBarProps {
   onClearRecent?: () => void;
   // Favorite items for quick access panel
   favoriteItems?: TreasureItem[];
+  /**
+   * Vitrina selection mode toggle. **Its ABSENCE is the permission gate** — the
+   * controller passes it only when `useCanShareVitrina() && !isProviderMode`,
+   * so a provider or a guest has no button to find in the DOM at all.
+   */
+  onToggleSelectionMode?: () => void;
+  /** Whether the vitrina selection mode is currently on. */
+  selectionMode?: boolean;
 }
 
 export default function MobileSearchBar({
@@ -118,6 +133,8 @@ export default function MobileSearchBar({
   onRecentItemClick,
   onClearRecent,
   favoriteItems = [],
+  onToggleSelectionMode,
+  selectionMode = false,
 }: MobileSearchBarProps) {
   const { t } = useLanguage();
   const theme = useTheme();
@@ -324,6 +341,47 @@ export default function MobileSearchBar({
                     : recentlyViewedItems.length}
                 </Box>
               )}
+            </IconButton>
+          )}
+
+          {/* «Seleccionar» — antes de Filtros, porque es una ACCIÓN sobre el
+              catálogo y no una forma de estrecharlo. Mismo idiom que el botón
+              vecino: 38px pintados con `hitSlop` que los lleva a 44 de alcance
+              real, que es lo que la barra de 46px permite. */}
+          {onToggleSelectionMode && (
+            <IconButton
+              onClick={onToggleSelectionMode}
+              aria-pressed={selectionMode}
+              aria-label={
+                selectionMode
+                  ? 'Salir del modo selección'
+                  : 'Seleccionar varias piezas'
+              }
+              sx={{
+                ...hitSlop(),
+                width: 38,
+                height: 38,
+                borderRadius: 2.5,
+                flexShrink: 0,
+                bgcolor: selectionMode
+                  ? emeraldCore.primary
+                  : isLight
+                    ? surfacesLight.background.secondary
+                    : surfacesDark.background.tertiary,
+                border: '1px solid',
+                borderColor: selectionMode
+                  ? emeraldCore.primary
+                  : isLight
+                    ? surfacesLight.border.light
+                    : surfacesDark.border.light,
+              }}
+            >
+              <CheckSquare
+                size={16}
+                color={
+                  selectionMode ? '#fff' : theme.palette.text.secondary
+                }
+              />
             </IconButton>
           )}
 

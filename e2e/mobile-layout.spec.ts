@@ -386,7 +386,7 @@ for (const vp of VIEWPORTS) {
       // Named controls rather than "every button": these are the ones the
       // audit measured at 26-38px. A blanket sweep would drag in chips and
       // decorative roles and turn red for reasons unrelated to reachability.
-      const labels = ['Filtros', 'Cerrar aviso'];
+      const labels = ['Filtros', 'Cerrar aviso', 'Seleccionar varias piezas'];
 
       for (const label of labels) {
         const control = page.getByRole('button', { name: label });
@@ -407,6 +407,102 @@ for (const vp of VIEWPORTS) {
 
         expect(reach.width, `${label} tap width`).toBeGreaterThanOrEqual(44);
         expect(reach.height, `${label} tap height`).toBeGreaterThanOrEqual(44);
+      }
+    });
+
+    /**
+     * Selección múltiple para compartir una vitrina (TM-VITRINA-MULTISEL).
+     *
+     * Lo que este test protege es el minuto que la iniciativa vino a borrar:
+     * curar varias piezas SIN salir del catálogo. Por eso las dos aserciones
+     * de URL no son decoración — si el toque de una tarjeta navegara, o si el
+     * gesto de atrás sacara de la página, el asesor perdería la curaduría y la
+     * posición de scroll de golpe, que es exactamente el flujo viejo.
+     */
+    test('el modo selección cura sin salir del catálogo', async ({ page }) => {
+      await page.goto('/treasure');
+      await waitForAppReady(page);
+      await page.waitForTimeout(1_500);
+
+      // Ancla positiva ANTES de cualquier negativa: una grilla vacía pasaría
+      // "no navegó" sin haber renderizado una sola pieza.
+      await expect(page.getByRole('article').first()).toBeVisible();
+
+      await page
+        .getByRole('button', { name: 'Seleccionar varias piezas' })
+        .click();
+
+      const casillas = page.getByRole('checkbox');
+      await expect(casillas.first()).toBeVisible();
+      await casillas.nth(0).click();
+      await casillas.nth(1).click();
+
+      await expect(page.getByText('2 piezas seleccionadas')).toBeVisible();
+      // El toque alternó; no navegó.
+      expect(new URL(page.url()).pathname).toBe('/treasure');
+
+      // Compartir existe y está habilitado con piezas dentro. NO se acuña acá:
+      // el diálogo pega contra /api/vitrina, y este spec es de layout.
+      await expect(
+        page.getByRole('button', { name: /Compartir/ }),
+      ).toBeEnabled();
+
+      // El gesto de atrás cierra el modo y DEJA al asesor en el catálogo.
+      await page.goBack();
+      await expect(page.getByRole('checkbox')).toHaveCount(0);
+      expect(new URL(page.url()).pathname).toBe('/treasure');
+      await expect(
+        page.getByRole('button', { name: 'Seleccionar varias piezas' }),
+      ).toBeVisible();
+    });
+
+    test('la barra de selección no tapa la última fila de la grilla', async ({
+      page,
+    }) => {
+      await page.goto('/treasure');
+      await waitForAppReady(page);
+      await page.waitForTimeout(1_500);
+
+      await page
+        .getByRole('button', { name: 'Seleccionar varias piezas' })
+        .click();
+      await page.getByRole('checkbox').first().click();
+
+      const barra = page.getByRole('region', {
+        name: 'Piezas seleccionadas para compartir',
+      });
+      await expect(barra).toBeVisible();
+
+      const caja = await barra.boundingBox();
+      expect(caja).not.toBeNull();
+      // Dentro del viewport: una barra fija que se sale por abajo es una barra
+      // cuyos botones no se pueden presionar.
+      expect(caja!.y + caja!.height).toBeLessThanOrEqual(vp.height + 1);
+      expect(caja!.y).toBeGreaterThan(0);
+      // El conteo y los botones NO se pisan. Es la única frase de la barra y
+      // es el dato por el que el asesor mira ahí. A 390px no cabe junto a los
+      // tres botones —midiéndolo: ~140px de frase contra ~266px de botones en
+      // 358px útiles—, y por eso la barra son DOS filas en el teléfono. Esta
+      // aserción es la que sostiene esa decisión; en una sola fila el conteo
+      // queda debajo de «Limpiar».
+      const conteo = barra.getByText(/pieza/).first();
+      await expect(conteo).toBeVisible();
+      const cajaConteo = (await conteo.boundingBox())!;
+      const cajaLimpiar = (await barra
+        .getByRole('button', { name: 'Limpiar' })
+        .boundingBox())!;
+      const seSolapan =
+        cajaConteo.x + cajaConteo.width > cajaLimpiar.x + 1 &&
+        cajaConteo.y + cajaConteo.height > cajaLimpiar.y + 1;
+      expect(seSolapan, 'el conteo se pisa con los botones').toBe(false);
+
+      // 44px de alcance por botón (DS3 §6.3).
+      for (const nombre of ['Limpiar', 'Compartir', 'Listo']) {
+        const b = await barra
+          .getByRole('button', { name: new RegExp(nombre) })
+          .boundingBox();
+        expect(b, `${nombre} sin caja`).not.toBeNull();
+        expect(b!.height, `${nombre} alto`).toBeGreaterThanOrEqual(44);
       }
     });
 

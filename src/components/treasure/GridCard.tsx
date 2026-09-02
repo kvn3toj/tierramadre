@@ -70,6 +70,17 @@ interface GridCardProps {
   onAddToCart?: (item: TreasureItem) => void;
   /** Si la pieza ya está en el carrito (cambia el rótulo del botón). */
   isInCart?: boolean;
+  /**
+   * Modo selección de vitrina: el toque de la tarjeta ALTERNA la pieza en vez
+   * de navegar a su ficha. Opcional a propósito — sin este prop la tarjeta se
+   * renderiza y se comporta exactamente como siempre, así que la vitrina
+   * pública y los perfiles de embajador no cambian.
+   */
+  selectionMode?: boolean;
+  /** Si la pieza está en la selección de vitrina (pinta el círculo marcado). */
+  isSelected?: boolean;
+  /** Alterna la pieza en la selección. Sólo se llama en `selectionMode`. */
+  onToggleSelect?: (item: TreasureItem) => void;
 }
 
 /** Builds the DM Mono spec line: abbreviated quality + weight/metal + mine
@@ -129,6 +140,9 @@ function GridCard({
   priceOverride,
   onAddToCart,
   isInCart,
+  selectionMode = false,
+  isSelected = false,
+  onToggleSelect,
 }: GridCardProps) {
   const { mode } = useThemeMode();
   const { shouldShowPrices } = usePriceShare();
@@ -238,9 +252,16 @@ function GridCard({
     </Typography>
   ) : undefined;
 
+  // En modo selección el toque alterna y NUNCA navega: el viaje que esta
+  // función existe para borrar es exactamente "abrir la ficha, agregar, volver
+  // atrás". Fuera del modo, es la navegación de siempre.
   const handleItemClick = useCallback(() => {
+    if (selectionMode) {
+      onToggleSelect?.(item);
+      return;
+    }
     onItemClick(item);
-  }, [onItemClick, item]);
+  }, [selectionMode, onToggleSelect, onItemClick, item]);
 
   const handlePrefetch = useCallback(() => {
     prefetchRoute('product');
@@ -353,8 +374,11 @@ function GridCard({
         />
       )}
 
-      {/* View count badge — top left (Admin only) */}
-      {isAdmin && viewCount !== undefined && viewCount > 0 && (
+      {/* View count badge — top left (Admin only).
+          Cede la esquina en modo selección: ahí va el círculo de verificación,
+          y arriba-izquierda es la única esquina libre (abajo-derecha viven
+          galería y lote, arriba-derecha promoción y reventa). */}
+      {!selectionMode && isAdmin && viewCount !== undefined && viewCount > 0 && (
         <Chip
           icon={<Eye size={12} />}
           label={
@@ -439,6 +463,82 @@ function GridCard({
       </Box>
     ) : null;
 
+  // ---- Modo selección: círculo de verificación + aro del pozo -------------
+  // Decorativo por completo (`aria-hidden`, sin eventos de puntero): quien
+  // anuncia el estado es la raíz, que en este modo es un `role="checkbox"` con
+  // `aria-checked`. Pintar el estado DOS veces al lector de pantalla es peor
+  // que no pintarlo.
+  //
+  // La señal no es sólo el color (DS3 §6.1): el glifo `Check` y el aro de 2px
+  // dicen "marcada" sin depender de distinguir verde de gris.
+  const selectionOverlay = selectionMode ? (
+    <>
+      {isSelected && (
+        <Box
+          aria-hidden
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            boxShadow: 'inset 0 0 0 2px var(--tm-accent)',
+            borderRadius: 'inherit',
+          }}
+        />
+      )}
+      <Box
+        aria-hidden
+        sx={{
+          position: 'absolute',
+          top: 6,
+          left: 6,
+          width: 24,
+          height: 24,
+          borderRadius: '50%',
+          pointerEvents: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: isSelected ? qe.onAccent : 'rgba(255,255,255,0.92)',
+          bgcolor: isSelected ? qe.accent : 'rgba(0,0,0,0.42)',
+          border: '1px solid',
+          borderColor: isSelected ? qe.accent : 'rgba(255,255,255,0.72)',
+          backdropFilter: isSelected ? 'none' : 'blur(4px)',
+          // Sólo transform/opacity, y con la compuerta dura de reduced-motion.
+          transition:
+            'opacity var(--tm-fast) var(--tm-ease), transform var(--tm-fast) var(--tm-ease)',
+          '@media (prefers-reduced-motion: reduce)': {
+            transition: 'none',
+          },
+        }}
+      >
+        {isSelected && <Check size={15} strokeWidth={3} />}
+      </Box>
+    </>
+  ) : null;
+
+  // El atenuado va SÓLO sobre la fotografía, nunca sobre la tarjeta entera: el
+  // pie de texto (nombre, calidad, precio) tiene que seguir siendo legible —
+  // es lo que el asesor está comparando mientras cura.
+  const mediaNode =
+    selectionMode && isSelected ? (
+      <Box
+        sx={{
+          width: '100%',
+          height: '100%',
+          opacity: 0.9,
+          transform: 'scale(0.97)',
+          transformOrigin: 'center',
+          transition:
+            'opacity var(--tm-fast) var(--tm-ease), transform var(--tm-fast) var(--tm-ease)',
+          '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+        }}
+      >
+        {imageWell}
+      </Box>
+    ) : (
+      imageWell
+    );
+
   // ---- Price (shared) -----------------------------------------------------
   const priceEl =
     priceOverride !== undefined ? (
@@ -468,11 +568,12 @@ function GridCard({
   return (
     <PieceCard
       variant={isLiteral ? 'frameless' : 'well'}
-      media={imageWell}
+      media={mediaNode}
       overlays={
         <>
           {isLiteral ? precioEspecialOverlay : overlays}
           {addButton}
+          {selectionOverlay}
         </>
       }
       name={displayName}
@@ -483,7 +584,16 @@ function GridCard({
       onClick={handleItemClick}
       onMouseEnter={handlePrefetch}
       onFocus={handlePrefetch}
-      ariaLabel={altText}
+      role={selectionMode ? 'checkbox' : 'article'}
+      ariaChecked={selectionMode ? isSelected : undefined}
+      // En modo, la etiqueta dice la ACCIÓN que el toque va a producir, no la
+      // descripción de la piedra: es lo único que le permite a alguien que no
+      // ve la tarjeta saber si está a punto de sumarla o de quitarla.
+      ariaLabel={
+        selectionMode
+          ? `${isSelected ? 'Quitar' : 'Seleccionar'} ${displayName}`
+          : altText
+      }
       compact={isMobile}
     />
   );
@@ -518,6 +628,11 @@ export default React.memo(GridCard, (prevProps, nextProps) => {
     prevProps.variantOverride === nextProps.variantOverride &&
     prevProps.priceOverride === nextProps.priceOverride &&
     prevProps.isInCart === nextProps.isInCart &&
+    // SIN estas dos, la casilla se congela: el comparador devuelve true para
+    // todo lo que no enumera, así que la primera marca sería la última que se
+    // ve. Es el defecto más caro que este modo puede tener.
+    prevProps.selectionMode === nextProps.selectionMode &&
+    prevProps.isSelected === nextProps.isSelected &&
     // A diferencia del resto de callbacks, la PRESENCIA de ésta decide si la
     // tarjeta muestra un botón. Se compara si existe, no su identidad, para
     // no perder memoización con un wrapper inestable.

@@ -16,6 +16,7 @@ export default defineConfig({
       ['tests/**/*.test.tsx', 'jsdom'],
       ['src/**/*.test.tsx', 'jsdom'],
       ['tests/useDirtyGuard.test.ts', 'jsdom'],
+      ['tests/useVitrinaSelection.test.ts', 'jsdom'],
       ['tests/useVaultUnlock.test.ts', 'jsdom'],
       ['tests/useVaultReducedMotion.test.ts', 'jsdom'],
       ['tests/vault-cinematic-sequence.test.ts', 'jsdom'],

@@ -1,5 +1,5 @@
-import { Box, ToggleButton, ToggleButtonGroup } from '@mui/material';
-import { LayoutGrid, List } from 'lucide-react';
+import { Box, ButtonBase, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { CheckSquare, LayoutGrid, List } from 'lucide-react';
 import { getQuietEmerald } from '../../../design-system';
 import SavedFiltersDropdown from '../SavedFiltersDropdown';
 import type { FilterPreset, FilterState } from '../../../hooks/useSavedFilters';
@@ -44,6 +44,15 @@ interface DesktopFilterToolbarProps {
   recentItems?: TreasureItem[];
   onRecentClick?: (item: TreasureItem) => void;
   onClearRecent?: () => void;
+  /**
+   * Vitrina selection mode toggle. **Its ABSENCE is the permission gate**: the
+   * controller passes it only when `useCanShareVitrina() && !isProviderMode`,
+   * so a provider or a guest never gets the button at all — not a disabled one,
+   * not a hidden one. Nothing to find in the DOM.
+   */
+  onToggleSelectionMode?: () => void;
+  /** Whether the vitrina selection mode is currently on. */
+  selectionMode?: boolean;
 }
 
 export default function DesktopFilterToolbar({
@@ -68,6 +77,8 @@ export default function DesktopFilterToolbar({
   recentItems,
   onRecentClick,
   onClearRecent,
+  onToggleSelectionMode,
+  selectionMode = false,
 }: DesktopFilterToolbarProps) {
   // Theme is data: resolve the Quiet Emerald token set from the mode instead of
   // hand-rolling hex/rgba here.
@@ -146,6 +157,57 @@ export default function DesktopFilterToolbar({
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
         {resultsSummary}
       </Box>
+
+      {/* «Seleccionar» — antes del grupo de vista, porque entra al modo en el
+          que ese grupo deja de tener sentido (el modo es sólo de cuadrícula).
+
+          SÓLO ICONO, como el corazón de favoritos que tiene al lado. Con el
+          rótulo medía 120px, y esta banda es de una sola línea por
+          construcción: medido en el catálogo real a 1009px, el botón rotulado
+          desbordaba la tira de orígenes (scrollWidth 98 > clientWidth 82, o
+          sea "Muzo" recortado a "Mu") y encogía el buscador de 195px a 140.
+          El estado encendido se lee por el relleno de acento, y el nombre por
+          `aria-label` + `title`. */}
+      {onToggleSelectionMode && (
+        <ButtonBase
+          onClick={onToggleSelectionMode}
+          aria-pressed={selectionMode}
+          aria-label={
+            selectionMode
+              ? 'Salir del modo selección'
+              : 'Seleccionar varias piezas'
+          }
+          title={
+            selectionMode
+              ? 'Salir del modo selección'
+              : 'Seleccionar varias piezas'
+          }
+          disableRipple
+          sx={{
+            // 40px es el piso de precisión de puntero en escritorio (DS3 §6.3);
+            // el teléfono usa 44 en su propia barra.
+            width: 40,
+            height: 40,
+            borderRadius: 2,
+            flexShrink: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: selectionMode ? qe.onAccent : qe.text,
+            backgroundColor: selectionMode ? qe.accent : 'transparent',
+            border: `1px solid ${selectionMode ? qe.accent : qe.border}`,
+            transition: 'opacity var(--tm-fast) var(--tm-ease)',
+            '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+            '&:active': { opacity: 0.85 },
+            '&:focus-visible': {
+              outline: `2px solid ${qe.accent}`,
+              outlineOffset: 2,
+            },
+          }}
+        >
+          <CheckSquare size={18} aria-hidden />
+        </ButtonBase>
+      )}
 
       <ToggleButtonGroup
         value={viewMode}
