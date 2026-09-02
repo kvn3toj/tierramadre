@@ -40,6 +40,17 @@ interface VirtualGridProps {
   favorites: number[];
   /** Comparison-selected item IDs — flows through cellProps like favorites */
   comparisonIds?: number[];
+  /** Vitrina-selection item IDs — same Set-in-cellProps pattern as comparison. */
+  selectedIds?: number[];
+  /** Whether the vitrina selection mode is active (cards toggle, never navigate). */
+  selectionMode?: boolean;
+  /**
+   * Extra bottom clearance, in px, for chrome floating above the tab bar (the
+   * vitrina selection bar). It has to grow the SPACER ROW, not a padding:
+   * `padding-bottom` on react-window's scroll container is not counted in its
+   * scroll extent, so the last row would sit permanently under the bar.
+   */
+  bottomInset?: number;
   /** Whether more items can be added to comparison */
   canAddToComparison?: boolean;
   onItemClick: (item: TreasureItem) => void;
@@ -58,6 +69,10 @@ interface VirtualGridProps {
     isSelectedForComparison?: boolean;
     /** Whether more items can be added to comparison */
     canAddToComparison?: boolean;
+    /** Whether the vitrina selection mode is active */
+    selectionMode?: boolean;
+    /** Whether this item is in the vitrina selection */
+    isSelected?: boolean;
   }) => React.ReactNode;
   /** Callback when scroll direction changes */
   onScrollDirectionChange?: (direction: 'up' | 'down') => void;
@@ -97,6 +112,8 @@ interface GridCellProps {
   columnCount: number;
   favoritesSet: Set<number>;
   comparisonIdsSet: Set<number>;
+  selectedIdsSet: Set<number>;
+  selectionMode: boolean;
   canAddToComparison: boolean;
   onItemClick: (item: TreasureItem) => void;
   onCertClick: (item: TreasureItem) => void;
@@ -130,6 +147,8 @@ function CellRenderer({
   columnCount,
   favoritesSet,
   comparisonIdsSet,
+  selectedIdsSet,
+  selectionMode,
   canAddToComparison,
   onItemClick,
   onCertClick,
@@ -149,6 +168,7 @@ function CellRenderer({
   const item = items[index];
   const isFavorite = favoritesSet.has(item.item);
   const isSelectedForComparison = comparisonIdsSet.has(item.item);
+  const isSelected = selectedIdsSet.has(item.item);
 
   return (
     <div
@@ -167,6 +187,8 @@ function CellRenderer({
         item,
         isFavorite,
         isSelectedForComparison,
+        selectionMode,
+        isSelected,
         canAddToComparison,
         onItemClick,
         onCertClick,
@@ -193,6 +215,9 @@ export default function VirtualGrid({
   items,
   favorites,
   comparisonIds,
+  selectedIds,
+  selectionMode = false,
+  bottomInset = 0,
   canAddToComparison = false,
   onItemClick,
   onCertClick,
@@ -417,6 +442,8 @@ export default function VirtualGrid({
       columnCount,
       favoritesSet: new Set(favorites),
       comparisonIdsSet: new Set(comparisonIds || []),
+      selectedIdsSet: new Set(selectedIds || []),
+      selectionMode,
       canAddToComparison,
       onItemClick,
       onCertClick,
@@ -431,6 +458,11 @@ export default function VirtualGrid({
       columnCount,
       favorites,
       comparisonIds,
+      // SIN estas dos en las dependencias, `cellProps` queda congelado y las
+      // casillas no se vuelven a pintar: entrar al modo y marcar una pieza no
+      // se verían. Es el mismo defecto que el comparador del memo de GridCard.
+      selectedIds,
+      selectionMode,
       canAddToComparison,
       onItemClick,
       onCertClick,
@@ -477,9 +509,9 @@ export default function VirtualGrid({
   const rowHeightFor = useCallback(
     (index: number) =>
       index === rowCount
-        ? layoutConstants.tabBarClearance
+        ? layoutConstants.tabBarClearance + bottomInset
         : cardHeight + rowGap,
-    [rowCount, cardHeight, rowGap],
+    [rowCount, cardHeight, rowGap, bottomInset],
   );
 
   // Every hook has already run by here: an early return above ANY hook makes
