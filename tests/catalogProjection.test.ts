@@ -90,13 +90,68 @@ describe('projectForGrant', () => {
     expect(out.precioCOP).toBeUndefined();
   });
 
-  it('restores full rows only for the items a vitrina grants', () => {
+  it('da PRECIO a lo que la vitrina otorga — y sólo a eso', () => {
     const other = { ...ROW, item: 2 } as TreasureItem;
     const out = projectForGrant([ROW, other], {
       kind: 'vitrina',
       itemIds: [1],
     }) as Record<string, unknown>[];
-    expect(out[0].precioCOP).toBe(635000); // granted
-    expect(out[1].precioCOP).toBeUndefined(); // not in this vitrina
+    expect(out[0].precioCOP).toBe(635000); // otorgada
+    expect(out[1].precioCOP).toBeUndefined(); // no está en esta vitrina
+  });
+
+  /**
+   * La regresión que este bloque existe para impedir.
+   *
+   * Hasta el 2026-09-04 la rama de vitrina devolvía el ítem CRUDO para las piezas
+   * otorgadas: `granted.has(i.item) ? i : toPublicItem(i)`. Medido contra
+   * producción con un token real y sin credencial, publicaba `ubicacion`,
+   * `asesor` — el nombre de una persona —, `asesorActual`, `caja`, `qr`,
+   * `sheetRow` y `fechaIngreso` de cada pieza otorgada.
+   *
+   * Un link de vitrina se reenvía por WhatsApp. Quien lo abre no es
+   * necesariamente el cliente al que se lo mandaron.
+   *
+   * El spec del control de acceso (2026-08-05) define el grant en cinco
+   * palabras: «precio curado de las piezas de esa vitrina».
+   */
+  it('una pieza otorgada NO revela ubicación, asesor, caja ni plomería interna', () => {
+    const [otorgada] = projectForGrant([ROW], {
+      kind: 'vitrina',
+      itemIds: [1],
+    }) as Record<string, unknown>[];
+
+    for (const campo of [
+      'ubicacion',
+      'asesor',
+      'asesorActual',
+      'estadoAsesor',
+      'caja',
+      'qr',
+      'sheetRow',
+      'costoTM',
+      'loteId',
+      'preponderancia',
+      'fechaIngreso',
+      'syncStatus',
+      'syncError',
+    ]) {
+      expect(otorgada, `la vitrina filtró "${campo}"`).not.toHaveProperty(campo);
+    }
+  });
+
+  it('la pieza otorgada sí conserva lo que la tarjeta necesita para no mentir', () => {
+    const [otorgada] = projectForGrant([ROW], {
+      kind: 'vitrina',
+      itemIds: [1],
+    }) as Record<string, unknown>[];
+    // Precio (el motivo del grant) y disponibilidad: sin `estado` la tarjeta no
+    // puede decir que la pieza ya se vendió, y el visitante pediría algo que no
+    // existe. Ninguno de los dos es dato de ubicación ni de un tercero.
+    expect(otorgada.precioCOP).toBe(635000);
+    expect(otorgada.estado).toBe('VENDIDA');
+    expect(otorgada.cantidad).toBe(1);
+    // Y lo público de siempre sigue estando.
+    expect(otorgada.nombre).toBe('Rey Midas');
   });
 });

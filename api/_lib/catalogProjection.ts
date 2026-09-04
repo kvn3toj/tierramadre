@@ -153,14 +153,125 @@ export function toPublicItem(item: TreasureItem): PublicItem {
   };
 }
 
+/**
+ * Lo que una vitrina otorga POR ENCIMA de lo público, y nada más.
+ *
+ * El diseño del control de acceso (spec 2026-08-05, tabla de la §«grants») define
+ * el grant de vitrina en cinco palabras: «precio curado de las piezas de esa
+ * vitrina». Precio. No dónde está la piedra, ni con qué asesor, ni en qué caja.
+ *
+ * Hasta el 2026-09-04 `projectForGrant` devolvía el ítem CRUDO para las piezas
+ * otorgadas — sin pasar por ninguna proyección. Medido contra producción con un
+ * token real y sin credencial, eso publicaba `ubicacion`, `asesor` (el nombre de
+ * una persona), `asesorActual`, `caja`, `qr`, `sheetRow` y `fechaIngreso` de cada
+ * pieza otorgada. Un link de vitrina se reenvía por WhatsApp: el alcance no es
+ * «el cliente al que se lo mandaron».
+ *
+ * Es exactamente el modo de fallo contra el que advierte el encabezado de este
+ * archivo — «una denylist falla ABIERTA» —, sólo que colado por la puerta del
+ * grant en vez de por la de la lista.
+ *
+ * Los campos de abajo se dividen en tres razones, y ninguna es «venía en el
+ * objeto»:
+ *   · PRECIO — es el motivo del grant.
+ *   · DISPONIBILIDAD — `cantidad` y `estado`: sin ellos la tarjeta no puede decir
+ *     que la pieza ya se vendió, y el visitante pediría algo que no existe.
+ *   · FORMA DE LA TARJETA — agrupación de lote y `metalType`: estructura de
+ *     render, sin dato de negocio adentro.
+ *
+ * Para agregar uno nuevo: que quepa en una de esas tres razones y escribí cuál.
+ */
+export const VITRINA_EXTRA_KEYS = [
+  // PRECIO — el motivo del grant
+  'precioCOP',
+  'precioInternacional',
+  'precioEspecial',
+  // DISPONIBILIDAD
+  'cantidad',
+  'estado',
+  // FORMA DE LA TARJETA
+  'metalType',
+  'isLote',
+  'groupKind',
+  'groupId',
+  'loteItems',
+  'newestMemberItem',
+] as const;
+
+export type VitrinaItem = Pick<
+  TreasureItem,
+  (typeof PUBLIC_KEYS)[number] | (typeof VITRINA_EXTRA_KEYS)[number]
+>;
+
+// Un extra de vitrina TIENE que ser un campo hoy retenido. Si alguien mueve uno
+// a PUBLIC_KEYS y se olvida de sacarlo de acá, esto rompe el build en vez de
+// dejar una lista con dos verdades.
+type VitrinaExtrasSonRetenidos =
+  (typeof VITRINA_EXTRA_KEYS)[number] extends (typeof WITHHELD_KEYS)[number]
+    ? true
+    : ['VITRINA_EXTRA_KEYS tiene un campo que no está retenido'];
+const _extrasRetenidos: VitrinaExtrasSonRetenidos = true;
+void _extrasRetenidos;
+
+/**
+ * Los que NO se otorgan nunca, por más vitrina que haya: ubicación física,
+ * identidad de terceros y plomería interna. Están acá con nombre y apellido
+ * para que agregarlos a VITRINA_EXTRA_KEYS rompa la compilación — es el mismo
+ * criterio que CAMPOS_RESERVADOS_CATALOGO usa del lado de Convex.
+ */
+export const NUNCA_EN_VITRINA = [
+  'ubicacion',
+  'asesor',
+  'asesorActual',
+  'estadoAsesor',
+  'caja',
+  'qr',
+  'sheetRow',
+  'costoTM',
+  'loteId',
+  'preponderancia',
+  'fechaIngreso',
+  'syncStatus',
+  'syncError',
+] as const;
+
+type FugaEnVitrina = Extract<
+  (typeof VITRINA_EXTRA_KEYS)[number],
+  (typeof NUNCA_EN_VITRINA)[number]
+>;
+const _sinFuga: FugaEnVitrina extends never
+  ? true
+  : ['VITRINA_EXTRA_KEYS incluye un campo prohibido:', FugaEnVitrina] = true;
+void _sinFuga;
+
+/** Público + lo que la vitrina otorga. Objeto nuevo; nunca muta `item`. */
+export function toVitrinaItem(item: TreasureItem): VitrinaItem {
+  return {
+    ...toPublicItem(item),
+    precioCOP: item.precioCOP,
+    precioInternacional: item.precioInternacional,
+    precioEspecial: item.precioEspecial,
+    cantidad: item.cantidad,
+    estado: item.estado,
+    metalType: item.metalType,
+    isLote: item.isLote,
+    groupKind: item.groupKind,
+    groupId: item.groupId,
+    loteItems: item.loteItems,
+    newestMemberItem: item.newestMemberItem,
+  };
+}
+
 export function projectForGrant(
   items: TreasureItem[],
   grant: Grant,
-): (TreasureItem | PublicItem)[] {
+): (TreasureItem | PublicItem | VitrinaItem)[] {
   if (grant.kind === 'staff') return items;
   if (grant.kind === 'vitrina') {
     const granted = new Set(grant.itemIds);
-    return items.map((i) => (granted.has(i.item) ? i : toPublicItem(i)));
+    // Las otorgadas pasan por `toVitrinaItem`, no salen crudas: el grant da
+    // precio, no la ubicación de la piedra ni el nombre del asesor.
+    return items.map((i) => (granted.has(i.item) ? toVitrinaItem(i) : toPublicItem(i)));
   }
   return items.map(toPublicItem);
 }
