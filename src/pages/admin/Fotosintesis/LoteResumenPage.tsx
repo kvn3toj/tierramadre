@@ -15,6 +15,8 @@ import {
   useConvexQuery,
   convexApi,
 } from '../../../lib/convex-safe';
+import { precioBaseCOP } from '../../../utils/precioBase';
+import { useTRM } from '../../../hooks/useTRM';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { readFreshSessionToken } from '../../../utils/sessionToken';
 import type { Id } from '../../../../convex/_generated/dataModel';
@@ -134,6 +136,8 @@ export default function FotosintesisLoteResumenPage() {
   const loteId = loteIdParam ?? '';
 
   const sessionToken = readFreshSessionToken() ?? undefined;
+  // La TRM del día, para los ítems anclados en dólares (ver utils/precioBase).
+  const { trmRate } = useTRM();
   const lot = useConvexQuery(
     convexApi.lots.getByLoteId,
     loteId ? { loteId, sessionToken } : 'skip',
@@ -733,9 +737,11 @@ export default function FotosintesisLoteResumenPage() {
               {lotItems.map((li) => {
                 const product = products.find((p) => p.itemId === li.itemId);
                 const pubOn = pubByItemId[li.itemId] ?? false;
-                // DERIVED final price (2026-07-21 refactor) — read-only.
+                // Precio final — sólo lectura. Resuelve el ancla en dólares
+                // (col BG) antes de caer al peso; la semilla costo × 2.6 sigue
+                // siendo el último recurso para una fila sin precio puesto.
                 const precioFinal =
-                  product?.precioFinalCOP ??
+                  precioBaseCOP(product, trmRate) ??
                   (product?.costoBaseCOP
                     ? Math.round(product.costoBaseCOP * 2.6)
                     : undefined);

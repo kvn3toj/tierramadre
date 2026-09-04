@@ -20,6 +20,7 @@ import {
   convexReady,
 } from '../lib/convex-safe';
 import { STORAGE_KEYS } from '../constants/storage-keys';
+import { useTRM } from './useTRM';
 import type {
   TreasureItem,
   EmeraldColor,
@@ -66,6 +67,8 @@ export interface PublishedRow {
   medidasValores?: string;
   categoria?: string;
   precioFinalCOP?: number;
+  /** Ancla en dólares (col BG). > 0 ⇒ el precio es este y el COP se deriva. */
+  precioFinalUSD?: number;
   ubicacion?: string;
   asesor?: string;
   estado?: string;
@@ -124,16 +127,50 @@ function derivePeso(
   return { pesoValue, isJewelry };
 }
 
-/** Map one published Convex row into the catalog's TreasureItem shape. */
-export function mapRowToTreasureItem(row: PublishedRow): TreasureItem {
+/**
+ * ¿Esta fila está anclada en dólares? La presencia de un número positivo en
+ * `precioFinalUSD` (col BG) ES la marca — no hay columna «moneda base» aparte.
+ *
+ * Por eso la regla es `> 0` y no «existe»: para desanclar un ítem se escribe 0
+ * en la hoja, porque el pull omite a propósito la celda vaciada y borrar BG
+ * dejaría el ancla viva en Convex. Ver convex/_lib/sheetPullMaps.ts.
+ */
+function estaAncladoEnUSD(usd: number | undefined): usd is number {
+  return typeof usd === 'number' && Number.isFinite(usd) && usd > 0;
+}
+
+/**
+ * Map one published Convex row into the catalog's TreasureItem shape.
+ *
+ * `trmRate` entra por parámetro y no por hook para que la función siga siendo
+ * pura y testeable; los dos llamadores pasan `useTRM().trmRate`.
+ */
+export function mapRowToTreasureItem(
+  row: PublishedRow,
+  opts?: { trmRate?: number },
+): TreasureItem {
   const { pesoValue, isJewelry, metalType } = derivePeso(
     row.peso,
     row.categoria,
   );
-  // Catalog price: the derived final price (precioFinalCOP = costoBaseCOP × 2.6,
-  // Sheets column M). By policy the public catalog never shows costoBaseCOP (L);
-  // it is scrubbed in publishedCatalog. Items without a base cost render at 0.
-  const precioCOP = row.precioFinalCOP ?? 0;
+  // El precio del catálogo. Dos rieles:
+  //
+  //   · ANCLADO EN DÓLARES (col BG > 0): el dólar es la verdad y el peso se
+  //     deriva con la TRM oficial del día. Una pieza cuyo valor real está en
+  //     dólares se repreciaba sola cada vez que la TRM se movía; esto lo cierra.
+  //   · EN PESOS (lo normal): `precioFinalCOP`, columna M.
+  //
+  // Sin TRM utilizable se cae a M a propósito. Nunca a 0: la lección del bug
+  // «$ 0 desde el ítem ~318» (2026-07-22) es que ninguna mitad de este cálculo
+  // puede dejar un precio en cero — un cero es «Consultar precio» en la vitrina.
+  const trm = opts?.trmRate;
+  const precioCOP =
+    estaAncladoEnUSD(row.precioFinalUSD) &&
+    typeof trm === 'number' &&
+    Number.isFinite(trm) &&
+    trm > 0
+      ? Math.round(row.precioFinalUSD * trm)
+      : (row.precioFinalCOP ?? 0);
 
   return {
     // `item` es un parseInt y aplasta los ids alfanuméricos ("93A" → 93);
@@ -267,6 +304,9 @@ export function useFotosintesisCatalog(): TreasureItem[] {
   );
 
   const seenVersion = version?.v;
+  // La TRM del día, para las filas ancladas en dólares. Una sola lectura
+  // compartida por CDN (`/api/trm`); el hook ya cachea y degrada solo.
+  const { trmRate } = useTRM();
 
   useEffect(() => {
     if (!convexReady || !convexClient) return;
@@ -304,9 +344,9 @@ export function useFotosintesisCatalog(): TreasureItem[] {
   return useMemo(() => {
     if (!rows) return [];
     return rows
-      .map(mapRowToTreasureItem)
+      .map((row) => mapRowToTreasureItem(row, { trmRate }))
       .filter((item) => Number.isFinite(item.item) && item.item > 0);
-  }, [rows]);
+  }, [rows, trmRate]);
 }
 
 // ─── Grouped lote / sublote catalog cards ───────────────────────────

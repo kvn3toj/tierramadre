@@ -166,6 +166,17 @@ export const FOTO_INVENTARIO_COLUMNS = [
   // Sin `preserve`: la app sí escribe este valor (a diferencia del bloque
   // AQ–BE, que mantiene una persona a mano).
   { header: 'Talla (anillo)', key: 'tallaAnillo' }, // BF
+  // ── Precio ancla en dólares (BG) ──
+  // Añadida a la hoja el 2026-09-01 (`scripts/agregar-columna-precio-usd.mjs`);
+  // el código la lee desde el 2026-09-04. Mismo criterio de APPEND que BF: este
+  // array ES el orden posicional, insertar en el medio correría las 576 filas.
+  //
+  // Vale la pena decir por qué llegó tarde: la hoja tuvo 59 cabeceras y esta
+  // lista 58 durante tres días. Los rangos de lectura y la cota de
+  // `api/get-table-rows.ts` se derivan del LARGO de este array, así que toda
+  // edición en BG se descartaba en silencio — sin error y sin marca. Un ancla
+  // en dólares escrita a mano no llegaba a Convex y nadie se enteraba.
+  { header: 'Precio USD', key: 'precioFinalUSD', numeric: true }, // BG
 ];
 
 /** Ordered header labels (row 1 of the Inventario tab). */

@@ -226,6 +226,15 @@ export default defineSchema({
     precioCOP: v.optional(v.number()),
     costoBaseCOP: v.optional(v.number()), // L — sheet-owned item cost (manual; no longer derived)
     precioFinalCOP: v.optional(v.number()), // M — seeded costoBaseCOP × 2.6, then sheet-owned
+    // BG — precio ANCLA en dólares (2026-09-01). Si es > 0, ese número es el
+    // precio y el cliente deriva el COP como `round(USD × TRM del día)`;
+    // `precioFinalCOP` se ignora para esa fila. Vacío o 0 ⇒ el ítem sigue en
+    // pesos, como el resto del catálogo.
+    //
+    // Existe porque una pieza cuyo valor real está en dólares se reprecia sola
+    // cada vez que la TRM se mueve. Para DESANCLAR se escribe 0, no se vacía la
+    // celda: el pull omite la celda vaciada a propósito (ver sheetPullMaps).
+    precioFinalUSD: v.optional(v.number()),
     // TRUE once a human set the price (sheet pull or admin edit): the lote
     // re-fan must not reset it to costoBaseCOP × 2.6. Absent/false ⇒ the row is
     // still tracking the seed formula.

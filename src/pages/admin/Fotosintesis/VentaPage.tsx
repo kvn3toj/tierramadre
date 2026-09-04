@@ -18,6 +18,8 @@ import {
   emeraldCore,
   goldAccent,
 } from '../../../design-system';
+import { precioBaseCOP } from '../../../utils/precioBase';
+import { useTRM } from '../../../hooks/useTRM';
 import {
   useConvexQuery,
   useAuthedConvexAction,
@@ -225,6 +227,8 @@ export default function FotosintesisVentaPage({
   // lot/provider lineage — mirroring VentaDetailPage, which also keys its
   // comprobante off the first item and lists the rest. The remaining items
   // render from their captured spotlight objects (no extra query).
+  // La TRM del día, para los ítems anclados en dólares (ver utils/precioBase).
+  const { trmRate } = useTRM();
   const item = useConvexQuery(
     convexApi.products.get,
     firstItemId ? { itemId: firstItemId } : 'skip',
@@ -247,10 +251,11 @@ export default function FotosintesisVentaPage({
           item.itemId,
           batchThumbs,
         ),
-        // Picker hint only — the derived final price (legacy precioCOP is ~82%
-        // empty). The authoritative per-item price still comes from
-        // `priceByItemId` once `getManyByItemIds` resolves.
-        precioCop: item.precioFinalCOP ?? item.precioCOP,
+        // Picker hint only — the authoritative per-item price still comes from
+        // `priceByItemId` once `getManyByItemIds` resolves. Resuelve el ancla en
+        // dólares: sembrar una venta con el peso provisional de un ítem anclado
+        // es cobrar la TRM del día en que se calculó, no la de hoy.
+        precioCop: precioBaseCOP(item, trmRate),
         loteId: item.loteId,
         estado: item.estado as string | undefined,
       };

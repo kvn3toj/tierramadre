@@ -106,6 +106,15 @@ const INVENTORY: TableSpec = {
   // planRowPatch) so the lote re-fan in lotItems.ts knows not to reprice the row
   // back to cost × 2.6.
   precioFinalCOP: { coerce: 'num' },
+  // ANCLA EN DÓLARES (columna BG, 2026-09-01). > 0 ⇒ el ítem se valúa en USD y
+  // el cliente deriva el COP con la TRM del día; M se ignora para esa fila.
+  //
+  // Ojo con el modo de DESANCLAR: `coerce: 'num'` omite a propósito la celda
+  // vaciada («never clear a number from a blanked cell», más abajo en este
+  // archivo), así que borrar BG NO devuelve el ítem a pesos — deja el ancla
+  // viva en Convex y la hoja mintiendo. Para desanclar se escribe **0**.
+  // Es exactamente por eso que la regla del ancla es `> 0` y no «existe».
+  precioFinalUSD: { coerce: 'num' },
   // COST OWNERSHIP CHANGE (2026-07-24): costoBaseCOP (column L) is SHEET-OWNED.
   // A human types the item cost into the sheet and it syncs back here. The old
   // preponderancia-based derivation (lot.costoTotalCOP × preponderancia%) is

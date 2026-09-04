@@ -15,6 +15,8 @@ import {
   paneHeight,
   containedScrollX,
 } from '../../../design-system';
+import { precioBaseCOP } from '../../../utils/precioBase';
+import { useTRM } from '../../../hooks/useTRM';
 import {
   useConvexQuery,
   useConvexAction,
@@ -71,20 +73,6 @@ const COP_FORMATTER = new Intl.NumberFormat('es-CO', {
 });
 const formatCOP = (n: number): string => COP_FORMATTER.format(n);
 
-/**
- * The one place this page decides what "the price" of an item is.
- *
- * Since the 2026-07-21 price refactor that's the single derived `precioFinalCOP`
- * (= costoBaseCOP × 2.6), falling back to the legacy `precioCOP` (col L, ~82%
- * empty since the 2026-05-29 audit) — see
- * docs/specs/2026-07-21-plan-refactor-precio-final.md.
- */
-function resolveItemPrice(item: {
-  precioFinalCOP?: number;
-  precioCOP?: number;
-}): number | undefined {
-  return item.precioFinalCOP ?? item.precioCOP;
-}
 
 interface ItemRow {
   id: string;
@@ -100,6 +88,7 @@ interface ItemRow {
   categoria?: string;
   precioCOP?: number;
   precioFinalCOP?: number;
+  precioFinalUSD?: number;
   ubicacion?: string;
   coleccion?: string;
   caja?: string;
@@ -128,6 +117,9 @@ export default function FotosintesisItemsPage() {
   // tab. `products.list` is projected (see convex/products.ts) and the mirror
   // is bounded (~500 rows), so pulling it whole and slicing client-side costs
   // less than five parallel filtered subscriptions.
+  // La TRM del día: #547/#548 están anclados en dólares y su precio en pesos
+  // se deriva acá, igual que en el catálogo. Ver src/utils/precioBase.ts.
+  const { trmRate } = useTRM();
   const items = useConvexQuery(
     convexApi.products.list,
     convexReady
@@ -592,7 +584,7 @@ export default function FotosintesisItemsPage() {
             <Box role="list">
               {filteredRows.map((row) => {
                 const meta = estadoMeta(row.estado, foto);
-                const precio = resolveItemPrice(row);
+                const precio = precioBaseCOP(row, trmRate);
                 return (
                   <Box
                     key={row.id}

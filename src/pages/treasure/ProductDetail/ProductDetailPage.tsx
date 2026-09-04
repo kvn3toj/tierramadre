@@ -52,6 +52,7 @@ import {
   PricePerCarat,
 } from './components';
 import { useConvexQuery, convexApi } from '../../../lib/convex-safe';
+import { useTRM } from '../../../hooks/useTRM';
 import {
   mapRowToTreasureItem,
   type PublishedRow,
@@ -154,13 +155,18 @@ export default function ProductDetail() {
   // `publishedCatalog`), build it straight from the public Convex doc so a
   // scanned QR still resolves to a real product page in the app — not a
   // "no encontrado". Found items are untouched (zero blast radius).
+  // La TRM del día: la necesita el fallback de abajo para resolver el precio de
+  // una pieza anclada en dólares (col BG). Las que vienen de `treasure` ya
+  // llegan resueltas por `useFotosintesisCatalog`.
+  const { trmRate } = useTRM();
+
   const product = useMemo(() => {
     if (groupId) return treasure.find((item) => item.groupId === groupId);
     const found = treasure.find((item) => item.item.toString() === itemId);
     if (found) return found;
-    if (publicDoc) return mapRowToTreasureItem(publicDoc);
+    if (publicDoc) return mapRowToTreasureItem(publicDoc, { trmRate });
     return undefined;
-  }, [treasure, itemId, groupId, publicDoc]);
+  }, [treasure, itemId, groupId, publicDoc, trmRate]);
 
   // Get display name early for use in effects
   const displayName = useMemo(() => {

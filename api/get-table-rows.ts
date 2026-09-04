@@ -121,6 +121,9 @@ export default withApiHandler(
     // Keep only valid, in-bounds rows (header is row 1). Dedupe by rowIndex,
     // unioning the changed column indexes so a row edited twice reads once.
     const byRow = new Map<number, Set<number>>();
+    // Índices que el Apps Script mandó y esta cota descartó. Se acumulan para
+    // avisar UNA vez, no por fila.
+    const fueraDeRango = new Set<number>();
     for (const e of entries) {
       const r = Number(e.rowIndex);
       if (!Number.isInteger(r) || r < 2) continue;
@@ -129,9 +132,28 @@ export default withApiHandler(
         const ci = Number(c);
         if (Number.isInteger(ci) && ci > 0 && ci < layout.keys.length) {
           set.add(ci); // ci > 0 → never resync column A (the natural key)
+        } else if (Number.isInteger(ci) && ci >= layout.keys.length) {
+          fueraDeRango.add(ci);
         }
       }
       byRow.set(r, set);
+    }
+    // La hoja tiene una columna que este código no conoce. NO es teórico: entre
+    // el 2026-09-01 y el 2026-09-04 la hoja tuvo 59 cabeceras y la lista 58, y
+    // toda edición en BG («Precio USD») se descartó acá sin error, sin marca y
+    // sin registro. Un ancla de precio escrita a mano no llegaba a Convex y
+    // nadie se enteró hasta auditar las dos puntas.
+    //
+    // El arreglo es agregar la columna a FOTO_INVENTARIO_COLUMNS; el largo de
+    // ese array gobierna esta cota y los dos rangos de lectura a la vez.
+    if (fueraDeRango.size > 0) {
+      console.warn(
+        `[get-table-rows] tabla "${table}": la hoja mandó ediciones en ` +
+          `columna(s) ${[...fueraDeRango].sort((a, b) => a - b).join(', ')} ` +
+          `(0-based) y el mapa sólo llega a ${layout.keys.length - 1}. ` +
+          `Esas ediciones se están DESCARTANDO. Falta declararlas en ` +
+          `api/_lib/fotosintesis-inventory-columns.js.`,
+      );
     }
     if (byRow.size === 0) {
       return sendSuccess(res, { table, sheetName: null, rows: [] });
