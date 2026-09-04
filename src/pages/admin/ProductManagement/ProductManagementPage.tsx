@@ -140,16 +140,18 @@ interface ConvexProductDoc {
   talla?: string;
   medidas?: string;
   categoria?: string;
-  precioCOP?: number;
+  precioFinalCOP?: number;
   ubicacion?: string;
   coleccion?: string;
   caja?: string;
   estado: EstadoValue;
   /**
-   * When set, the product belongs to a Fotosíntesis lote. Its public catalog
-   * price (precio embajador, col N) is governed by Fotosíntesis, NOT precioCOP
-   * (col L) — so the EditDrawer surfaces a deep-link instead of pretending this
-   * field is the price.
+   * When set, the product belongs to a Fotosíntesis lote. The deep-link in the
+   * EditDrawer is the bridge to the lote's own pricing view; the price edited
+   * here is still `precioFinalCOP` (col M), the same figure the public catalog
+   * reads. (Until 2026-09-04 this module read and wrote `precioCOP` — the
+   * legacy col L, retired from the SOT mirror on 2026-05-29 — so every price
+   * typed here landed in a field no query reads and no cell mirrors.)
    */
   loteId?: string;
   syncStatus: 'synced' | 'pending' | 'error';
@@ -164,7 +166,7 @@ function toRow(doc: ConvexProductDoc): InventoryRowData {
     peso: doc.peso,
     color: doc.color,
     calidad: doc.calidad,
-    precioCOP: doc.precioCOP,
+    precioFinalCOP: doc.precioFinalCOP,
     ubicacion: doc.ubicacion,
     coleccion: doc.coleccion,
     estado: doc.estado,
@@ -184,7 +186,7 @@ function toDrawerProduct(doc: ConvexProductDoc): EditDrawerProduct {
     talla: doc.talla,
     medidas: doc.medidas,
     categoria: doc.categoria,
-    precioCOP: doc.precioCOP,
+    precioFinalCOP: doc.precioFinalCOP,
     ubicacion: doc.ubicacion,
     coleccion: doc.coleccion,
     caja: doc.caja,
@@ -423,9 +425,9 @@ export default function ProductManagementPage() {
       if (q) qualities.add(q);
       const k = (p.categoria ?? '').trim();
       if (k) categories.add(k);
-      if (typeof p.precioCOP === 'number' && p.precioCOP > 0) {
-        if (p.precioCOP < minPrice) minPrice = p.precioCOP;
-        if (p.precioCOP > maxPrice) maxPrice = p.precioCOP;
+      if (typeof p.precioFinalCOP === 'number' && p.precioFinalCOP > 0) {
+        if (p.precioFinalCOP < minPrice) minPrice = p.precioFinalCOP;
+        if (p.precioFinalCOP > maxPrice) maxPrice = p.precioFinalCOP;
       }
       const carats = p.peso ? parseCarats(p.peso) : null;
       if (carats !== null) {
@@ -469,7 +471,7 @@ export default function ProductManagementPage() {
       }
       // Missing-price toggle (data quality)
       if (onlyMissingPrice) {
-        if (typeof p.precioCOP === 'number' && Number.isFinite(p.precioCOP)) {
+        if (typeof p.precioFinalCOP === 'number' && Number.isFinite(p.precioFinalCOP)) {
           return false;
         }
       }
@@ -505,8 +507,8 @@ export default function ProductManagementPage() {
       // Advanced — price range (only filters items with a numeric price)
       if (advanced.priceRange) {
         const [lo, hi] = advanced.priceRange;
-        if (typeof p.precioCOP === 'number' && Number.isFinite(p.precioCOP)) {
-          if (p.precioCOP < lo || p.precioCOP > hi) return false;
+        if (typeof p.precioFinalCOP === 'number' && Number.isFinite(p.precioFinalCOP)) {
+          if (p.precioFinalCOP < lo || p.precioFinalCOP > hi) return false;
         }
         // Items without a price pass through; "Sin precio" is a separate filter
       }
@@ -573,7 +575,7 @@ export default function ProductManagementPage() {
       color: selectedForBandeja.color,
       calidad: selectedForBandeja.calidad,
       coleccion: selectedForBandeja.coleccion,
-      precioCOP: selectedForBandeja.precioCOP,
+      precioFinalCOP: selectedForBandeja.precioFinalCOP,
       thumbnailUrl: Number.isFinite(itemNumber)
         ? thumbnails[itemNumber]?.url
         : undefined,
@@ -891,20 +893,20 @@ export default function ProductManagementPage() {
           await saveEditMany({
             idToken,
             itemIds: Array.from(selectedIds),
-            patch: { precioCOP: value },
+            patch: { precioFinalCOP: value },
           });
         } else {
           const ops = Array.from(selectedIds).map(async (id) => {
             const p = products?.find((q) => q.itemId === id);
-            if (!p || typeof p.precioCOP !== 'number') return;
+            if (!p || typeof p.precioFinalCOP !== 'number') return;
             const next =
               mode === 'delta'
-                ? p.precioCOP + value
-                : Math.round(p.precioCOP * (1 + value / 100));
+                ? p.precioFinalCOP + value
+                : Math.round(p.precioFinalCOP * (1 + value / 100));
             await saveEdit({
               idToken,
               itemId: id,
-              patch: { precioCOP: next },
+              patch: { precioFinalCOP: next },
             });
           });
           await Promise.all(ops);
@@ -1184,7 +1186,7 @@ export default function ProductManagementPage() {
                 peso={selectedBandeja.peso}
                 coleccion={selectedBandeja.coleccion}
                 calidad={selectedBandeja.calidad}
-                precioCOP={selectedBandeja.precioCOP}
+                precioFinalCOP={selectedBandeja.precioFinalCOP}
                 thumbnailUrl={selectedBandeja.thumbnailUrl}
                 chromaHex={selectedBandeja.chromaHex}
                 onOpenEditor={() => setEditingItemId(selectedBandeja.itemId)}

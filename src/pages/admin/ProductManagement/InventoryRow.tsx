@@ -32,7 +32,7 @@ export interface InventoryRowData {
   peso?: string;
   color?: string;
   calidad?: string;
-  precioCOP?: number;
+  precioFinalCOP?: number;
   ubicacion?: string;
   coleccion?: string;
   estado: EstadoValue;
@@ -330,9 +330,9 @@ export function InventoryRow({
           {onInlineEdit ? (
             <InlineEditCell
               foto={foto}
-              display={formatPriceCOP(row.precioCOP)}
+              display={formatPriceCOP(row.precioFinalCOP)}
               rawValue={
-                typeof row.precioCOP === 'number' ? String(row.precioCOP) : ''
+                typeof row.precioFinalCOP === 'number' ? String(row.precioFinalCOP) : ''
               }
               parse={(s) => {
                 const n = Number(String(s).replace(/[^0-9.]/g, ''));
@@ -340,7 +340,7 @@ export function InventoryRow({
               }}
               onSave={(next) =>
                 onInlineEdit(row.itemId, {
-                  precioCOP: next as number | null,
+                  precioFinalCOP: next as number | null,
                 })
               }
               ariaLabel={`Precio de ${row.nombre ?? row.itemId}`}
@@ -359,7 +359,7 @@ export function InventoryRow({
                 minWidth: 0,
               }}
             >
-              {formatPriceCOP(row.precioCOP)}
+              {formatPriceCOP(row.precioFinalCOP)}
             </Typography>
           )}
         </Box>

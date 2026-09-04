@@ -831,7 +831,7 @@ function toDrawerProduct(row: ItemRow): EditDrawerProduct {
     talla: row.talla,
     medidas: row.medidas,
     categoria: row.categoria,
-    precioCOP: row.precioCOP,
+    precioFinalCOP: row.precioFinalCOP,
     ubicacion: row.ubicacion,
     coleccion: row.coleccion,
     caja: row.caja,

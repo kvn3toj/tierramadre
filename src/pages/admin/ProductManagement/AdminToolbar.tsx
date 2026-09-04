@@ -72,7 +72,7 @@ interface AdminToolbarProps {
   /** Show only products that have at least one Drive thumbnail */
   onlyWithImages: boolean;
   onOnlyWithImagesChange: (value: boolean) => void;
-  /** Show only products missing a precioCOP */
+  /** Show only products missing a precioFinalCOP */
   onlyMissingPrice: boolean;
   onOnlyMissingPriceChange: (value: boolean) => void;
   /** Advanced scope filters (color, quality, shape, range, …) */
