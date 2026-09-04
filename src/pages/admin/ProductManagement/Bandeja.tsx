@@ -27,7 +27,7 @@ export interface BandejaSelectedProduct {
   color?: string;
   calidad?: string;
   coleccion?: string;
-  precioCOP?: number;
+  precioFinalCOP?: number;
   thumbnailUrl?: string;
   chromaHex?: string;
 }

@@ -22,7 +22,7 @@ interface StoneHeroProps {
   peso?: string;
   coleccion?: string;
   calidad?: string;
-  precioCOP?: number;
+  precioFinalCOP?: number;
   thumbnailUrl?: string;
   chromaHex?: string;
   onOpenEditor: () => void;
@@ -42,7 +42,7 @@ export function StoneHero({
   peso,
   coleccion,
   calidad,
-  precioCOP,
+  precioFinalCOP,
   thumbnailUrl,
   chromaHex,
   onOpenEditor,
@@ -150,7 +150,7 @@ export function StoneHero({
           >
             {itemId}
             {peso ? ` · ${peso} ct` : ""}
-            {precioCOP ? ` · ${formatPrice(precioCOP)}` : ""}
+            {precioFinalCOP ? ` · ${formatPrice(precioFinalCOP)}` : ""}
           </Typography>
         </Box>
         <ButtonBase

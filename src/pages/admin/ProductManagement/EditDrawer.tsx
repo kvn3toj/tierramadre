@@ -10,7 +10,7 @@
  *   Identity — nombre, coleccion, caja, ubicacion
  *   Specifications — peso, color, calidad, corte, talla (aro), medidas,
  *                    cantidad, categoria
- *   Pricing — precioCOP
+ *   Pricing — precioFinalCOP (col M: the price the public catalog reads)
  *   Status — estado (radio group with status pips)
  *   History — last edits (collapsed accordion)
  *   Footer — Cancel + Save (sticky)
@@ -84,16 +84,17 @@ export interface EditDrawerProduct {
   tallaAnillo?: string;
   medidas?: string;
   categoria?: string;
-  precioCOP?: number;
+  precioFinalCOP?: number;
   ubicacion?: string;
   coleccion?: string;
   caja?: string;
   estado: EstadoValue;
   /**
-   * When set, the product belongs to a Fotosíntesis lote. The public catalog
-   * price is the precio embajador (col N), managed in Fotosíntesis; the
-   * "Precio COP" field below (col L) is only an internal/base reference.
-   * Drives the deep-link notice in the Precio section.
+   * When set, the product belongs to a Fotosíntesis lote. Drives the deep-link
+   * notice in the Precio section — the lote view is where cost and the re-fan
+   * live. The "Precio COP" field below is `precioFinalCOP` (col M), which IS
+   * the public catalog price, and saving it stamps `precioFinalManual` so the
+   * lote re-fan stops repricing the row.
    */
   loteId?: string;
   syncStatus: 'synced' | 'pending' | 'error';
@@ -111,7 +112,7 @@ export interface EditDrawerPatch {
   tallaAnillo?: string;
   medidas?: string;
   categoria?: string;
-  precioCOP?: number;
+  precioFinalCOP?: number;
   ubicacion?: string;
   coleccion?: string;
   caja?: string;
@@ -169,7 +170,7 @@ interface DraftState {
   tallaAnillo: string;
   medidas: string;
   categoria: string;
-  precioCOP: string;
+  precioFinalCOP: string;
   ubicacion: string;
   coleccion: string;
   caja: string;
@@ -188,7 +189,7 @@ function toDraft(p: EditDrawerProduct | null): DraftState {
     tallaAnillo: p?.tallaAnillo ?? '',
     medidas: p?.medidas ?? '',
     categoria: p?.categoria ?? '',
-    precioCOP: p?.precioCOP != null ? String(p.precioCOP) : '',
+    precioFinalCOP: p?.precioFinalCOP != null ? String(p.precioFinalCOP) : '',
     ubicacion: p?.ubicacion ?? '',
     coleccion: p?.coleccion ?? '',
     caja: p?.caja ?? '',
@@ -202,7 +203,7 @@ function draftToNewProduct(draft: DraftState): NewProductInput {
   const cantidadNum =
     draft.cantidad === '' ? undefined : Number(draft.cantidad);
   const precioNum =
-    draft.precioCOP === '' ? undefined : Number(draft.precioCOP);
+    draft.precioFinalCOP === '' ? undefined : Number(draft.precioFinalCOP);
   return {
     itemId: draft.itemId,
     nombre: draft.nombre,
@@ -217,6 +218,13 @@ function draftToNewProduct(draft: DraftState): NewProductInput {
     tallaAnillo: draft.tallaAnillo,
     medidas: draft.medidas,
     categoria: draft.categoria,
+    // GAP (2026-09-04): la creación sigue mandando el campo LEGACY `precioCOP`
+    // porque `createProductFieldsArgs` en convex/products.ts todavía no acepta
+    // `precioFinalCOP` — verificado contra prod con `convex function-spec`. La
+    // EDICIÓN sí escribe ya `precioFinalCOP` (prod lo acepta). Cerrar esto pide
+    // una rama desde main que agregue el campo a `createProductFieldsArgs` +
+    // `_createProduct` y un `convex deploy`; hasta entonces, una pieza creada
+    // aquí con precio nace sin precio público y hay que reeditarla.
     precioCOP:
       precioNum !== undefined && Number.isFinite(precioNum)
         ? precioNum
@@ -265,10 +273,10 @@ function diffDraft(
     }
   }
   const precioNum =
-    draft.precioCOP === '' ? undefined : Number(draft.precioCOP);
+    draft.precioFinalCOP === '' ? undefined : Number(draft.precioFinalCOP);
   if (precioNum !== undefined && Number.isFinite(precioNum)) {
-    if (precioNum !== (original.precioCOP ?? -1)) {
-      patch.precioCOP = precioNum;
+    if (precioNum !== (original.precioFinalCOP ?? -1)) {
+      patch.precioFinalCOP = precioNum;
     }
   }
 
@@ -656,22 +664,22 @@ export function EditDrawer({
           <Section title="Precio" atelier={atelier} foto={foto}>
             <Field
               label="Precio COP"
-              value={draft.precioCOP}
+              value={draft.precioFinalCOP}
               onChange={(v) =>
-                setDraft({ ...draft, precioCOP: v.replace(/[^0-9]/g, '') })
+                setDraft({ ...draft, precioFinalCOP: v.replace(/[^0-9]/g, '') })
               }
-              hint="Solo número entero, sin separadores"
+              hint="Solo número entero, sin separadores · es el precio público"
               atelier={atelier}
               foto={foto}
               monospace
               inputMode="numeric"
               prefix="$"
             />
-            {/* F8 — para piezas que pertenecen a un lote de Fotosíntesis, este
-                "Precio COP" (col L) es solo una referencia interna/base; el
-                precio público del catálogo (precio embajador, col N) se
-                gestiona en Fotosíntesis. El deep-link es el puente; aquí no se
-                editan los precios por nivel. */}
+            {/* Para piezas de un lote de Fotosíntesis el deep-link lleva al
+                lote, donde viven el costo y el re-fan. Este campo es
+                `precioFinalCOP` (col M) — el precio que pinta el catálogo — y
+                guardarlo estampa `precioFinalManual`, que es justo lo que
+                impide que el re-fan lo devuelva a costo × 2.6. */}
             {!isCreate && product?.loteId && (
               <LotePriceNotice
                 loteId={product.loteId}
@@ -1574,7 +1582,7 @@ const FIELD_LABELS: Record<string, string> = {
   tallaAnillo: 'Talla (anillo)',
   medidas: 'Medidas',
   categoria: 'Categoría',
-  precioCOP: 'Precio COP',
+  precioFinalCOP: 'Precio COP',
   ubicacion: 'Ubicación',
   coleccion: 'Colección',
   caja: 'Caja',
@@ -1993,13 +2001,17 @@ function LockBanner({
 }
 
 /**
- * LotePriceNotice — F8 bridge. Items belonging to a Fotosíntesis lote publish
- * their public catalog price as the *precio embajador* (SOT col N), managed
- * inside Fotosíntesis — not as the "Precio COP" field above (col L), which for
- * lote items is only an internal/base reference. Editing "Precio COP" here
- * would look successful but never move the price customers actually see, so
- * this notice names that gap and deep-links to the lote resumen (the `/close`
- * route, where the embajador/consciente prices are edited).
+ * LotePriceNotice — bridge to the lote view. The "Precio COP" field above IS
+ * the public catalog price (`precioFinalCOP`, SOT col M); what lives in the
+ * lote is the COST and the re-fan that derives a price from it. Saving a price
+ * here stamps `precioFinalManual`, which is precisely what stops the re-fan
+ * from resetting the row to costoBaseCOP × 2.6.
+ *
+ * This notice used to claim the opposite — that the field was "only an internal
+ * reference" and the real price lived in a *precio embajador* (col N). That was
+ * true of the pre-2026-07 layout and false afterwards, and it is how twelve
+ * TM-001 pieces were priced into `precioCOP` (the retired col L) and reached
+ * customers as "Consultar precio" (diagnosed 2026-09-04).
  *
  * Atelier-pure styling, echoing LockBanner: hairline border with an emerald
  * left edge (informational bridge, not a status pip) and ledger meta type.
@@ -2033,19 +2045,16 @@ function LotePriceNotice({
         Esta pieza pertenece a un lote
       </Typography>
       <Typography sx={{ ...atelier.type.meta, color: atelier.ink.secondary }}>
-        El precio público del catálogo es el{' '}
+        Este{' '}
         <Box
           component="span"
           sx={{ fontWeight: 600, color: atelier.ink.primary }}
         >
-          precio embajador
-        </Box>
-        , que se gestiona en Fotosíntesis. Este{' '}
-        <Box component="span" sx={{ fontWeight: 600 }}>
           Precio COP
         </Box>{' '}
-        es solo una referencia interna o de base y no cambia lo que ven los
-        clientes.
+        sí es el que ven los clientes, y al guardarlo queda fijado a mano: el
+        re-fan del lote deja de recalcularlo desde el costo. En Fotosíntesis se
+        gestionan el costo del lote y ese recálculo.
       </Typography>
       <Box
         component={RouterLink}
@@ -2065,7 +2074,7 @@ function LotePriceNotice({
           },
         }}
       >
-        Gestionar precio en Fotosíntesis →
+        Ver el lote en Fotosíntesis →
       </Box>
     </Box>
   );
