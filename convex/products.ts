@@ -407,6 +407,11 @@ export const CAMPOS_PUBLICOS_CATALOGO = [
   'categoria',
   // Precio de vitrina (el DERIVADO, nunca el costo — ver CAMPOS_RESERVADOS)
   'precioFinalCOP',
+  // El ancla en dólares (col BG). Es precio de LISTA, igual que precioFinalCOP,
+  // así que es público por el mismo criterio: lo que le corresponde a quien
+  // mira una vitrina. El cliente lo necesita para derivar el COP con la TRM
+  // del día — sin él, una pieza anclada mostraría un peso congelado.
+  'precioFinalUSD',
   // Lo que la web pinta como "disponible / vendida" y como colección
   'estado',
   'coleccion',
@@ -2625,7 +2630,17 @@ const createProductFieldsArgs = v.object({
   medidas: v.optional(v.string()),
   medidasValores: v.optional(v.string()),
   categoria: v.optional(v.string()),
+  // `precioCOP` es el riel LEGACY (col L del layout viejo, retirada del espejo
+  // SOT el 2026-05-29): no tiene columna, no está en el allowlist de pull y
+  // está en CAMPOS_RESERVADOS_CATALOGO. Se conserva porque hay documentos
+  // viejos, pero NADIE debería mandarlo para una fila SOT.
   precioCOP: v.optional(v.number()),
+  // El precio de verdad (col M), el que lee el catálogo. Faltaba acá hasta el
+  // 2026-09-04, así que una pieza creada con precio desde el drawer nacía sin
+  // precio público y salía a la vitrina como «Consultar precio» — el mismo
+  // defecto que se arregló en la EDICIÓN y que dejó doce piezas de TM-001 sin
+  // precio durante dos semanas. Ver el handler: se estampa `precioFinalManual`.
+  precioFinalCOP: v.optional(v.number()),
   ubicacion: v.optional(v.string()),
   asesor: v.optional(v.string()),
   coleccion: v.optional(v.string()),
@@ -2662,6 +2677,13 @@ export const _createProduct = internalMutation({
       itemId: itemIdTrim,
       rowIndex: nextRow,
       ...fields,
+      // Mismo sello que estampan `_saveEdit` y el pull: un precio puesto por una
+      // persona no lo recalcula el re-fan del lote. Sin él, una pieza nueva con
+      // precio y con costo 0 (lo normal al crearla) volvería a 0 en el primer
+      // re-fan — costoBaseCOP × 2.6 = 0.
+      ...(fields.precioFinalCOP !== undefined
+        ? { precioFinalManual: true }
+        : {}),
       estado: 'DISPONIBLE' as const,
       lastPulledAt: now,
       syncStatus: 'pending' as const,
