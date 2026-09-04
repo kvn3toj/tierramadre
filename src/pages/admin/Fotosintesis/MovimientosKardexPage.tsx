@@ -48,6 +48,8 @@ import {
   XCircle,
 } from 'lucide-react';
 import { getFoto, fontFamilies } from '../../../design-system';
+import { precioBaseCOP } from '../../../utils/precioBase';
+import { useTRM } from '../../../hooks/useTRM';
 import {
   convexApi,
   convexReady,
@@ -180,6 +182,8 @@ export default function MovimientosKardexPage() {
   // ── Candidate item pools ────────────────────────────────────────────────
   // Entrega: any DISPONIBLE item, fetched once (client-filtered per row by
   // typed text) rather than one reactive query per row.
+  // La TRM del día, para los ítems anclados en dólares (ver utils/precioBase).
+  const { trmRate } = useTRM();
   const disponibles = useConvexQuery(
     convexApi.products.list,
     convexReady && mode === 'entrega'
@@ -190,6 +194,7 @@ export default function MovimientosKardexPage() {
         itemId: string;
         nombre: string;
         precioFinalCOP?: number;
+        precioFinalUSD?: number;
         precioCOP?: number;
       }>
     | undefined;
@@ -226,6 +231,7 @@ export default function MovimientosKardexPage() {
         itemId: string;
         nombre: string;
         precioFinalCOP?: number;
+        precioFinalUSD?: number;
         precioCOP?: number;
       }>
     | undefined;
@@ -239,6 +245,7 @@ export default function MovimientosKardexPage() {
         itemId: string;
         nombre: string;
         precioFinalCOP?: number;
+        precioFinalUSD?: number;
         precioCOP?: number;
       }>
     | undefined;
@@ -263,7 +270,7 @@ export default function MovimientosKardexPage() {
       return (disponibles ?? []).map((p) => ({
         itemId: p.itemId,
         nombre: p.nombre,
-        precioSugerido: p.precioFinalCOP ?? p.precioCOP,
+        precioSugerido: precioBaseCOP(p, trmRate),
       }));
     }
     return [...(enAsesor ?? []), ...(enConsignacion ?? [])]
@@ -271,9 +278,9 @@ export default function MovimientosKardexPage() {
       .map((p) => ({
         itemId: p.itemId,
         nombre: p.nombre,
-        precioSugerido: p.precioFinalCOP ?? p.precioCOP,
+        precioSugerido: precioBaseCOP(p, trmRate),
       }));
-  }, [mode, disponibles, enAsesor, enConsignacion, currentlyHeldItemIds]);
+  }, [mode, disponibles, enAsesor, enConsignacion, currentlyHeldItemIds, trmRate]);
 
   const seededRef = useRef(false);
   useEffect(() => {

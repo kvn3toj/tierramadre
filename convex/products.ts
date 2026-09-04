@@ -146,6 +146,11 @@ export const list = query({
       categoria: row.categoria,
       precioCOP: row.precioCOP,
       precioFinalCOP: row.precioFinalCOP,
+      // El ancla en dólares viaja con el precio: las superficies admin
+      // (inventario, kardex, resumen de lote) resuelven el COP con la TRM del
+      // día igual que el catálogo. Sin esto verían el peso provisional y una
+      // venta se sembraría con un número que la TRM ya movió.
+      precioFinalUSD: row.precioFinalUSD,
       ubicacion: row.ubicacion,
       coleccion: row.coleccion,
       caja: row.caja,
@@ -237,6 +242,7 @@ export const getManyByItemIds = query({
       estado: string;
       precioCOP?: number;
       precioFinalCOP?: number;
+      precioFinalUSD?: number;
     }> = [];
     for (const itemId of itemIds) {
       const row = await ctx.db
@@ -256,6 +262,8 @@ export const getManyByItemIds = query({
         estado: row.estado,
         precioCOP: row.precioCOP,
         precioFinalCOP: row.precioFinalCOP,
+        // Idem: este picker siembra el precio de una venta multi-ítem.
+        precioFinalUSD: row.precioFinalUSD,
       });
     }
     return out;
