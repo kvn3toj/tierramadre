@@ -1460,16 +1460,26 @@ export const pushToSheet = action({
             // ── Fotosíntesis v2 fields (written only on the SOT Inventario
             // tab; the legacy treasure sheet ignores them) ──
             //
-            // PUSH-ONLY FIELD — do NOT collapse this to `?? ''`. preponderancia
-            // is the one field we push but never pull: it is deliberately
-            // EXCLUDED from WRITABLE.inventory (see convex/_lib/sheetPullMaps.ts),
-            // so an undefined mirror value means "Convex never learned it", NOT
-            // "the operator cleared it". api/admin-product-update.ts:257 writes
-            // any key that is present-and-defined, so sending '' would blank
-            // column U — the ONLY place that number lives — and the pull could
-            // never bring it back. Omitting the key preserves the sheet cell.
-            // Every other field here is round-tripped by the pull, so for those
-            // `?? ''` genuinely means "empty on both sides" and is safe.
+            // CAMPOS PUSH-ONLY — no colapsar a `?? ''`. Son los que empujamos
+            // pero NUNCA traemos: están excluidos de WRITABLE.inventory (ver
+            // convex/_lib/sheetPullMaps.ts). Para ellos un valor indefinido en
+            // Convex significa «Convex no se enteró», NO «la persona lo borró».
+            // api/admin-product-update.ts:257 escribe toda clave presente-y-
+            // definida, así que mandar '' BORRA la celda del espejo, y el pull
+            // no puede devolverla porque no los lee. Omitir la clave preserva
+            // la celda. Los demás campos de este payload sí hacen ida y vuelta
+            // por el pull, y para esos `?? ''` sí significa «vacío de los dos
+            // lados».
+            //
+            // preponderancia lleva esta guarda desde el principio.
+            // fotoUrl y certificadoUrl NO la llevaban, y costó 4 certificados
+            // el 2026-09-05: #483, #484, #551 y #552 tenían su URL escrita en
+            // la hoja desde el 23-ago, Convex nunca la supo, y un push
+            // disparado por una corrección de `caja`/`coleccion` reescribió la
+            // fila entera y mandó '' en la columna AM. Sobrevivieron #544,
+            // #545, #546 y #550 sólo porque nadie los empujó desde entonces.
+            // Los dos campos son de Convex desde el 2026-08-15 (el incidente
+            // que costó 9 fotos): la hoja es su ESPEJO, no su casa.
             ...(row.preponderancia !== undefined
               ? { preponderancia: row.preponderancia }
               : {}),
@@ -1488,8 +1498,10 @@ export const pushToSheet = action({
             tecnicaJoya: row.tecnicaJoya ?? '',
             minerales: (row.minerales ?? []).join(', '),
             complementos: (row.complementos ?? []).join(', '),
-            fotoUrl: row.fotoUrl ?? '',
-            certificadoUrl: row.certificadoUrl ?? '',
+            ...(row.fotoUrl !== undefined ? { fotoUrl: row.fotoUrl } : {}),
+            ...(row.certificadoUrl !== undefined
+              ? { certificadoUrl: row.certificadoUrl }
+              : {}),
             formulaGema: row.formulaGema ?? '',
             formulaJoya: row.formulaJoya ?? '',
             rangoDescuento: row.rangoDescuento ?? '',
