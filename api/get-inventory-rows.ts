@@ -28,6 +28,7 @@ import {
 import {
   FOTO_INVENTARIO_COLUMNS,
   FOTO_INVENTARIO_LAST_COL,
+  FOTO_INVENTARIO_HEADERS,
 } from './_lib/fotosintesis-inventory-columns.js';
 import { resolveGrant } from './_lib/catalogGrant.js';
 import { lookupVitrina } from './_lib/vitrinaLookup.js';
@@ -85,6 +86,49 @@ export default withApiHandler(
     const values = (response.data.values ?? []) as unknown[][];
     if (values.length <= 1) {
       return sendSuccess(res, { sheetName: targetSheet, rows: [] });
+    }
+
+    /**
+     * La fila 1 se COMPARA contra el mapa antes de descartarla.
+     *
+     * Este endpoint lee A1:{últimaColumna}, donde la última columna se deriva
+     * del largo de `FOTO_INVENTARIO_COLUMNS`. Si la hoja gana una columna y el
+     * mapa no se entera, la lectura se queda corta y las ediciones de esa
+     * columna se descartan en silencio, sin error y sin registro.
+     *
+     * No es teórico: entre el 2026-09-01 y el 2026-09-04 la hoja tuvo 59
+     * cabeceras y el mapa 58, y toda edición de la columna BG («Precio USD»)
+     * se perdió durante tres días. Nadie comparaba las dos puntas, así que no
+     * había forma de enterarse salvo auditando a mano.
+     *
+     * Se avisa y se sigue, no se aborta: una cabecera renombrada no puede
+     * tumbar el sync entero de un inventario de 576 filas. Pero queda en los
+     * logs de la función, que es donde alguien lo puede ver.
+     */
+    const cabecerasHoja = (values[0] ?? []).map((h) => String(h ?? '').trim());
+    if (cabecerasHoja.length !== FOTO_INVENTARIO_HEADERS.length) {
+      console.warn(
+        `[get-inventory-rows] La hoja tiene ${cabecerasHoja.length} cabeceras y ` +
+          `FOTO_INVENTARIO_COLUMNS declara ${FOTO_INVENTARIO_HEADERS.length}. ` +
+          `Se lee hasta ${FOTO_INVENTARIO_LAST_COL}, así que las columnas de más ` +
+          `NO se sincronizan. Declaralas en api/_lib/fotosintesis-inventory-columns.js.`,
+      );
+    }
+    const desalineadas = FOTO_INVENTARIO_HEADERS.map((esperada, i) => ({
+      i,
+      esperada,
+      real: cabecerasHoja[i] ?? '(falta)',
+    })).filter((c) => c.real !== c.esperada);
+    if (desalineadas.length > 0) {
+      console.warn(
+        `[get-inventory-rows] ${desalineadas.length} cabecera(s) no coinciden con ` +
+          `el mapa canónico — el contrato es POSICIONAL, así que una columna movida ` +
+          `escribe en la vecina: ` +
+          desalineadas
+            .slice(0, 8)
+            .map((c) => `idx ${c.i}: se esperaba "${c.esperada}", hay "${c.real}"`)
+            .join(' · '),
+      );
     }
 
     // Row 1 is the header; data starts at row 2 (1-based sheet index = i + 1).

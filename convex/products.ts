@@ -10,6 +10,7 @@ import {
 import { v, ConvexError } from 'convex/values';
 import { api, internal } from './_generated/api';
 import { projectFotoUrls } from './_lib/fotoUrls';
+import { WRITABLE } from './_lib/sheetPullMaps';
 import {
   qualityBucket,
   caratBucket,
@@ -2121,7 +2122,34 @@ export const _upsertManyFromSheet = internalMutation({
 
     for (const item of items) {
       const existing = existingMap.get(item.itemId);
-      const cleanedFields = {
+      /**
+       * El riel LEGACY pasa por el MISMO allowlist que el delta sync.
+       *
+       * `_pullFromSheet` arma su patch a mano —19 campos— sin mirar
+       * `WRITABLE.inventory`, así que era el único camino hoja→Convex sin
+       * control. Dos consecuencias medidas:
+       *
+       *   · Escribía `precioCOP`, que NO está en el allowlist: el riel muerto,
+       *     el mismo que dejó doce piezas sin precio público.
+       *   · No escribía `precioFinalCOP`, que SÍ está: el campo que lee el
+       *     catálogo nunca llegaba por esta vía.
+       *
+       * Y las exclusiones que el allowlist protege a propósito —`fotoUrl` y
+       * `certificadoUrl` (2026-08-15, costó 9 fotos), `mostrarEnCatalogo`
+       * (2026-07-30, casi despublica 285 piezas)— no las respetaba nadie acá;
+       * hoy no las escribe por omisión, pero nada lo impedía.
+       *
+       * El filtro es una línea y cierra la clase entera: lo que el delta sync
+       * no puede escribir desde la hoja, este riel tampoco.
+       */
+      const permitido = (k: string) =>
+        Object.prototype.hasOwnProperty.call(WRITABLE.inventory, k);
+      const filtrar = <T extends Record<string, unknown>>(o: T): Partial<T> =>
+        Object.fromEntries(
+          Object.entries(o).filter(([k]) => permitido(k)),
+        ) as Partial<T>;
+
+      const cleanedFields = filtrar({
         nombre: item.fields.nombre ?? undefined,
         peso: item.fields.peso ?? undefined,
         color: item.fields.color ?? undefined,
@@ -2141,13 +2169,19 @@ export const _upsertManyFromSheet = internalMutation({
         caja: item.fields.caja ?? undefined,
         asesorActual: item.fields.asesorActual ?? undefined,
         estadoAsesor: item.fields.estadoAsesor ?? undefined,
-      };
+      });
 
       if (!existing) {
         await ctx.db.insert('productInventory', {
           itemId: item.itemId,
           rowIndex: item.rowIndex,
           ...cleanedFields,
+          // `estado` es obligatorio en el esquema y el filtro del allowlist lo
+          // vuelve opcional para TypeScript (no puede saber estáticamente que
+          // la clave sobrevive). Acá SÍ corresponde un default: es una fila
+          // NUEVA que no existía en el espejo, no un hueco de una existente —
+          // que es el caso donde inventar el estado sí era el defecto.
+          estado: cleanedFields.estado ?? ('DISPONIBLE' as const),
           lastPulledAt: now,
           syncStatus: 'synced' as const,
         });

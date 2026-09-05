@@ -2,7 +2,11 @@
  * One-off data migrations. Run with `npx convex run --prod migrations:<name>`.
  * Safe to delete a migration once it has run in prod.
  */
-import { internalMutation, internalAction } from './_generated/server';
+import {
+  internalMutation,
+  internalAction,
+  internalQuery,
+} from './_generated/server';
 import { api, internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
 import { v } from 'convex/values';
@@ -363,10 +367,31 @@ export const mergeAguaMarina = internalMutation({
  *
  *   npx convex run --prod migrations:seedBucketC '{}'
  */
-export const seedBucketC = internalAction({
+/**
+ * ¿Ya corrió `seedBucketC`? Se detecta por el lote que crea primero.
+ *
+ * Existe porque `seedBucketC` es la ÚNICA migración de este archivo sin guarda
+ * de idempotencia — su propia documentación lo dice, al describir otra como
+ * «Idempotent via clientToken (unlike seedBucketC)». Y `convex/migrations.ts`
+ * viaja entero a producción en cada deploy, así que sigue disparable HOY con
+ * un `npx convex run --prod`, dos meses después de haber cumplido su función.
+ * Re-correrla duplicaría lotes, sublotes e ítems, con sus costos.
+ */
+export const _yaCorrioSeedBucketC = internalQuery({
   args: {},
+  handler: async (ctx): Promise<boolean> => {
+    const lotes = await ctx.db.query('lots').collect();
+    return lotes.some((l) => l.renombreLote === 'Rocas Lunares');
+  },
+});
+
+export const seedBucketC = internalAction({
+  // `confirmarReejecucion` NO tiene default: hay que escribirlo a mano para
+  // volver a correr esto, y quien lo escriba ya leyó por qué está.
+  args: { confirmarReejecucion: v.optional(v.boolean()) },
   handler: async (
     ctx,
+    { confirmarReejecucion },
   ): Promise<{
     rocasLunares: {
       loteId: string;
@@ -376,6 +401,23 @@ export const seedBucketC = internalAction({
     standalone: Array<{ itemId: string; nombre: string }>;
     skipped: string[];
   }> => {
+    // GUARDA DE RE-EJECUCIÓN (2026-09-05). Ver `_yaCorrioSeedBucketC`.
+    if (!confirmarReejecucion) {
+      const yaCorrio = await ctx.runQuery(
+        internal.migrations._yaCorrioSeedBucketC,
+        {},
+      );
+      if (yaCorrio) {
+        throw new Error(
+          'seedBucketC ya corrió: existe el lote «Rocas Lunares». Volver a ' +
+            'correrla DUPLICA lotes, sublotes e ítems con sus costos — no es ' +
+            'idempotente. Si de verdad querés re-ejecutarla, pasá ' +
+            '{ "confirmarReejecucion": true } y limpiá antes lo que creó la ' +
+            'corrida anterior.',
+        );
+      }
+    }
+
     const EDWIN_PROVIDER_ID =
       'kd7dgn7p7yc35782q4qxb70kas87ces0' as Id<'providers'>;
     const TALLER_BRONCE_PROVIDER_ID =
