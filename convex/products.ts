@@ -1443,7 +1443,11 @@ export const pushToSheet = action({
             // api/_lib/fotosintesis-inventory-columns.js.
             ubicacion: row.ubicacion ?? '',
             asesor: row.asesor ?? '',
-            estado: row.estado ?? 'DISPONIBLE',
+            // Sin estado en el espejo se escribe VACÍO, no 'DISPONIBLE': el
+            // push no es quien decide si una pieza se vende. Rellenarlo acá
+            // convertía un hueco en una afirmación, y como el pull leía esa
+            // celda de vuelta, el invento se volvía indistinguible de un dato.
+            estado: row.estado ?? '',
             qr: row.qr ?? '',
             coleccion: row.coleccion ?? '',
             caja: row.caja ?? '',

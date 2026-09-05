@@ -209,10 +209,15 @@ describe('coerceCell', () => {
 });
 
 describe('estado normalizers', () => {
-  it('inventory: case-insensitive, legacy default + casing', () => {
+  it('inventory: case-insensitive, y una celda vacía NO inventa un estado', () => {
     expect(normalizeInvEstado('disponible')).toBe('DISPONIBLE');
     expect(normalizeInvEstado('RETORNADO')).toBe('Retornado');
-    expect(normalizeInvEstado('')).toBe('DISPONIBLE');
+    // Hasta el 2026-09-04 esto devolvía 'DISPONIBLE' y el test lo llamaba
+    // «legacy default». Era un invento: la hoja no dice nada y Convex escribía
+    // una afirmación sobre si la pieza se puede vender. `null` = no toques el
+    // campo, el mismo contrato que ya usaba el valor desconocido de abajo.
+    expect(normalizeInvEstado('')).toBeNull();
+    expect(normalizeInvEstado('   ')).toBeNull();
     expect(normalizeInvEstado('xyz')).toBeNull();
   });
 

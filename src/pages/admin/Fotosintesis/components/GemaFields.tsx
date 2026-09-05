@@ -34,7 +34,10 @@ export interface GemaDraft {
   nombre: string;
   peso: string;
   color: string;
-  calidad: GemaCalidad;
+  // `| ""` como sus hermanos `tipoEsmeralda` y `corte`: una gema sin calidad
+  // medida se hidrata vacía y se queda vacía. Antes entraba como "F1" y se
+  // guardaba sola al tocar cualquier otro campo (ver normalizeCalidad).
+  calidad: GemaCalidad | "";
   procedencia: string;
   preponderancia: number | "";
   precioPublicoCOP: number | "";
@@ -214,14 +217,22 @@ export function GemaFields({
 
   // Quality-based public price suggestion. Only computed when we have a
   // useful costoBase — otherwise the hint stays hidden (no placeholder).
-  const calidadFactor = CALIDAD_FACTORS[value.calidad] ?? 1;
+  // Sin calidad medida NO se sugiere precio. El factor de calidad multiplica el
+  // costo para proponer el público, así que sugerir con una calidad vacía sería
+  // poner un número que no descansa en nada — y peor, hasta el 2026-09-04 la
+  // calidad vacía llegaba acá como "F1" inventado, así que la sugerencia salía
+  // con la confianza de un dato medido. Es la misma clase de invento que el
+  // resto de este arreglo cierra, sólo que aguas abajo.
+  const calidadFactor = value.calidad ? (CALIDAD_FACTORS[value.calidad] ?? 1) : 1;
   const canSuggestPrecio =
+    value.calidad !== "" &&
     typeof value.preponderancia === "number" &&
     value.preponderancia > 0 &&
     lotCostoTotalCOP > 0;
-  const suggestedPrecio = canSuggestPrecio
-    ? suggestedPrecioPublicoCOP(computedCostoBaseCOP, value.calidad)
-    : 0;
+  const suggestedPrecio =
+    canSuggestPrecio && value.calidad !== ""
+      ? suggestedPrecioPublicoCOP(computedCostoBaseCOP, value.calidad)
+      : 0;
   const currentPrecio =
     typeof value.precioPublicoCOP === "number" ? value.precioPublicoCOP : 0;
   const suggestionMatches =
@@ -426,7 +437,7 @@ export function GemaFields({
         placeholder="Elegir calidad…"
         disabled={disabled}
         vocabularyKey="calidad"
-        onChange={(next) => onChange({ calidad: next as GemaCalidad })}
+        onChange={(next) => onChange({ calidad: next as GemaCalidad | "" })}
       />
 
       <Box

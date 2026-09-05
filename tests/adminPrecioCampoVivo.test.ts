@@ -42,18 +42,20 @@ const archivos = readdirSync(MODULO).filter(
 );
 
 /**
- * La ÚNICA excepción viva, y es deliberada: el modo creación del drawer sigue
- * mandando `precioCOP` porque `createProductFieldsArgs` en convex/products.ts
- * todavía no acepta `precioFinalCOP` — verificado contra producción con
- * `npx convex function-spec --prod` el 2026-09-04. Cerrarla pide una rama desde
- * `main` que agregue el campo a `createProductFieldsArgs` + `_createProduct` y
- * un `convex deploy`. Mientras siga acá, una pieza creada con precio desde el
- * drawer nace sin precio público y hay que reeditarla.
+ * Ya no hay excepción, y así tiene que quedarse.
  *
- * Se enumera línea por línea a propósito: si la excepción se mueve o se
- * multiplica, el test falla y alguien tiene que volver a decidir.
+ * Entre el 2026-09-04 por la mañana y esa misma tarde esta lista tuvo una
+ * entrada: el modo CREACIÓN del drawer seguía mandando `precioCOP` porque
+ * `createProductFieldsArgs` en prod todavía no aceptaba `precioFinalCOP`. Se
+ * desplegó el campo (PR #156) y se cerró el camino, así que la lista vuelve a
+ * estar vacía.
+ *
+ * Se deja como constante, y no se borra la comparación, a propósito: una lista
+ * vacía que alguien tiene que volver a llenar a mano es una compuerta; un test
+ * sin ella es una invitación. Si mañana hace falta una excepción nueva,
+ * agregarla obliga a escribir por qué.
  */
-const EXCEPCION_CREACION = ['EditDrawer.tsx:228'];
+const EXCEPCION_CREACION: string[] = [];
 
 /** Quita comentarios de línea y de bloque: el incidente se documenta en prosa
  *  dentro de estos archivos, y esa prosa no es una escritura. */

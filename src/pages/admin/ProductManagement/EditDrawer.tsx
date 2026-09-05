@@ -218,14 +218,13 @@ function draftToNewProduct(draft: DraftState): NewProductInput {
     tallaAnillo: draft.tallaAnillo,
     medidas: draft.medidas,
     categoria: draft.categoria,
-    // GAP (2026-09-04): la creación sigue mandando el campo LEGACY `precioCOP`
-    // porque `createProductFieldsArgs` en convex/products.ts todavía no acepta
-    // `precioFinalCOP` — verificado contra prod con `convex function-spec`. La
-    // EDICIÓN sí escribe ya `precioFinalCOP` (prod lo acepta). Cerrar esto pide
-    // una rama desde main que agregue el campo a `createProductFieldsArgs` +
-    // `_createProduct` y un `convex deploy`; hasta entonces, una pieza creada
-    // aquí con precio nace sin precio público y hay que reeditarla.
-    precioCOP:
+    // El mismo campo que escribe la edición: el que lee el catálogo. Estuvo en
+    // `precioCOP` (el riel legacy) hasta el 2026-09-04, así que una pieza
+    // creada con precio nacía sin precio público. Prod acepta `precioFinalCOP`
+    // en `createProduct` y `_createProduct` desde el deploy de ese día
+    // (verificado con `convex function-spec --prod`), y el insert estampa
+    // `precioFinalManual` para que el re-fan del lote no lo borre.
+    precioFinalCOP:
       precioNum !== undefined && Number.isFinite(precioNum)
         ? precioNum
         : undefined,

@@ -342,7 +342,16 @@ const INV_ESTADOS = [
 /** Mirror of products.ts#normalizeEstado (kept here to avoid cross-importing a non-exported helper). */
 export function normalizeInvEstado(v: unknown): string | null {
   const raw = String(v ?? '').trim();
-  if (raw === '') return 'DISPONIBLE'; // legacy default
+  // Celda vacía ⇒ SKIP, no «DISPONIBLE». Devolver el default acá era el mismo
+  // invento que ya se cerró en `calidad`: la hoja no dice nada y Convex escribe
+  // «disponible», que es una afirmación sobre si la pieza se puede vender. El
+  // push la estampaba de vuelta en la hoja y a las 24 horas no se distinguía de
+  // un estado puesto por una persona.
+  //
+  // `null` es el contrato que este archivo ya usa para «no toques el campo»
+  // (ver el retorno de unknown, abajo). Un alta nueva sigue naciendo DISPONIBLE
+  // por su propio default en `lotItems._create`, que es donde corresponde.
+  if (raw === '') return null;
   const upper = raw.toUpperCase();
   if (upper === 'RETORNADO') return 'Retornado';
   const hit = INV_ESTADOS.find((e) => e.toUpperCase() === upper);
