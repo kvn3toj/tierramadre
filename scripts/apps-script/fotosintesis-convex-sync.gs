@@ -111,18 +111,38 @@ function onEdit(e) {
     var lock = LockService.getDocumentLock();
     if (!lock.tryLock(5000)) return; // la edición ya quedó en la hoja; se recupera con "completo"
     try {
-      for (var r = startRow; r < startRow + nRows; r++) {
-        if (r === 1) continue; // fila de encabezados
-        var naturalKey = String(sheet.getRange(r, 1).getValue()).trim();
-        if (!naturalKey) continue; // columna A vacía → fila aún no real
-        var changedCols = [];
-        for (var c = startCol; c < startCol + nCols; c++) {
-          if (c === 1) continue; // columna A = clave natural, nunca se sincroniza
-          changedCols.push(c - 1); // 0-based para casar con los mapas de columnas del servidor
-        }
-        if (changedCols.length === 0) continue;
-        queueDirty(tab, naturalKey, changedCols, r);
+      // Las columnas cambiadas son las mismas para todas las filas del rango.
+      var changedCols = [];
+      for (var c = startCol; c < startCol + nCols; c++) {
+        if (c === 1) continue; // columna A = clave natural, nunca se sincroniza
+        changedCols.push(c - 1); // 0-based para casar con los mapas del servidor
       }
+      if (changedCols.length === 0) return;
+
+      // UNA lectura de las claves de todo el rango, no una por fila.
+      // `getRange(r, 1).getValue()` dentro del bucle costaba una llamada al
+      // servicio de hojas POR FILA; un pegado de 200 filas hacía 200 lecturas
+      // más 200 lecturas de la cola entera dentro de queueDirty. El trigger
+      // simple tiene 30 s: reventaba a la mitad y las filas restantes no se
+      // encolaban — sin aviso, porque onEdit no puede lanzar.
+      var primera = Math.max(startRow, 2); // nunca el encabezado
+      var ultima = startRow + nRows - 1;
+      if (ultima < primera) return;
+      var claves = sheet
+        .getRange(primera, 1, ultima - primera + 1, 1)
+        .getValues();
+
+      var pendientes = [];
+      for (var i = 0; i < claves.length; i++) {
+        var naturalKey = String(claves[i][0]).trim();
+        if (!naturalKey) continue; // columna A vacía → fila aún no real
+        pendientes.push({
+          key: naturalKey,
+          cols: changedCols,
+          rowIndex: primera + i,
+        });
+      }
+      if (pendientes.length) queueDirtyBatch(tab, pendientes);
     } finally {
       lock.releaseLock();
     }
@@ -132,25 +152,76 @@ function onEdit(e) {
   }
 }
 
-/** Inserta/une una entrada de cambio en la hoja oculta _SyncQueue (dedup por tab+clave). */
-function queueDirty(tab, naturalKey, colIdxs, rowIndex) {
+/**
+ * Inserta/une varias entradas de cambio en `_SyncQueue` de una sola pasada
+ * (dedup por tab+clave). Reemplaza al viejo `queueDirty` de a una fila.
+ *
+ * DOS COSAS QUE ARREGLA, y las dos costaban ediciones:
+ *
+ * 1. UNA lectura y UNA escritura para todo el rango. El anterior leía la cola
+ *    ENTERA (`getDataRange().getValues()`) por cada fila editada y escribía
+ *    celda por celda. Un pegado de 200 filas eran 200 lecturas completas de la
+ *    cola más 200 escrituras sueltas; el trigger simple tiene 30 s y reventaba
+ *    a la mitad, dejando las filas restantes sin encolar y sin aviso (onEdit
+ *    no puede lanzar sin romperle la edición al usuario).
+ *
+ * 2. LA CARRERA CON EL FLUSH. Al unir sobre una fila existente, el anterior
+ *    NO tocaba el flushToken (columna 6). Si esa fila ya estaba estampada
+ *    porque un flush la había mandado, la edición nueva se unía a ella y
+ *    después `deleteQueueRowsByFlushToken` la borraba entera — llevándose un
+ *    cambio que nunca se envió. Ahora, al unir, el token se LIMPIA: la fila
+ *    deja de pertenecer a ese envío y sobrevive al borrado. El costo es
+ *    reenviar columnas que quizá ya se aplicaron, y eso es inofensivo: el
+ *    upsert del servidor es idempotente. Perder la edición no lo es.
+ */
+function queueDirtyBatch(tab, entradas) {
   var qs = ensureQueueSheet();
-  var data = qs.getDataRange().getValues(); // [header, ...rows]
+  var data = qs.getDataRange().getValues(); // [header, ...rows] — UNA lectura
+  var indicePorClave = {};
   for (var i = 1; i < data.length; i++) {
-    if (String(data[i][0]) === tab && String(data[i][1]) === naturalKey) {
-      var union = unionCsv(String(data[i][2]), colIdxs);
-      qs.getRange(i + 1, 3).setValue(union);
-      qs.getRange(i + 1, 4).setValue(rowIndex);
-      return;
-    }
+    if (String(data[i][0]) === tab) indicePorClave[String(data[i][1])] = i;
   }
-  qs.appendRow([
-    tab,
-    naturalKey,
-    colIdxs.slice().sort(numAsc).join(','),
-    rowIndex,
-    nowStamp(),
-    '', // flushToken
+
+  var nuevas = [];
+  var tocadas = {}; // fila (1-based en la hoja) → true, para reescribirlas juntas
+  for (var j = 0; j < entradas.length; j++) {
+    var en = entradas[j];
+    var idx = indicePorClave[en.key];
+    if (idx === undefined) {
+      nuevas.push([
+        tab,
+        en.key,
+        en.cols.slice().sort(numAsc).join(','),
+        en.rowIndex,
+        nowStamp(),
+        '', // flushToken
+      ]);
+      continue;
+    }
+    data[idx][2] = unionCsv(String(data[idx][2]), en.cols);
+    data[idx][3] = en.rowIndex;
+    data[idx][5] = ''; // ← se suelta del flush en curso (ver punto 2 arriba)
+    tocadas[idx] = true;
+  }
+
+  // Reescritura de las filas unidas: un setValues por fila contigua, no una
+  // llamada por celda.
+  var idxs = Object.keys(tocadas).map(Number).sort(numAsc);
+  for (var k = 0; k < idxs.length; k++) {
+    var fila = idxs[k];
+    qs.getRange(fila + 1, 1, 1, 6).setValues([data[fila].slice(0, 6)]);
+  }
+
+  // Y las nuevas, todas juntas al final.
+  if (nuevas.length) {
+    qs.getRange(qs.getLastRow() + 1, 1, nuevas.length, 6).setValues(nuevas);
+  }
+}
+
+/** Compatibilidad: una sola entrada delega en el batch. */
+function queueDirty(tab, naturalKey, colIdxs, rowIndex) {
+  queueDirtyBatch(tab, [
+    { key: naturalKey, cols: colIdxs, rowIndex: rowIndex },
   ]);
 }
 
@@ -215,7 +286,9 @@ function flushDeltas() {
     var lock2 = LockService.getDocumentLock();
     lock2.waitLock(CONFIG.lockWaitMs);
     try {
-      deleteQueueRowsByFlushToken(flushToken); // sólo las filas que enviamos
+      // Sólo las filas que enviamos, y de esas, no las protegidas: su edición
+      // no se aplicó, así que se quedan en la cola para el próximo intento.
+      deleteQueueRowsByFlushToken(flushToken, clavesProtegidas(result));
     } finally {
       lock2.releaseLock();
     }
@@ -342,7 +415,13 @@ function summarize(result) {
     short:
       tP + ' actualizadas' +
       (tU ? ', ' + tU + ' nuevas' : '') +
-      (tProt ? ', ' + tProt + ' protegidas' : ''),
+      (tProt ? ', ' + tProt + ' protegidas (se reintentan)' : '') +
+      // `tSkip` se venía sumando y no se mostraba en ninguna parte. Una fila
+      // «descartada» es una que el servidor miró y decidió no tocar; verla en
+      // el resumen es la diferencia entre «no pasó nada» y «no pasó nada CON
+      // estas 40 filas», que es lo que uno necesita para saber si su edición
+      // entró.
+      (tSkip ? ', ' + tSkip + ' sin cambios' : ''),
     long: parts.join('\n'),
     flags: flags,
   };
@@ -412,13 +491,45 @@ function clearFlushToken(flushToken) {
   }
 }
 
-function deleteQueueRowsByFlushToken(flushToken) {
+/**
+ * Borra de la cola las filas de ESTE envío — salvo las que el servidor devolvió
+ * como PROTEGIDAS, que se conservan para reintentar.
+ *
+ * Una fila protegida es una cuya edición NO se aplicó: hay una edición de admin
+ * en curso en la app (`syncStatus` pending/error) y el servidor decide no
+ * pisarla. Hasta el 2026-09-05 se borraban igual, así que el cambio que la
+ * persona escribió en la hoja se descartaba en silencio — no se aplicó, no se
+ * reintentaba, y el aviso decía «N protegidas» sin decir cuáles.
+ *
+ * `conservar` son las claves que el servidor nombró en `reviewFlags`. Se les
+ * suelta el flushToken para que el próximo flush las vuelva a mandar.
+ */
+function deleteQueueRowsByFlushToken(flushToken, conservar) {
   var qs = ensureQueueSheet();
   var data = qs.getDataRange().getValues();
+  var proteger = conservar || {};
   // Borra de abajo hacia arriba para no desplazar índices.
   for (var i = data.length - 1; i >= 1; i--) {
-    if (String(data[i][5]) === flushToken) qs.deleteRow(i + 1);
+    if (String(data[i][5]) !== flushToken) continue;
+    if (proteger[String(data[i][1])]) {
+      qs.getRange(i + 1, 6).setValue(''); // se suelta y espera al próximo flush
+      continue;
+    }
+    qs.deleteRow(i + 1);
   }
+}
+
+/** Claves que el servidor marcó como protegidas, sacadas de reviewFlags. */
+function clavesProtegidas(result) {
+  var out = {};
+  var flags = (result && result.reviewFlags) || [];
+  for (var i = 0; i < flags.length; i++) {
+    var f = flags[i];
+    if (f && f.key && String(f.reason || '').indexOf('protegida') === 0) {
+      out[String(f.key)] = true;
+    }
+  }
+  return out;
 }
 
 // =============================================================================

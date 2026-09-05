@@ -223,6 +223,22 @@ export const upsertTable = internalMutation({
           lastPulledAt: now,
         });
         protectedCount++;
+        // Decir CUÁL quedó protegida, no sólo cuántas.
+        //
+        // Hasta el 2026-09-05 esto sólo incrementaba el contador. El Apps
+        // Script recibía «3 protegidas» sin saber cuáles, y como igual borraba
+        // toda la cola por flushToken, la edición de esas filas se descartaba
+        // en silencio: no se aplicó, no se reintenta y nadie sabe cuál era.
+        //
+        // Con la clave acá, el script puede conservar esas filas en la cola
+        // para el próximo flush y nombrarlas en el aviso.
+        reviewFlags.push({
+          key: row.key,
+          reason:
+            'protegida: hay una edición de admin en curso en la app ' +
+            '(syncStatus pending/error). Tu cambio en la hoja NO se aplicó; ' +
+            'queda en la cola y se reintenta en la próxima sincronización.',
+        });
         continue;
       }
 
