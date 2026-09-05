@@ -71,17 +71,66 @@ const syncFoto = httpAction(async (ctx, request) => {
 
   const mode = body.mode ?? (body.deltas ? "delta" : "full");
 
+  /**
+   * Un error por tabla NO puede viajar dentro de un 200.
+   *
+   * `runDelta` y `runFull` atrapan el fallo de cada tabla y lo guardan en
+   * `perTable[tabla].error`, y después devuelven normalmente. Envuelto en un
+   * `json(200, { ok: true, ... })`, el resultado era que aunque fallaran TODAS
+   * las tablas el Apps Script recibía un 200 — y su contrato es explícito:
+   * `callConvex` sólo lanza fuera del rango 2xx, y sólo cuando lanza el
+   * `catch` hace `clearFlushToken` y conserva la cola para reintentar. Con
+   * 200, en cambio, borra las filas enviadas y muestra «✅».
+   *
+   * La cola es el ÚNICO registro de qué celdas se tocaron, y los tres crones
+   * de reconciliación están apagados (medido 2026-09-04), así que no había
+   * respaldo: la edición se perdía para siempre, en silencio.
+   *
+   * 502 y no 207: el 207 es semánticamente más preciso para un éxito parcial,
+   * pero está dentro de 2xx, así que el script NO lanzaría y borraría la cola
+   * igual. Hace falta un código ≥300 para que el contrato existente reintente.
+   *
+   * Se conserva el cuerpo entero (`perTable`, `reviewFlags`) para que el log y
+   * el toast digan QUÉ tabla falló, no sólo que algo falló. Reintentar una
+   * tabla que sí había sincronizado es inofensivo — el upsert es idempotente —
+   * y es infinitamente preferible a perder la edición.
+   */
+  const tablasConError = (r: unknown): string[] => {
+    const per = (r as { perTable?: Record<string, { error?: string }> })
+      ?.perTable;
+    if (!per) return [];
+    return Object.entries(per)
+      .filter(([, v]) => v && typeof v.error === "string" && v.error)
+      .map(([t, v]) => `${t}: ${v.error}`);
+  };
+
   try {
     if (mode === "delta") {
       const result = await ctx.runAction(internal.fotoSync.runDelta, {
         deltas: body.deltas ?? {},
       });
+      const fallidas = tablasConError(result);
+      if (fallidas.length) {
+        return json(502, {
+          ok: false,
+          error: `Tablas con error: ${fallidas.join(" · ")}`,
+          ...result,
+        });
+      }
       return json(200, { ok: true, ...result });
     }
     if (mode === "full") {
       const result = await ctx.runAction(internal.fotoSync.runFull, {
         tables: body.tables,
       });
+      const fallidas = tablasConError(result);
+      if (fallidas.length) {
+        return json(502, {
+          ok: false,
+          error: `Tablas con error: ${fallidas.join(" · ")}`,
+          ...result,
+        });
+      }
       return json(200, { ok: true, ...result });
     }
     return json(400, { ok: false, error: `Unknown mode "${mode}"` });
