@@ -1956,7 +1956,12 @@ export const _pullFromSheet = internalAction({
       {
         items: items
           .map((item, i) => ({
-            itemId: String(item.item ?? '').trim(),
+            // Por `itemId` CRUDO, no por `item`: `item` es un parseInt y
+            // aplasta "93A"/"93B" a 93. Con la clave vieja, un «Resincronizar»
+            // escribía Romeo y Julieta encima del padre #93 —RETIRADA— y lo
+            // resucitaba como disponible, en silencio y sin tocar a las hijas.
+            // El `?? item` conserva el comportamiento para un payload viejo.
+            itemId: String(item.itemId ?? item.item ?? '').trim(),
             // ROOT-CAUSE FIX: `i + 2` was the position in the COMPACTED payload
             // array (blank/non-numeric rows already dropped by
             // /api/get-treasure-sheets), NOT the true physical sheet row — that
@@ -2363,6 +2368,14 @@ export async function setInventoryLastPull(ctx: MutationCtx, lastPull: string) {
 
 type SheetRow = {
   item?: number | string;
+  /**
+   * El itemId CRUDO, sin pasar por parseInt. `item` aplasta las subdivisiones
+   * alfanuméricas ("93A" y "93B" → 93), así que clavear el upsert por `item`
+   * hacía que las dos hijas se escribieran sobre la fila del PADRE #93 — que
+   * está RETIRADA — y lo devolvía al inventario disponible. Lo sirve
+   * /api/get-treasure-sheets desde que existe la subdivisión.
+   */
+  itemId?: string;
   /**
    * True 1-based PHYSICAL row of this item in the sheet, supplied by
    * /api/get-treasure-sheets. Distinct from the item's position in the
