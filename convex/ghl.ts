@@ -50,6 +50,8 @@ import {
   precioConMarkup,
   precioBaseEsValido,
 } from './_lib/precioVitrina';
+// Alias: `precioBaseCOP` ya nombra al acumulador de esta misma función.
+import { precioBaseCOP as resolverPrecioBase } from './_lib/precioBase';
 import {
   isContactInactive,
   addContactTags,
@@ -142,11 +144,18 @@ export const searchProducts = query({
       tipoJoya: p.tipoJoya,
       tipo: p.tipo,
       // `precioEmbajadorCOP` is the ambassador/wholesale tier — NEVER a valid
-      // stand-in for the retail price quoted to an end customer. If
-      // `precioCOP` is missing, the item is correctly excluded downstream
-      // (`eligibleProducts` requires a numeric `precioCOP`) rather than
-      // silently quoting the wrong tier.
-      precioCOP: p.precioCOP,
+      // stand-in for the retail price quoted to an end customer. Una pieza sin
+      // precio se excluye aguas abajo (`eligibleProducts` exige un
+      // `precioCOP` numérico) en vez de cotizar el tier equivocado.
+      //
+      // La FUENTE, eso sí, es `precioFinalCOP` — el mismo campo que muestra la
+      // vitrina — y no el riel legacy `precioCOP`. Medido el 2026-09-04: de 227
+      // piezas ofrecibles, 8 tenían precio sólo en `precioFinalCOP`, así que
+      // este canal las escondía por completo ($1.280.000 que no se podían
+      // ofrecer por WhatsApp). Para las 216 que traían los dos campos, los dos
+      // coincidían exactamente — no había cotización vieja, sí inventario
+      // invisible. Ver convex/_lib/precioBase.ts.
+      precioCOP: resolverPrecioBase(p),
       estado: p.estado,
       // Normalize the "allowed to appear" flag at this IO boundary so the
       // pure ranking module doesn't need to know about loteId/legacy vs
@@ -376,7 +385,16 @@ export const createOrder = mutation({
       if (!product) throw new ConvexError(`PRODUCT_NOT_FOUND:${line.sku}`);
       if (product.estado !== 'DISPONIBLE')
         throw new ConvexError(`NOT_AVAILABLE:${line.sku}`);
-      const base = product.precioCOP ?? 0;
+      // El precio que se COBRA tiene que ser el mismo que la vitrina MUESTRA.
+      // Hasta el 2026-09-04 acá decía `product.precioCOP ?? 0` — el riel
+      // legacy, sin columna en el espejo desde el 2026-05-29 y hoy en 0 o
+      // ausente en casi todo el inventario — mientras el catálogo pinta
+      // `precioFinalCOP`. Ocho piezas del lote TM-001 estaban publicadas CON
+      // precio y con `precioCOP` en 0: el cliente las veía, las agregaba,
+      // escribía nombre, celular y correo, y recién ahí saltaba
+      // PRECIO_NO_DISPONIBLE. Ver convex/_lib/precioBase.ts — incluida la
+      // razón por la que la TRM no entra en este cálculo.
+      const base = resolverPrecioBase(product) ?? 0;
       // Per-LINE guard, not just the sum below: a cart mixing a priced stone
       // with an unpriced ("Consultar precio") one sums to > 0, so the
       // `totalCOP <= 0` check alone lets the unpriced piece ride along for
