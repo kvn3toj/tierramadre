@@ -301,10 +301,29 @@ export function EditDrawer({
   const [driveState, setDriveState] =
     useState<DriveFolderState>(EMPTY_DRIVE_STATE);
 
-  // Reset draft when the product changes
+  /**
+   * El borrador se reinicia al ABRIR el drawer sobre otra pieza — y sólo ahí.
+   *
+   * Antes las dependencias incluían `product`, el OBJETO. El padre lo fabrica
+   * inline en el JSX (`product={editing ? toDrawerProduct(editing) : null}`),
+   * así que tiene identidad nueva en CADA render del padre, y este efecto
+   * corría en cada uno: `setDraft(toDraft(product))` pisaba lo que la persona
+   * estaba tecleando.
+   *
+   * No hacía falta nada raro para dispararlo: otro admin guardando, el bot
+   * escribiendo, el muestreo de miniaturas — cualquier latido reactivo de
+   * Convex re-renderiza el padre. El síntoma era que «N cambios sin guardar»
+   * volvía a «Sin cambios» a mitad de una edición.
+   *
+   * Ahora depende de la IDENTIDAD de la pieza y de si el drawer está abierto.
+   * Que un cambio de fondo NO refresque el borrador es deliberado: mientras
+   * alguien edita, su texto manda; lo de abajo se ve al reabrir.
+   */
   useEffect(() => {
     setDraft(toDraft(product));
-  }, [product?.itemId, product]);
+    // `product` (el objeto) queda fuera a propósito — ver arriba.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.itemId, open, mode]);
 
   // Lazy-fetch Drive folder + media when drawer opens for a product
   useEffect(() => {

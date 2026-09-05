@@ -544,6 +544,18 @@ export default function ProductManagementPage() {
     [editingItemId, products],
   );
 
+  /**
+   * Estabiliza la identidad del objeto que recibe el drawer. Fabricarlo inline
+   * en el JSX le daba identidad nueva en cada render, y el efecto de reinicio
+   * del drawer —que dependía del objeto— borraba lo tecleado en cada latido
+   * reactivo de Convex. El drawer además acotó sus dependencias; esto ataca la
+   * misma causa del otro lado.
+   */
+  const drawerProduct = useMemo(
+    () => (editing ? toDrawerProduct(editing) : null),
+    [editing],
+  );
+
   // === Phase G — create flow ===
   // Set of every itemId currently in the mirror — fed to validateNewProduct
   // for the duplicate-id check. Recomputed on every products refresh.
@@ -585,20 +597,17 @@ export default function ProductManagementPage() {
     };
   }, [selectedForBandeja, thumbnails, chromaSamples]);
 
-  // Close drawer with Escape when not saving
-  useEffect(() => {
-    if (!editingItemId) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isSaving) {
-        // Phase G — also reset drawerMode so a follow-up open isn't
-        // stuck in create mode.
-        setEditingItemId(null);
-        setDrawerMode('edit');
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [editingItemId, isSaving]);
+  // Escape lo maneja el DRAWER, no esta pantalla.
+  //
+  // Acá había un listener a nivel `window` que hacía `setEditingItemId(null)`
+  // directo. El drawer ya tiene el guardián C4 —`onClose={guardedClose}`, y MUI
+  // llama a onClose tanto en Escape como en el backdrop—, así que este listener
+  // no agregaba nada: sólo se adelantaba y CERRABA SIN PREGUNTAR, tirando los
+  // cambios que el pie del drawer estaba anunciando como «N cambios sin
+  // guardar». Cerrar por la X o por Cancelar sí preguntaba; por Escape no.
+  //
+  // Se borra en vez de duplicar el guardián: dos dueños de la misma tecla es
+  // exactamente cómo se coló la excepción.
 
   // ─── Handlers ────────────────────────────────────────────────────────
 
@@ -689,6 +698,34 @@ export default function ProductManagementPage() {
 
   // Close drawer on cancel — also reset drawerMode so the next open
   // starts in edit mode unless explicitly entered via handleCreateNew.
+  /**
+   * ¿Hay ALGÚN filtro puesto? Gobierna el mensaje del estado vacío.
+   *
+   * Antes miraba sólo `search` y `filter`, así que filtrar por colección, por
+   * «Con fotos», por «Sin precio» o por cualquiera de los ocho avanzados y no
+   * encontrar nada mostraba **«Espejo vacío»** — que no dice «tu filtro no dio
+   * resultados», dice «la base está vacía». Frente a un inventario de 576
+   * piezas, eso se lee como que el sync se rompió.
+   *
+   * La lista de fuentes es la MISMA que ya usa el botón «Limpiar» de la barra
+   * (AdminToolbar): si algo cuenta para limpiarlo, cuenta para saber que hay un
+   * filtro puesto.
+   */
+  const hayFiltroActivo =
+    !!search.trim() ||
+    filter !== 'all' ||
+    !!collection ||
+    onlyWithImages ||
+    onlyMissingPrice ||
+    advanced.type !== 'all' ||
+    !!advanced.color ||
+    !!advanced.shape ||
+    !!advanced.quality ||
+    !!advanced.category ||
+    advanced.cantidad !== 'all' ||
+    !!advanced.priceRange ||
+    !!advanced.caratRange;
+
   const handleCloseDrawer = useCallback(() => {
     setEditingItemId(null);
     setDrawerMode('edit');
@@ -888,6 +925,9 @@ export default function ProductManagementPage() {
         return;
       }
       setIsBulkSaving(true);
+      // Cuántas se tocaron DE VERDAD (el modo absoluto las toca todas; delta y
+      // porcentaje saltan las que no tienen precio del que partir).
+      let aplicadas = selectedIds.size;
       try {
         if (mode === 'absolute') {
           await saveEditMany({
@@ -898,7 +938,10 @@ export default function ProductManagementPage() {
         } else {
           const ops = Array.from(selectedIds).map(async (id) => {
             const p = products?.find((q) => q.itemId === id);
-            if (!p || typeof p.precioFinalCOP !== 'number') return;
+            // Una pieza sin precio no se puede subir ni bajar un porcentaje:
+            // se salta. Antes se saltaba EN SILENCIO y el aviso igual contaba
+            // la selección entera.
+            if (!p || typeof p.precioFinalCOP !== 'number') return false;
             const next =
               mode === 'delta'
                 ? p.precioFinalCOP + value
@@ -908,14 +951,22 @@ export default function ProductManagementPage() {
               itemId: id,
               patch: { precioFinalCOP: next },
             });
+            return true;
           });
-          await Promise.all(ops);
+          const hechos = await Promise.all(ops);
+          aplicadas = hechos.filter(Boolean).length;
         }
+        const saltadas = selectedIds.size - aplicadas;
         notify(
-          `Precio actualizado en ${selectedIds.size} piedra${
-            selectedIds.size === 1 ? '' : 's'
-          }`,
-          'success',
+          // El aviso dice lo que PASÓ, no lo que se seleccionó. Con la cuenta
+          // vieja, elegir 50 piedras de las cuales 20 no tienen precio decía
+          // «actualizado en 50» — y la persona se iba creyendo que las 50
+          // cambiaron.
+          `Precio actualizado en ${aplicadas} piedra${aplicadas === 1 ? '' : 's'}` +
+            (saltadas > 0
+              ? ` · ${saltadas} sin precio, no se pudieron ajustar`
+              : ''),
+          saltadas > 0 ? 'warning' : 'success',
         );
         clearSelection();
       } catch (err) {
@@ -1121,7 +1172,7 @@ export default function ProductManagementPage() {
               <EmptyState
                 atelier={atelier}
                 foto={foto}
-                hasFilter={!!search.trim() || filter !== 'all'}
+                hasFilter={hayFiltroActivo}
                 onResync={handleResync}
                 isResyncing={isResyncing}
               />
@@ -1214,7 +1265,7 @@ export default function ProductManagementPage() {
           or the FotoHero "+ Nueva piedra" button (Phase G, mode="create"). */}
       <EditDrawer
         open={!!editingItemId}
-        product={editing ? toDrawerProduct(editing) : null}
+        product={drawerProduct}
         isSaving={isSaving}
         // Phase G — create mode
         mode={drawerMode}
