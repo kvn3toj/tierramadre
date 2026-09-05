@@ -1,0 +1,57 @@
+# Compuerta de calidad. Corre en cada PR y en cada push a main.
+#
+# POR QUÉ EXISTE (2026-09-05): no había NINGUNA. Los dos workflows que había
+# —claude-code-review y claude— son revisión asistida, no una compuerta: nada
+# corría `tsc` ni la suite. Un push a main desplegaba a producción con los
+# tests rotos, y las ~2.170 aserciones que este repo compró con incidentes no
+# bloqueaban nada.
+#
+# No es hipotético: ese mismo día se mergearon a main marcadores de conflicto
+# de git dentro del `<script>` bloqueante de index.html. `lint` no los vio
+# (index.html no es TypeScript) y `build` los empaquetó igual. Sólo faltó que
+# Vercel terminara de desplegar.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Un PR que recibe varios pushes cancela sus corridas viejas: la única que
+# importa es la del último commit.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  calidad:
+    name: Tipos y pruebas
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # Antes que nada, y sin depender de node_modules: un marcador de
+      # conflicto en el árbol invalida cualquier otra cosa que digamos.
+      - name: Sin marcadores de conflicto
+        run: |
+          if git grep -nE '^(<{7}|>{7}) ' -- '*.html' '*.ts' '*.tsx' '*.js' '*.mjs' '*.json' '*.gs' '*.css'; then
+            echo "::error::Hay marcadores de conflicto sin resolver (ver arriba)."
+            exit 1
+          fi
+
+      # Cubre app, api/ Y convex/. El tercero faltaba: `convex/` no está en el
+      # tsconfig de la app, así que sus errores de tipos no los veía nadie.
+      - name: Tipos
+        run: npm run lint
+
+      - name: Pruebas unitarias
+        run: npm run test:unit

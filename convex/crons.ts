@@ -27,6 +27,25 @@ const crons = cronJobs();
  * "🔄 Convex Sync"). To pause even the daily pull, set env `INVENTORY_PULL_CRON`
  * to anything other than "on" — `_pullFromSheet` no-ops (see products.ts).
  */
+/**
+ * ⚠️ ESTE CRON ESTÁ APAGADO EN PRODUCCIÓN (medido 2026-09-05).
+ *
+ * `INVENTORY_PULL_CRON = "off"` y `FOTO_RECONCILE_CRON = "off"` en el
+ * deployment de producción, así que el pull diario y el backstop de
+ * reconciliación NO corren. El comentario de arriba describe la política, no
+ * el estado, y leerlo como estado lleva a suponer un respaldo que no existe.
+ *
+ * Por qué importa: la cola del Apps Script era el único registro de qué celdas
+ * se tocaron, y sin estos crones no había ninguna red debajo. Si el flush
+ * fallaba, la edición no se recuperaba «en la próxima corrida» — no había
+ * próxima corrida.
+ *
+ * Para encenderlo: `npx convex env set --prod INVENTORY_PULL_CRON on`. Antes de
+ * hacerlo, mirar lo que arrastra: `_pullFromSheetCron` usa el RIEL LEGACY
+ * (`_pullFromSheet`), no el delta sync. Desde el 2026-09-05 ese riel filtra por
+ * el mismo allowlist, así que ya no puede escribir campos prohibidos — pero
+ * sigue siendo un segundo camino de escritura sobre `productInventory`.
+ */
 crons.interval(
   'pull inventory from sheet',
   { hours: 24 },
