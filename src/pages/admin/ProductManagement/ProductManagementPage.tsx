@@ -141,6 +141,7 @@ interface ConvexProductDoc {
   medidas?: string;
   categoria?: string;
   precioFinalCOP?: number;
+  precioFinalUSD?: number;
   ubicacion?: string;
   coleccion?: string;
   caja?: string;
@@ -167,6 +168,7 @@ function toRow(doc: ConvexProductDoc): InventoryRowData {
     color: doc.color,
     calidad: doc.calidad,
     precioFinalCOP: doc.precioFinalCOP,
+    precioFinalUSD: doc.precioFinalUSD,
     ubicacion: doc.ubicacion,
     coleccion: doc.coleccion,
     estado: doc.estado,

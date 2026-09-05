@@ -11,6 +11,7 @@
  * both `SpotlightProduct` and any future row type without a circular import on
  * the layout context.
  */
+import { precioBaseCOP } from '../../../../utils/precioBase';
 export interface SelectableItem {
   itemId: string;
   precioCop?: number;
@@ -75,24 +76,40 @@ export type CompradorTier = 'embajador' | 'final';
 /** Minimal price shape returned by the Convex product queries
  *  (products.list / products.getManyByItemIds) — uppercase COP fields. */
 export interface TierPricedCop {
+  /** Ancla en dólares (col BG). > 0 ⇒ manda sobre el COP. */
+  precioFinalUSD?: number;
   precioCOP?: number;
   precioFinalCOP?: number;
 }
 
 /**
  * Resolve the per-item price to suggest. After the 2026-07-21 price refactor
- * there is ONE price for every buyer: precioFinalCOP (= costoBaseCOP × 2.6).
- * The `tier` arg is retained for call-site compatibility but no longer affects
- * the price. Legacy precioCOP is the fallback (its Sheets column was retired
- * 2026-05-29 and it is empty for ~82% of items). Returns undefined only when the
- * item carries no price at all.
+ * there is ONE price for every buyer: precioFinalCOP. The `tier` arg is
+ * retained for call-site compatibility but no longer affects the price.
+ *
+ * RESUELVE EL ANCLA EN DÓLARES. Antes hacía `precioFinalCOP ?? precioCOP` y se
+ * saltaba `precioFinalUSD` por completo, así que el escritorio de ventas —el
+ * precio AUTORITATIVO, el que queda congelado en `lineItems`— sembraba un
+ * número distinto del que la vitrina le había mostrado al cliente. Para #547 y
+ * #548 eso eran +$1.241.631 y +$2.628.482 sobre lo publicado.
+ *
+ * Delega en `precioBaseCOP` (src/utils/precioBase.ts), el mismo resolvedor que
+ * usan el catálogo y las otras cuatro pantallas admin: un solo lugar donde se
+ * decide qué es «el precio». `precioCOP` sigue como último recurso para filas
+ * viejas, igual que antes.
+ *
+ * Devuelve `undefined` cuando la pieza no tiene precio — nunca 0, para que
+ * quien llama pueda distinguir «gratis» de «no sé cuánto vale».
  */
 export function pickTierPrice(
   item: TierPricedCop,
   _tier: CompradorTier,
+  trmRate?: number,
 ): number | undefined {
-  for (const p of [item.precioFinalCOP, item.precioCOP]) {
-    if (typeof p === 'number' && !Number.isNaN(p)) return p;
+  const base = precioBaseCOP(item, trmRate);
+  if (typeof base === 'number' && !Number.isNaN(base)) return base;
+  if (typeof item.precioCOP === 'number' && !Number.isNaN(item.precioCOP)) {
+    return item.precioCOP;
   }
   return undefined;
 }
@@ -136,14 +153,17 @@ export function resolveKardexPrices(
   lineItems: ReadonlyArray<{ itemId: string; precioCOP: number }> | undefined,
   manyItems: ReadonlyArray<TierPricedCop & { itemId: string }> | undefined,
   tier: CompradorTier,
+  trmRate?: number,
 ): Map<string, number | undefined> {
   const map = new Map<string, number | undefined>();
   if (lineItems && lineItems.length > 0) {
+    // Una venta ya guardada conserva SU precio congelado: no se re-resuelve con
+    // la TRM de hoy. El comprobante tiene que decir lo que se cobró.
     for (const line of lineItems) map.set(line.itemId, line.precioCOP);
     return map;
   }
   for (const row of manyItems ?? []) {
-    map.set(row.itemId, pickTierPrice(row, tier));
+    map.set(row.itemId, pickTierPrice(row, tier, trmRate));
   }
   return map;
 }
