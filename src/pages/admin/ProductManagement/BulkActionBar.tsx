@@ -277,9 +277,28 @@ function BulkPricePopover({
   const [raw, setRaw] = useState('');
 
   const close = () => setOpen(false);
+
+  /**
+   * El valor tecleado, y si sirve para aplicar.
+   *
+   * `Number('')` es 0, y 0 es finito: con el guard viejo —`if
+   * (!Number.isFinite(n)) return;`— abrir el popover en modo «absoluto» (el que
+   * viene por defecto), no escribir nada y darle a Aplicar ponía **$0 a toda la
+   * selección**. Sin previsualización, sin confirmación y sin deshacer, con un
+   * toast verde encima, y el 0 viajaba a la columna M y a la vitrina. Hay una
+   * fila así en producción hoy (#339).
+   *
+   * Un 0 en modo absoluto NO es un precio: es «no escribí nada». En delta y
+   * porcentaje, en cambio, un negativo sí es legítimo (bajar precios), y por eso
+   * la regla del `> 0` se aplica sólo al modo absoluto.
+   */
+  const limpio = raw.replace(/[^0-9.\-]/g, '').trim();
+  const n = limpio === '' ? Number.NaN : Number(limpio);
+  const valorValido =
+    Number.isFinite(n) && (mode !== 'absolute' || n > 0) && !(mode !== 'absolute' && n === 0);
+
   const apply = () => {
-    const n = Number(raw.replace(/[^0-9.\-]/g, ''));
-    if (!Number.isFinite(n)) return;
+    if (!valorValido) return;
     onApply({ mode, value: n });
     setRaw('');
     close();
@@ -446,6 +465,7 @@ function BulkPricePopover({
           </ButtonBase>
           <ButtonBase
             onClick={apply}
+            disabled={!valorValido}
             disableRipple
             data-testid="bulk-change-price-apply"
             sx={{
@@ -456,6 +476,15 @@ function BulkPricePopover({
               px: '12px',
               py: '6px',
               borderRadius: '4px',
+              // Que se VEA que no se puede aplicar, no sólo que no haga nada:
+              // un botón que ignora el clic en silencio se lee como que falló
+              // la app, y el próximo intento es teclear cualquier cosa.
+              '&.Mui-disabled': {
+                opacity: 0.4,
+                cursor: 'not-allowed',
+                color: foto.ink.inverse,
+                backgroundColor: foto.accent.primary,
+              },
             }}
           >
             Aplicar

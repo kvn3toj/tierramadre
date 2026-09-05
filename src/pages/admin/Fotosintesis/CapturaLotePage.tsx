@@ -1721,6 +1721,22 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Idempotencia del guardado, y honestidad del error.
+   *
+   * `tokenIntentoRef` sobrevive a los reintentos del MISMO ítem: si el primer
+   * intento falló por red, el segundo manda el mismo token y el servidor
+   * devuelve el resultado anterior en vez de crear una segunda pieza. Se limpia
+   * recién cuando el guardado termina bien, para que el ítem siguiente arranque
+   * con token nuevo.
+   *
+   * `itemCreadoRef` recuerda si el alta ya pasó dentro de ESTE intento, para
+   * que un fallo posterior (foto, certificado, patch de medios) no se reporte
+   * como «No pudimos guardar el ítem» cuando el ítem sí quedó.
+   */
+  const tokenIntentoRef = useRef<string | null>(null);
+  const itemCreadoRef = useRef<string | null>(null);
+
   // Cancel flows ---------------------------------------------------------------
   // `cancelItemDialogOpen` covers two semantic actions depending on the lot
   // shape: shrink the declared count by 1 (skip current slot), OR cancel the
@@ -1917,6 +1933,47 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
     itemsCount < unidadesDeclaradas &&
     !saving;
 
+  /**
+   * Hay algo tipeado que todavía no se guardó.
+   *
+   * Más flojo que `canSave` a propósito: `canSave` exige que el ítem esté
+   * COMPLETO y el lote abierto; para avisar antes de perder el trabajo alcanza
+   * con que la persona haya escrito o adjuntado algo. Un formulario a medias es
+   * justamente el que más duele perder.
+   */
+  const hayBorradorSinGuardar =
+    !saving &&
+    (activeNombre.trim().length > 0 ||
+      typeof activePreponderancia === 'number' ||
+      photos.length > 0 ||
+      !!certificadoFile ||
+      observacion.trim().length > 0);
+
+  /**
+   * Avisa antes de cerrar la pestaña, recargar o navegar fuera del sitio.
+   *
+   * La pantalla de captura no tenía ninguna guardia: un F5 o un clic en el
+   * historial se llevaba el ítem tipeado —nombre, medidas, fotos adjuntas— sin
+   * una palabra. Es el mismo trabajo que el drawer sí protege con su guardián
+   * de «N cambios sin guardar».
+   *
+   * `beforeunload` cubre recarga, cierre de pestaña y salida del sitio. La
+   * navegación DENTRO de la app (react-router) no dispara este evento; queda
+   * anotado como lo que falta, y es un cambio mayor porque pide un bloqueador
+   * de router.
+   */
+  useEffect(() => {
+    if (!hayBorradorSinGuardar) return;
+    const alSalir = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      // Los navegadores modernos ignoran el texto y muestran el suyo; hace
+      // falta asignar returnValue igual para que el diálogo aparezca.
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', alSalir);
+    return () => window.removeEventListener('beforeunload', alSalir);
+  }, [hayBorradorSinGuardar]);
+
   // BR-2 sólo aplica a lotes con costo (espejo del candado real en
   // lots._close — ver convex/_lib/cierreLote.ts). Un lote sin costo (patrón
   // "Recuperado": C-070/C-090) cierra sin exigir preponderancia.
@@ -2007,10 +2064,26 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
         subtipoForm: SUBTIPO_LABEL[subtipo],
       } as unknown as CreateLotItemArgs;
 
-      const result = (await createLotItem(payload)) as {
+      // `clientToken` — la MISMA guarda de idempotencia que ya usaban el bot y
+      // el copiloto, y que a la captura web le faltaba. Sin él, un doble clic o
+      // un reintento tras un error de red asignan DOS itemId y crean dos filas;
+      // con él, el replay devuelve el resultado anterior (convex/lotItems.ts
+      // `_create`, guardia por `by_token`).
+      //
+      // Se genera UNA vez por intento de guardado y se reusa si hay reintento,
+      // que es justo lo que lo hace servir de algo.
+      const clientToken = tokenIntentoRef.current ?? crypto.randomUUID();
+      tokenIntentoRef.current = clientToken;
+
+      const result = (await createLotItem({
+        ...(payload as Record<string, unknown>),
+        clientToken,
+      } as unknown as CreateLotItemArgs)) as {
         lotItemId: Id<'lotItems'>;
         itemId: string;
       };
+      // A partir de acá la pieza YA EXISTE en la base.
+      itemCreadoRef.current = result.itemId;
 
       const photoFiles = photos
         .map((p) => p.file)
@@ -2065,6 +2138,9 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
       } else {
         resetItemDraft();
       }
+      // Guardado completo: el próximo ítem arranca con token nuevo.
+      tokenIntentoRef.current = null;
+      itemCreadoRef.current = null;
       notify(
         photoUploadFailed
           ? `Ítem ${result.itemId} guardado SIN foto — la imagen no se subió, reintentá desde edición`
@@ -2072,8 +2148,19 @@ function ActiveLotPage({ loteId, embedded = false }: ActiveLotPageProps) {
         photoUploadFailed ? 'warning' : 'success',
       );
     } catch (err) {
+      const detalle =
+        err instanceof Error ? err.message : 'No pudimos guardar el ítem';
+      // Si el alta YA pasó, el fallo vino de un paso posterior (la foto, el
+      // certificado, el patch de medios). Decir «No pudimos guardar el ítem»
+      // ahí es falso y peligroso: invita a reintentar, y el reintento creaba
+      // una segunda pieza. Ahora se nombra la que quedó y se dice qué falló.
+      //
+      // El `clientToken` de arriba hace que un reintento sea inofensivo igual;
+      // esto es para que la persona no tenga que confiar en eso a ciegas.
       setError(
-        err instanceof Error ? err.message : 'No pudimos guardar el ítem',
+        itemCreadoRef.current
+          ? `El ítem ${itemCreadoRef.current} SÍ quedó guardado, pero falló un paso posterior: ${detalle}. No lo vuelvas a crear — completalo desde edición.`
+          : detalle,
       );
     } finally {
       setSaving(false);
