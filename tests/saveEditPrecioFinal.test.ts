@@ -67,3 +67,39 @@ describe('_saveEdit — precioFinalCOP', () => {
     expect(patches[0]).not.toHaveProperty('precioFinalManual');
   });
 });
+
+/**
+ * La forma del validador, que hasta ahora nadie miraba.
+ *
+ * Los casos de arriba llaman al handler de `_saveEdit` DIRECTO, con un objeto
+ * plano. Eso salta el validador de argumentos de Convex (`saveEditPatchArgs`),
+ * así que ninguno de ellos prueba lo que el encabezado del archivo afirma sobre
+ * él: podrías borrar `precioFinalCOP` del validador y esta suite seguiría en
+ * verde mientras producción rechaza cada guardado.
+ *
+ * No es hipotético: el 2026-09-04 el drawer mandaba `precioCOP` y el validador
+ * de creación NO aceptaba `precioFinalCOP`. La forma del validador ES el
+ * contrato entre la pantalla y el servidor, y merece su propia prueba.
+ */
+describe('saveEditPatchArgs — el contrato con la pantalla', () => {
+  it('acepta el campo que el catálogo lee, y el ancla en dólares no se cuela', async () => {
+    const mod = await import('../convex/products');
+    const args = (
+      mod as unknown as { saveEditPatchArgs?: { fields?: Record<string, unknown> } }
+    ).saveEditPatchArgs;
+    // Si deja de exportarse, este test avisa en vez de pasar por vacío.
+    expect(args, 'saveEditPatchArgs debe exportarse para poder fijarlo').toBeDefined();
+    // Un `v.object()` de Convex guarda sus campos en `.fields`.
+    const campos = Object.keys(args?.fields ?? {});
+    expect(campos.length, 'el validador no expuso campos').toBeGreaterThan(0);
+
+    // El campo vivo: sin él, ningún precio del editor llega al catálogo.
+    expect(campos).toContain('precioFinalCOP');
+    // El legacy sigue aceptado para documentos viejos, pero ya nadie lo manda.
+    expect(campos).toContain('precioCOP');
+    // Los que la edición de inventario necesita de verdad.
+    for (const c of ['nombre', 'calidad', 'estado', 'coleccion', 'caja', 'ubicacion']) {
+      expect(campos, `falta ${c}`).toContain(c);
+    }
+  });
+});

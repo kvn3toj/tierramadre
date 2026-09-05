@@ -278,9 +278,13 @@ export default function FotosintesisVentaPage({
   // itemId → tier-resolved suggested price (COP), order-preserving from manyItems.
   const priceByItemId = useMemo(() => {
     const m = new Map<string, number | undefined>();
-    for (const r of manyItems ?? []) m.set(r.itemId, pickTierPrice(r, tier));
+    // Con la TRM: éste es el precio AUTORITATIVO de la venta, el que queda
+    // congelado en `lineItems`. Sin ella resolvía el COP provisional y el
+    // escritorio cobraba distinto de lo que la vitrina mostró.
+    for (const r of manyItems ?? [])
+      m.set(r.itemId, pickTierPrice(r, tier, trmRate));
     return m;
-  }, [manyItems, tier]);
+  }, [manyItems, tier, trmRate]);
 
   // itemId → estado, so the row + confirm guard know which pieces are VENDIDA.
   const estadoByItemId = useMemo(() => {
@@ -658,11 +662,32 @@ export default function FotosintesisVentaPage({
   // Now that every item's estado is queried (manyItems), block the sale if ANY
   // selected piece is already VENDIDA — not just the lead item.
   const anySold = (manyItems ?? []).some((r) => r.estado === 'VENDIDA');
+
+  /**
+   * Ninguna LÍNEA puede ir en $0, no sólo el total.
+   *
+   * `precioCop > 0` mira la SUMA, y un carrito que mezcla una pieza con precio
+   * con una sin precio suma > 0 y pasa: la pieza sin precio viaja gratis,
+   * escondida detrás de la que sí lo tiene. Es exactamente el agujero que
+   * `precioBaseEsValido` cierra del lado del checkout público —su propio
+   * comentario lo explica— y que acá faltaba.
+   *
+   * Sólo se evalúa cuando `manyItems` ya resolvió: antes de eso el mapa está
+   * vacío y todas las líneas parecerían sin precio.
+   */
+  const preciosResueltos = (manyItems ?? []).length > 0;
+  const lineaSinPrecio = preciosResueltos
+    ? selectedItems.find(
+        (s) => !((priceByItemId.get(s.itemId) ?? 0) > 0),
+      )
+    : undefined;
+
   const canConfirm =
     !!sede &&
     itemsCount > 0 &&
     !!clientId &&
     precioCop > 0 &&
+    !lineaSinPrecio &&
     creditoComplete &&
     !itemSold &&
     !anySold &&
@@ -694,6 +719,15 @@ export default function FotosintesisVentaPage({
     if (anySold) {
       setErrorBanner(
         'Uno o más ítems ya están vendidos. Quitalos para continuar.',
+      );
+      return;
+    }
+    if (lineaSinPrecio) {
+      // Nombra la pieza. Un botón deshabilitado sin motivo manda a la persona a
+      // adivinar, y con un carrito de ocho piezas la adivinanza es cara.
+      setErrorBanner(
+        `El ítem ${lineaSinPrecio.itemId} no tiene precio: no se puede vender ` +
+          `en $0. Ponele precio en el inventario y volvé, o quitalo del carrito.`,
       );
       return;
     }
@@ -947,6 +981,7 @@ export default function FotosintesisVentaPage({
     clientId,
     itemSold,
     anySold,
+    lineaSinPrecio,
     precioCop,
     totalCop,
     comisionCop,

@@ -1017,7 +1017,10 @@ async function findOwningActiveSale(ctx: MutationCtx, itemId: string) {
   return null;
 }
 
-const saveEditPatchArgs = v.object({
+// Exportado para poder FIJARLO en un test: la forma de este validador es el
+// contrato entre la pantalla de inventario y el servidor, y el 2026-09-04
+// costó doce precios que nadie lo estuviera mirando.
+export const saveEditPatchArgs = v.object({
   nombre: v.optional(v.string()),
   peso: v.optional(v.string()),
   color: v.optional(v.string()),
@@ -1617,6 +1620,25 @@ export const _saveEditMany = internalMutation({
     patch: saveEditPatchArgs,
   },
   handler: async (ctx, { itemIds, editorEmail, editorName, patch }) => {
+    // Un precio de CERO no se pone en lote, nunca.
+    //
+    // `Number('')` es 0, así que el popover de «Cambiar precio» del admin podía
+    // mandar 0 con el campo vacío y dejar la selección entera en $0 — sin
+    // previsualización ni deshacer, y el 0 viajaba a la columna M y a la
+    // vitrina. El camino del cliente ya se cerró (BulkActionBar valida y
+    // deshabilita), pero esta mutation es la que TOCA el dato: si el guard vive
+    // sólo en la pantalla, el próximo llamador lo vuelve a abrir.
+    //
+    // Poner un precio en 0 pieza por pieza sigue siendo posible desde el editor
+    // individual — ahí es una decisión deliberada sobre UNA pieza, no un
+    // resbalón que barre una selección.
+    if (patch.precioFinalCOP !== undefined && !(patch.precioFinalCOP > 0)) {
+      throw new Error(
+        'Un precio en lote tiene que ser mayor que cero. Recibido: ' +
+          String(patch.precioFinalCOP),
+      );
+    }
+
     let updatedCount = 0;
     let unchangedCount = 0;
     let missingCount = 0;

@@ -25,6 +25,8 @@ import { StatusPip, type EstadoValue } from './StatusPip';
 import { ChromaBar } from './ChromaBar';
 // === Phase H — inline edit ===
 import { InlineEditCell } from './InlineEditCell';
+import { precioBaseCOP } from '../../../utils/precioBase';
+import { useTRM } from '../../../hooks/useTRM';
 
 export interface InventoryRowData {
   itemId: string;
@@ -33,6 +35,8 @@ export interface InventoryRowData {
   color?: string;
   calidad?: string;
   precioFinalCOP?: number;
+  /** Ancla en dólares (col BG). > 0 ⇒ el COP es derivado, no editable acá. */
+  precioFinalUSD?: number;
   ubicacion?: string;
   coleccion?: string;
   estado: EstadoValue;
@@ -93,6 +97,26 @@ export function InventoryRow({
   isLockedByOther,
 }: InventoryRowProps) {
   const theme = useTheme();
+
+  /**
+   * Una pieza anclada en dólares muestra el COP RESUELTO, y no ofrece editarlo.
+   *
+   * Antes esta celda mostraba y dejaba editar `precioFinalCOP` a secas — para
+   * #547 y #548 eso es el COP provisional congelado a una TRM vieja, o sea un
+   * número que el catálogo ya no usa. Peor: la edición en línea escribía sobre
+   * él, así que la persona corregía «el precio» y no cambiaba nada de lo que ve
+   * un cliente.
+   *
+   * Ahora se muestra `USD × TRM del día` —lo mismo que la vitrina— con una
+   * marca «US$», y la celda pasa a sólo lectura: el precio de esa pieza vive en
+   * la columna BG de la hoja, que es donde hay que cambiarlo.
+   */
+  const { trmRate } = useTRM();
+  const anclada =
+    typeof row.precioFinalUSD === 'number' &&
+    Number.isFinite(row.precioFinalUSD) &&
+    row.precioFinalUSD > 0;
+  const precioMostrado = precioBaseCOP(row, trmRate) ?? row.precioFinalCOP;
   const atelier = getAtelier(theme.palette.mode);
 
   // Status tint — barely-there wash (4-6% alpha over canvas)
@@ -327,7 +351,7 @@ export function InventoryRow({
             numeric string. `parse` strips non-numeric chars and rejects
             non-positive values (returning `null` clears the field). */}
         <Box sx={{ minWidth: 0, textAlign: 'right' }}>
-          {onInlineEdit ? (
+          {onInlineEdit && !anclada ? (
             <InlineEditCell
               foto={foto}
               display={formatPriceCOP(row.precioFinalCOP)}
@@ -359,7 +383,16 @@ export function InventoryRow({
                 minWidth: 0,
               }}
             >
-              {formatPriceCOP(row.precioFinalCOP)}
+              {formatPriceCOP(precioMostrado)}
+              {anclada && (
+                <Box
+                  component="span"
+                  title={`Precio anclado en US$${row.precioFinalUSD?.toLocaleString('en-US')} — el COP se deriva con la TRM del día y no se edita acá`}
+                  sx={{ ml: '4px', opacity: 0.6, fontSize: '0.85em' }}
+                >
+                  US$
+                </Box>
+              )}
             </Typography>
           )}
         </Box>
