@@ -221,13 +221,18 @@ export function mapRowToTreasureItem(
     ).trim(),
     // Adaptador SOT v3 (2026-07-21): la legacy tenía "Precio COP"; el SOT v3 usa
     // `precioFinalCOP` (= costoBase × 2.6). Orden: precio cop (legacy) →
-    // precioFinalCOP (SOT v3) → precioEmbajadorCOP (SOT v2, deprecado) →
-    // posicional (solo legacy; en el SOT el índice 11 es costoBaseCOP).
+    // precioFinalCOP (SOT v3) → precioEmbajadorCOP (SOT v2, deprecado).
+    //
+    // SIN posicional. El índice 11 es `costoBaseCOP`: con la celda de precio
+    // vacía, ese fallback servía el COSTO DE COMPRA como precio de vitrina.
+    // Medido el 2026-09-04: 39 filas sin `precioFinalCOP`, 12 de ellas con
+    // costo > 0. No llegaba al visitante anónimo —la proyección le quita el
+    // precio— pero sí a quien abre un link de vitrina y a staff, que es
+    // justamente donde se cotiza.
     precioCOP: parsePrice(
       getValue(INVENTARIO_HEADERS.PRECIO_COP) ||
         getValue(INVENTARIO_HEADERS.PRECIO_FINAL) ||
-        getValue(INVENTARIO_HEADERS.PRECIO_EMBAJADOR) ||
-        getByIndex(11),
+        getValue(INVENTARIO_HEADERS.PRECIO_EMBAJADOR),
     ),
     precioInternacional: 0,
     // NO positional fallback here. The `getByIndex` defaults encode the
@@ -241,32 +246,53 @@ export function mapRowToTreasureItem(
     // resolves and this fallback could never fire usefully — it could only
     // ever leak a price. Dropping it is a no-op today and closes that path.
     //
-    // NOTE the sibling fields are NOT equally safe: `asesor` has no header on
-    // the legacy sheet (idx -1), so its `getByIndex(13)` IS load-bearing
-    // there and must stay, even though the same index is
-    // `precioconscientecop` on the Fotosíntesis layout.
-    // Header lookup ONLY — deliberately no `getByIndex` fallback, for exactly
-    // the reason P0.3 removed ubicación's: the positional defaults encode the
-    // legacy layout, and against any other layout they return a neighbouring
-    // column's value. Left undefined when absent so the UI can hide the row
-    // rather than print a placeholder.
+    // ── De acá abajo, SÓLO cabecera nombrada (2026-09-05) ────────────────
+    //
+    // La advertencia que había acá decía que `asesor` no tiene cabecera en el
+    // libro legacy y que por eso su `getByIndex(13)` era load-bearing. Dejó de
+    // ser cierta, y el motivo importa: `SPREADSHEET_ID` y
+    // `FOTOSINTESIS_SPREADSHEET_ID` apuntan HOY AL MISMO libro —verificado
+    // comparando las dos variables y leyendo la fila 1: 59 cabeceras, layout
+    // idéntico—. El «libro legacy con layout A:U congelado» ya no existe
+    // aparte, así que ningún posicional de esta función tiene un layout al que
+    // corresponder.
+    //
+    // Y no eran inofensivos. Medido contra la fila 1 real, cada índice apuntaba
+    // a la columna de al lado:
+    //
+    //     idx 13 → «(sin uso)»       idx 17 → QR
+    //     idx 14 → UBICACIÓN         idx 19 → CAJA
+    //     idx 15 → ASESOR            idx 20 → preponderancia (un número)
+    //     idx 16 → ESTADO
+    //
+    // Como el fallback sólo dispara cuando la celda con nombre está VACÍA, el
+    // efecto era: una fila sin `caja` recibía la URL del QR; una sin
+    // `coleccion` recibía un ESTADO; una sin `estadoAsesor` recibía un número.
+    // Eso es exactamente la corrupción que hay en producción al 2026-09-04:
+    // 57 filas con `caja` = la URL del QR (48 publicadas) y 19 con `coleccion`
+    // = un ESTADO. El botón «Resincronizar» la estampaba en Convex y el push la
+    // devolvía a la hoja.
+    //
+    // El criterio es el que ya usó P0.3 al quitar el de `ubicación`: si la
+    // cabecera resuelve, el posicional sólo puede mentir. Hoy resuelven las
+    // once.
     procedencia: getValue(INVENTARIO_HEADERS.PROCEDENCIA) || undefined,
     ubicacion: getValue(INVENTARIO_HEADERS.UBICACION) || '',
-    asesor: getValue(INVENTARIO_HEADERS.ASESOR) || getByIndex(13) || '',
+    asesor: getValue(INVENTARIO_HEADERS.ASESOR) || '',
+    // El default 'DISPONIBLE' se queda: es una etiqueta de presentación para
+    // una fila sin estado, no un dato que se escriba. Ojo igual — esta salida
+    // alimenta el upsert del pull, así que si alguna vez hay filas sin estado
+    // conviene revisarlo junto con `normalizeInvEstado`, que desde el
+    // 2026-09-04 sí devuelve null en vez de inventar. Hoy: 0 filas sin estado.
     estado: (
-      getValue(INVENTARIO_HEADERS.ESTADO) ||
-      getByIndex(14) ||
-      'DISPONIBLE'
+      getValue(INVENTARIO_HEADERS.ESTADO) || 'DISPONIBLE'
     ).toUpperCase() as TreasureStatus,
-    qr: getValue(INVENTARIO_HEADERS.QR) || getByIndex(15) || '',
-    coleccion: getValue(INVENTARIO_HEADERS.COLECCION) || getByIndex(16) || '',
-    caja: getValue(INVENTARIO_HEADERS.CAJA) || getByIndex(17) || '',
-    asesorActual:
-      getValue(INVENTARIO_HEADERS.ASESOR_ACTUAL) || getByIndex(19) || '',
+    qr: getValue(INVENTARIO_HEADERS.QR) || '',
+    coleccion: getValue(INVENTARIO_HEADERS.COLECCION) || '',
+    caja: getValue(INVENTARIO_HEADERS.CAJA) || '',
+    asesorActual: getValue(INVENTARIO_HEADERS.ASESOR_ACTUAL) || '',
     estadoAsesor: (
-      getValue(INVENTARIO_HEADERS.ESTADO_ASESOR) ||
-      getByIndex(20) ||
-      ''
+      getValue(INVENTARIO_HEADERS.ESTADO_ASESOR) || ''
     ).toUpperCase() as TreasureStatus | '',
     isJewelry: pesoData.isJewelry,
     ...(pesoData.metalType ? { metalType: pesoData.metalType } : {}),
