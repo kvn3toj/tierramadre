@@ -25,7 +25,7 @@ export interface NewProductInput {
   tallaAnillo?: string;
   medidas?: string;
   categoria?: string;
-  precioCOP?: number;
+  precioFinalCOP?: number;
   ubicacion?: string;
   coleccion?: string;
   caja?: string;
@@ -42,7 +42,7 @@ export interface ValidatedProduct {
   tallaAnillo?: string;
   medidas?: string;
   categoria?: string;
-  precioCOP?: number;
+  precioFinalCOP?: number;
   ubicacion?: string;
   coleccion?: string;
   caja?: string;
@@ -81,11 +81,11 @@ export function validateNewProduct(
     tallaAnillo: trimOrUndef(input.tallaAnillo),
     medidas: trimOrUndef(input.medidas),
     categoria: trimOrUndef(input.categoria),
-    precioCOP:
-      typeof input.precioCOP === "number" &&
-      Number.isFinite(input.precioCOP) &&
-      input.precioCOP > 0
-        ? input.precioCOP
+    precioFinalCOP:
+      typeof input.precioFinalCOP === "number" &&
+      Number.isFinite(input.precioFinalCOP) &&
+      input.precioFinalCOP > 0
+        ? input.precioFinalCOP
         : undefined,
     ubicacion: trimOrUndef(input.ubicacion),
     coleccion: trimOrUndef(input.coleccion),

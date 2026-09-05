@@ -393,7 +393,6 @@ export const _create = internalMutation({
       ubicacion: args.ubicacion,
       coleccion: args.coleccion,
       caja: args.caja,
-      precioCOP: args.precioPublicoCOP,
       estado: 'DISPONIBLE' as const,
       loteId: args.loteId,
       preponderancia: args.preponderancia,
@@ -423,8 +422,26 @@ export const _create = internalMutation({
       formulaGema: args.formulaGema,
       formulaJoya: args.formulaJoya,
       rangoDescuento: args.rangoDescuento,
-      // DERIVED single final price (2026-07-21 refactor); replaces the tiers.
-      precioFinalCOP: computePrecioFinal(costoBaseCOP),
+      // El precio de lista. Dos orígenes, y el de la persona manda:
+      //
+      //   · Si quien captura escribió un «Precio público», ESE es el precio, y
+      //     se sella `precioFinalManual` para que el re-fan del lote no lo
+      //     recalcule.
+      //   · Si no escribió ninguno, queda la semilla derivada costo × 2.6.
+      //
+      // Hasta el 2026-09-04 el precio tecleado se guardaba en `precioCOP` —el
+      // riel legacy, sin columna en el espejo desde el 2026-05-29— y este campo
+      // se llenaba SIEMPRE con la semilla. Con costo 0, la semilla es 0: la
+      // pieza nacía en «Consultar precio» con un precio escrito al lado que
+      // nadie leía. Le pasó a doce piezas del lote TM-001, y es la misma falla
+      // que llegaba por el wizard /nuevo del bot y por la captura web, porque
+      // las tres puntas mandan `precioPublicoCOP` y todas caían acá.
+      ...(args.precioPublicoCOP !== undefined
+        ? {
+            precioFinalCOP: args.precioPublicoCOP,
+            precioFinalManual: true,
+          }
+        : { precioFinalCOP: computePrecioFinal(costoBaseCOP) }),
       lastPulledAt: now,
       syncStatus: 'pending' as const,
     });
@@ -984,12 +1001,21 @@ export const _updateGemaFields = internalMutation({
       // "clear" sentinel. Blank inputs arrive as undefined (the *PatchFromDraft
       // builders omit them) and are skipped by the guard above, so zero-handling
       // is now consistent with the precioEmbajador/Consciente tier fields.
+      //
+      // Aterriza en `precioFinalCOP` —el campo que lee el catálogo— y no en el
+      // legacy `precioCOP`, que es donde caía hasta el 2026-09-04. Las tres
+      // puntas que mandan `precioPublicoCOP` (la captura web, el copiloto y el
+      // wizard /nuevo del bot) pasan por acá, así que las tres escribían un
+      // precio que ningún cliente veía. Se sella `precioFinalManual` por el
+      // mismo motivo que en el alta: sin eso el re-fan del lote lo devuelve a
+      // costo × 2.6, que para un lote con costo 0 es CERO.
       const next = patch.precioPublicoCOP;
-      if (next !== product.precioCOP) {
-        productPatch.precioCOP = next;
+      if (next !== product.precioFinalCOP) {
+        productPatch.precioFinalCOP = next;
+        productPatch.precioFinalManual = true;
         changes.push({
-          field: 'precioCOP',
-          before: product.precioCOP ?? null,
+          field: 'precioFinalCOP',
+          before: product.precioFinalCOP ?? null,
           after: next ?? null,
         });
       }

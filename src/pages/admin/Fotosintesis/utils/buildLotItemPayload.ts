@@ -197,6 +197,7 @@ export function gemaDraftFromProduct(row: {
   calidad?: string;
   procedencia?: string;
   precioCOP?: number;
+  precioFinalCOP?: number;
   cantidad?: number;
   talla?: string;
   medidas?: string;
@@ -214,7 +215,17 @@ export function gemaDraftFromProduct(row: {
     calidad: normalizeCalidad(row.calidad),
     procedencia: row.procedencia ?? '',
     preponderancia: '',
-    precioPublicoCOP: row.precioCOP ?? '',
+    // Se hidrata del campo VIVO, el mismo que escribe el guardado
+    // (`lotItems._updateGemaFields` → `precioFinalCOP`). `precioCOP` queda
+    // sólo como respaldo para filas viejas que nunca recibieron el campo nuevo.
+    //
+    // No es cosmético: las ocho piezas de TM-001 que recibieron precio el
+    // 2026-09-04 tienen `precioFinalCOP` con valor y `precioCOP` en 0 — no
+    // ausente, CERO. Hidratando del legacy, el borrador nacía en 0, y como 0 es
+    // un número (no un blanco), el builder lo mandaba y el guardado escribía
+    // `precioFinalCOP = 0` con sello manual: borraba el precio y lo dejaba
+    // clavado, por abrir la ficha y guardar cualquier otro campo.
+    precioPublicoCOP: row.precioFinalCOP ?? row.precioCOP ?? '',
     // Preserve "unset" rather than fabricating a 1. A legacy bruto (rough
     // stone) carries no `cantidad`, and since stones now edit as gemas
     // (inferItemTipo) this hydrate must not inject a piece-count the operator
@@ -344,6 +355,7 @@ export function joyaDraftFromProduct(row: {
   minerales?: string[];
   complementos?: string[];
   precioCOP?: number;
+  precioFinalCOP?: number;
 }): JoyaDraft {
   const { value, unit } = parseJoyaPeso(row.peso);
   return {
@@ -359,7 +371,17 @@ export function joyaDraftFromProduct(row: {
     minerales: (row.minerales ?? []) as JoyaDraft['minerales'],
     complementos: (row.complementos ?? []) as JoyaDraft['complementos'],
     preponderancia: '',
-    precioPublicoCOP: row.precioCOP ?? '',
+    // Se hidrata del campo VIVO, el mismo que escribe el guardado
+    // (`lotItems._updateGemaFields` → `precioFinalCOP`). `precioCOP` queda
+    // sólo como respaldo para filas viejas que nunca recibieron el campo nuevo.
+    //
+    // No es cosmético: las ocho piezas de TM-001 que recibieron precio el
+    // 2026-09-04 tienen `precioFinalCOP` con valor y `precioCOP` en 0 — no
+    // ausente, CERO. Hidratando del legacy, el borrador nacía en 0, y como 0 es
+    // un número (no un blanco), el builder lo mandaba y el guardado escribía
+    // `precioFinalCOP = 0` con sello manual: borraba el precio y lo dejaba
+    // clavado, por abrir la ficha y guardar cualquier otro campo.
+    precioPublicoCOP: row.precioFinalCOP ?? row.precioCOP ?? '',
   };
 }
 
@@ -406,6 +428,7 @@ export function brutoDraftFromProduct(row: {
   cantidadEstimada?: number;
   rendimientoEsperado?: number;
   precioCOP?: number;
+  precioFinalCOP?: number;
 }): BrutoDraft {
   return {
     nombre: row.nombre ?? '',
@@ -414,7 +437,17 @@ export function brutoDraftFromProduct(row: {
     cantidadEstimada: row.cantidadEstimada ?? '',
     rendimientoEsperado: row.rendimientoEsperado ?? '',
     preponderancia: '',
-    precioPublicoCOP: row.precioCOP ?? '',
+    // Se hidrata del campo VIVO, el mismo que escribe el guardado
+    // (`lotItems._updateGemaFields` → `precioFinalCOP`). `precioCOP` queda
+    // sólo como respaldo para filas viejas que nunca recibieron el campo nuevo.
+    //
+    // No es cosmético: las ocho piezas de TM-001 que recibieron precio el
+    // 2026-09-04 tienen `precioFinalCOP` con valor y `precioCOP` en 0 — no
+    // ausente, CERO. Hidratando del legacy, el borrador nacía en 0, y como 0 es
+    // un número (no un blanco), el builder lo mandaba y el guardado escribía
+    // `precioFinalCOP = 0` con sello manual: borraba el precio y lo dejaba
+    // clavado, por abrir la ficha y guardar cualquier otro campo.
+    precioPublicoCOP: row.precioFinalCOP ?? row.precioCOP ?? '',
   };
 }
 
@@ -459,13 +492,24 @@ export function insumoDraftFromProduct(row: {
   categoria?: string;
   cantidad?: number;
   precioCOP?: number;
+  precioFinalCOP?: number;
 }): InsumoDraft {
   return {
     nombre: row.nombre ?? '',
     categoria: row.categoria ?? '',
     cantidad: row.cantidad ?? '',
     preponderancia: '',
-    precioPublicoCOP: row.precioCOP ?? '',
+    // Se hidrata del campo VIVO, el mismo que escribe el guardado
+    // (`lotItems._updateGemaFields` → `precioFinalCOP`). `precioCOP` queda
+    // sólo como respaldo para filas viejas que nunca recibieron el campo nuevo.
+    //
+    // No es cosmético: las ocho piezas de TM-001 que recibieron precio el
+    // 2026-09-04 tienen `precioFinalCOP` con valor y `precioCOP` en 0 — no
+    // ausente, CERO. Hidratando del legacy, el borrador nacía en 0, y como 0 es
+    // un número (no un blanco), el builder lo mandaba y el guardado escribía
+    // `precioFinalCOP = 0` con sello manual: borraba el precio y lo dejaba
+    // clavado, por abrir la ficha y guardar cualquier otro campo.
+    precioPublicoCOP: row.precioFinalCOP ?? row.precioCOP ?? '',
   };
 }
 

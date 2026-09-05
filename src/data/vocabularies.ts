@@ -73,9 +73,23 @@ export const CALIDAD_LEGACY_ALIAS: Record<string, GemaCalidad> = {
  * of being silently coerced to the default. Mirrors `normalizeCalidadForSheet`
  * in `convex/_lib/fotosintesisVocab.ts`, which already preserves unknowns.
  */
-export function normalizeCalidad(raw: string | undefined | null): GemaCalidad {
+export function normalizeCalidad(
+  raw: string | undefined | null,
+): GemaCalidad | '' {
   const s = (raw ?? '').trim();
-  if (!s) return DEFAULT_CALIDAD;
+  // VACÍO SE QUEDA VACÍO. Hasta el 2026-09-04 esto devolvía DEFAULT_CALIDAD
+  // ('F1') y era el gemelo app-side del bug que ya se había cerrado en
+  // `normalizeCalidadForSheet`. No era teórico: se hidrataba el drawer con una
+  // fila de calidad vacía, 'F1' entraba al borrador, quedaba dentro de la línea
+  // base de «cambios sin guardar» y se empujaba al SOT al guardar CUALQUIER
+  // otro campo. `productEdits` registró 14 ediciones `calidad: null → F1` así,
+  // sobre joyería, mientras se editaba otra cosa.
+  //
+  // Un default que rellena un campo vacío es un dato inventado con forma de
+  // dato — y como `calidad` alimenta CALIDAD_FACTORS, ese invento terminaba
+  // sugiriendo el precio público. DEFAULT_CALIDAD sobrevive sólo como semilla
+  // visible del alta (EMPTY_GEMA_DRAFT), donde la persona la ve y la cambia.
+  if (!s) return '';
   if ((CALIDADES as readonly string[]).includes(s)) return s as GemaCalidad;
   const aliased = CALIDAD_LEGACY_ALIAS[s];
   if (aliased) return aliased;

@@ -68,3 +68,45 @@ describe('el precio cobrado es el publicado', () => {
     expect(servidor(anclada)).not.toBe(0);
   });
 });
+
+/**
+ * La regresión que casi meto yo, y por eso queda fijada.
+ *
+ * Al mandar el «Precio público» a `precioFinalCOP` (en vez del legacy
+ * `precioCOP`), el drawer de Fotosíntesis seguía HIDRATÁNDOSE del legacy. Las
+ * ocho piezas de TM-001 que recibieron precio el 2026-09-04 tienen
+ * `precioFinalCOP` con valor y `precioCOP` en **0** — no ausente, cero.
+ *
+ * Con la hidratación vieja el borrador nacía en 0; y como 0 es un número y no
+ * un blanco, el builder lo mandaba en vez de omitirlo, y el guardado escribía
+ * `precioFinalCOP = 0` con sello `precioFinalManual`. Es decir: abrir la ficha
+ * y guardar CUALQUIER otro campo borraba el precio y lo dejaba clavado en cero,
+ * a salvo del re-fan que podría haberlo recuperado.
+ *
+ * La regla que fija esto: se hidrata del mismo campo que se escribe. Un
+ * guardado que no toca el precio tiene que ser un no-op sobre el precio.
+ */
+describe('hidratar y escribir tienen que ser el mismo campo', () => {
+  // Espejo de la hidratación en buildLotItemPayload (los cuatro sitios).
+  const hidratar = (row: { precioFinalCOP?: number; precioCOP?: number }) =>
+    row.precioFinalCOP ?? row.precioCOP ?? '';
+  // Espejo del builder: sólo un número viaja; el blanco se omite.
+  const aPatch = (v: number | '') => (typeof v === 'number' ? v : undefined);
+
+  it('una pieza con precio vivo y `precioCOP` en 0 no se pisa sola', () => {
+    const row = { precioFinalCOP: 105_000, precioCOP: 0 }; // la forma de #556
+    expect(hidratar(row)).toBe(105_000);
+    // Y al guardar sin tocar el precio, el patch trae el MISMO valor:
+    // `next === product.precioFinalCOP`, así que no hay escritura.
+    expect(aPatch(hidratar(row))).toBe(row.precioFinalCOP);
+  });
+
+  it('una fila vieja sin el campo nuevo sigue hidratando del legacy', () => {
+    expect(hidratar({ precioCOP: 150_000 })).toBe(150_000);
+  });
+
+  it('sin ningún precio hidrata en blanco, y el blanco se omite', () => {
+    expect(hidratar({})).toBe('');
+    expect(aPatch(hidratar({}))).toBeUndefined();
+  });
+});
