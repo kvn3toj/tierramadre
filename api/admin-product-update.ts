@@ -131,6 +131,25 @@ function s(v: unknown): string {
   return String(v);
 }
 
+/**
+ * Conserva una celda que nadie tocó, SIN convertir números en texto.
+ *
+ * Leer sin formato ya evita que "17.9%" sustituya a 0.1785, pero si después se
+ * escribe la cadena "0.1785" el problema vuelve por la otra punta:
+ * `valueInputOption: 'USER_ENTERED'` parsea toda cadena contra el idioma de la
+ * hoja. Hoy es es_MX (punto decimal) y coincide; en es_CO o es_ES el punto es
+ * separador de miles y "0.1785" se convierte en 1785.
+ *
+ * Es el mismo razonamiento que ya aplica el merge a las columnas `numeric` del
+ * payload —"passing a JS number sidesteps locale parsing entirely"—, sólo que
+ * aquellas venían de Convex y éstas de la propia hoja. Devolver el número tal
+ * cual saca al locale de la ecuación en los dos caminos.
+ */
+export function preservar(v: unknown): string | number {
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  return s(v);
+}
+
 export default withApiHandler(
   async (
     req: VercelRequest,
@@ -213,14 +232,37 @@ export default withApiHandler(
     // When updating, read the located row first so we PRESERVE every column we
     // don't explicitly touch (notably fechaIngreso in column B). Appends start
     // from an empty row — there is nothing to preserve for a brand-new item.
-    let existingRow: string[] = [];
+    // `unknown[]`, no `string[]`: con UNFORMATTED_VALUE la API devuelve números
+    // y booleanos de verdad, no cadenas. Todo uso pasa por `s()`, que acepta
+    // unknown; tiparlo como string[] sería mentir sobre lo que trae adentro.
+    let existingRow: unknown[] = [];
     if (!willAppend) {
       const readRange = `${targetSheet}!A${foundRow}:${lastCol}${foundRow}`;
       const existing = await sheets.spreadsheets.values.get({
         spreadsheetId,
         range: readRange,
+        // SIN ESTO SE LEE FORMATEADO, Y LO FORMATEADO SE ESCRIBE DE VUELTA.
+        // Esta fila se lee para conservar las columnas que nadie tocó, y cada
+        // una se reescribe tal cual salió. El default de la API es
+        // FORMATTED_VALUE —lo que se VE, no lo que HAY—, así que el viaje de
+        // ida y vuelta pasa la fila entera por el formato de pantalla.
+        //
+        // Medido el 2026-09-05 sobre las 576 filas del SOT: 3631 celdas salen
+        // distintas de como están, y 1039 numéricas no vuelven al mismo valor.
+        // `preponderancia` 0.1785 se lee "17.9%" y regresa 0.179 en 41 filas
+        // — o sea que la guarda de convex/products.ts, que omite la clave justo
+        // para no pisar esa celda, quedaba anulada por esta lectura: preservaba
+        // la celda y la degradaba igual. `costoBaseCOP` pierde decimales en 55.
+        // Y un cero con formato contable se lee "-" y vuelve como el TEXTO "-":
+        // le pasó a #483 y #484 en `Costo lote (fórmula)` ese mismo día.
+        //
+        // Que no haya sido peor es SUERTE, no diseño: la hoja está en es_MX,
+        // que usa punto decimal, así que "244,231" vuelve a ser 244231. En
+        // es_CO o es_ES esa misma cadena vale 244,231 — cada costo dividido por
+        // mil, en cada push. Leer sin formato quita la dependencia del locale.
+        valueRenderOption: 'UNFORMATTED_VALUE',
       });
-      existingRow = (existing.data.values?.[0] ?? []) as string[];
+      existingRow = existing.data.values?.[0] ?? [];
 
       // Defense in depth: the row we located by column A must STILL read back
       // as this itemId. It will by construction; this guards against a race
@@ -242,7 +284,7 @@ export default withApiHandler(
       // never drifts from create-fotosintesis-sot.mjs / the migration script.
       merged = new Array(FOTO_COLUMNS.length).fill('');
       for (let i = 0; i < FOTO_COLUMNS.length; i++) {
-        merged[i] = s(existingRow[i] ?? ''); // preserve untouched columns
+        merged[i] = preservar(existingRow[i]); // preserve untouched columns
       }
       for (let i = 0; i < FOTO_COLUMNS.length; i++) {
         const col = FOTO_COLUMNS[i];
@@ -274,7 +316,7 @@ export default withApiHandler(
       // Legacy treasure sheet — positional A:U (unchanged behavior).
       merged = new Array(21).fill('');
       for (let i = 0; i < 21; i++) {
-        merged[i] = s(existingRow[i] ?? '');
+        merged[i] = preservar(existingRow[i]);
       }
       // Column A — itemId (preserve)
       merged[0] = String(itemId);
