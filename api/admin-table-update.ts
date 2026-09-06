@@ -66,6 +66,16 @@ function s(v: unknown): string {
   return String(v);
 }
 
+/**
+ * Conserva una celda intacta sin convertir números en texto. Ver la nota larga
+ * en api/admin-product-update.ts: escribir "0.1785" con `USER_ENTERED` lo hace
+ * pasar por el idioma de la hoja, y devolver el número no.
+ */
+function preservar(v: unknown): string | number {
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  return s(v);
+}
+
 export default withApiHandler(
   async (
     req: VercelRequest,
@@ -129,6 +139,10 @@ export default withApiHandler(
     const colAResp = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${targetSheet}!A:A`,
+      // Ver la nota en admin-product-update.ts: una clave formateada no iguala
+      // a la clave real y el endpoint APPENDEA una fila duplicada en vez de
+      // actualizar. Acá las claves son de ventas, lotes y comisiones.
+      valueRenderOption: 'UNFORMATTED_VALUE',
     });
     const colA = (colAResp.data.values ?? []) as string[][];
     const { targetRow, willAppend, matchedKey } = resolveTableRowTarget(
@@ -139,14 +153,23 @@ export default withApiHandler(
 
     // Existing row → read it to preserve untouched cells (lets the sheet keep
     // notes/manually-added columns past our last managed column).
-    let existingRow: string[] = [];
+    // `unknown[]`, no `string[]`: ver la nota de tipo en admin-product-update.ts.
+    let existingRow: unknown[] = [];
     if (!willAppend) {
       const readRange = `${targetSheet}!A${targetRow}:${config.lastColumnLetter}${targetRow}`;
       const existing = await sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
         range: readRange,
+        // Mismo motivo que en api/admin-product-update.ts: esta fila se lee
+        // para conservar lo que nadie tocó y se reescribe tal cual salió, así
+        // que leerla FORMATEADA (el default de la API) le pasa el formato de
+        // pantalla a cada celda preservada. Estas tablas son de plata —ventas,
+        // comisiones, lotes—, y acá el daño sería el mismo: decimales
+        // recortados, porcentajes redondeados y ceros contables convertidos en
+        // el texto "-".
+        valueRenderOption: 'UNFORMATTED_VALUE',
       });
-      existingRow = (existing.data.values?.[0] ?? []) as string[];
+      existingRow = existing.data.values?.[0] ?? [];
 
       // Defense in depth: the located row must still read back as the key we
       // matched. Guards the race between the A:A scan and this read — this
@@ -162,9 +185,11 @@ export default withApiHandler(
     }
 
     // Build the merged row positionally (column A = index 0).
-    const merged: string[] = new Array(config.columns.length).fill('');
+    const merged: (string | number)[] = new Array(config.columns.length).fill(
+      '',
+    );
     for (let i = 0; i < config.columns.length; i++) {
-      merged[i] = s(existingRow[i] ?? '');
+      merged[i] = preservar(existingRow[i]);
     }
     for (let i = 0; i < config.columns.length; i++) {
       const col = config.columns[i];
