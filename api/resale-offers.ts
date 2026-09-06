@@ -71,12 +71,19 @@ export async function handleResaleOffers(
   // que tarde hasta el TTL en aparecer es aceptable, y por eso las mutaciones
   // de curaduría NO mueven el centinela — moverlo haría que cada navegador
   // conectado rebaje el catálogo entero por un cambio de favoritos.
-  const rows = await conCache<CurationRow[]>('resaleOffers', async () => {
-    return (await convexClient!.query(
-      api.ambassadorCuration.listResale,
-      {},
-    )) as CurationRow[];
-  });
+  const rows = await conCache<CurationRow[]>(
+    'resaleOffers',
+    async () => {
+      return (await convexClient!.query(
+        api.ambassadorCuration.listResale,
+        {},
+      )) as CurationRow[];
+    },
+    // Piso propio y explícito: como las mutaciones de curaduría no mueven el
+    // centinela, ESTE número es toda la frescura que tiene la insignia. Si el
+    // TTL compartido del catálogo sube, la reventa se queda en 5 min.
+    { ttlMs: 5 * 60 * 1000 },
+  );
 
   if (rows.length === 0) return sendSuccess(res, { offers: [] });
 

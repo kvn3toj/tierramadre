@@ -1,4 +1,5 @@
 import { convexClient, isConvexEnabled } from './convex-client.js';
+import { CATALOG_CACHE_TTL_MS } from '../../src/constants/catalogTtl.js';
 
 /**
  * Caché de las consultas pesadas de catálogo, con el centinela `catalogVersion`
@@ -59,8 +60,12 @@ import { convexClient, isConvexEnabled } from './convex-client.js';
  * Nunca sirve datos de otro despliegue: el proceso muere con la instancia.
  */
 
-/** El mismo piso que `CATALOG_CACHE_TTL_MS` del hook del navegador. */
-export const CATALOGO_TTL_MS = 5 * 60 * 1000;
+/**
+ * El mismo piso que el hook del navegador — literalmente la misma constante,
+ * ver src/constants/catalogTtl.ts. Se re-exporta con el nombre que ya usan
+ * las pruebas y los comentarios de este lado.
+ */
+export const CATALOGO_TTL_MS = CATALOG_CACHE_TTL_MS;
 
 interface Entrada {
   version: number;
@@ -70,9 +75,38 @@ interface Entrada {
 
 const memoria = new Map<string, Entrada>();
 
+/**
+ * Cargas en vuelo, por llave. Dos requests que fallan la caché a la vez en la
+ * misma instancia comparten UNA lectura de Convex en vez de pagar dos: sin
+ * esto, una ráfaga de visitas justo después de un bump (o de un arranque en
+ * frío) escanea el catálogo entero tantas veces como requests concurrentes.
+ */
+const enVuelo = new Map<string, Promise<unknown>>();
+
 /** Sólo para las pruebas: deja la caché como recién arrancada. */
 export function _vaciarCache(): void {
   memoria.clear();
+  enVuelo.clear();
+}
+
+/** Opciones de `conCache`. Las dos primeras existen sólo para las pruebas. */
+export interface OpcionesDeCache {
+  /** Instante de evaluación. Por defecto, ahora. */
+  ahora?: number;
+  /**
+   * Versión del centinela a usar en vez de leerla de Convex. SÓLO PRUEBAS: en
+   * producción la versión se lee siempre, porque servir de una caché cuya
+   * validez no se comprobó es exactamente como una piedra vendida sigue a la
+   * venta.
+   */
+  version?: number;
+  /**
+   * Piso de frescura para ESTA llave. Por defecto el compartido con el
+   * navegador. Una llave puede pedir otro cuando su dato envejece distinto —
+   * p. ej. las ofertas de reventa, cuyas mutaciones no mueven el centinela a
+   * propósito y viven sólo del TTL.
+   */
+  ttlMs?: number;
 }
 
 /**
@@ -119,9 +153,11 @@ export function entradaVigente(
 export async function conCache<T>(
   clave: string,
   cargar: () => Promise<T>,
-  ahora: number = Date.now(),
+  opciones: OpcionesDeCache = {},
 ): Promise<T> {
-  const version = await leerVersion();
+  const ahora = opciones.ahora ?? Date.now();
+  const ttlMs = opciones.ttlMs ?? CATALOGO_TTL_MS;
+  const version = opciones.version ?? (await leerVersion());
   if (version === null) return cargar();
 
   const entrada = memoria.get(clave);
@@ -129,11 +165,20 @@ export async function conCache<T>(
     return entrada!.valor as T;
   }
 
-  const valor = await cargar();
-  memoria.set(clave, {
-    version,
-    vencimiento: ahora + CATALOGO_TTL_MS,
-    valor,
-  });
-  return valor;
+  // Fallo de caché: si otra request de esta instancia ya está cargando la
+  // misma llave, esperar esa carga en vez de pagar una segunda.
+  const pendiente = enVuelo.get(clave);
+  if (pendiente) return pendiente as Promise<T>;
+
+  const carga = (async () => {
+    try {
+      const valor = await cargar();
+      memoria.set(clave, { version, vencimiento: ahora + ttlMs, valor });
+      return valor;
+    } finally {
+      enVuelo.delete(clave);
+    }
+  })();
+  enVuelo.set(clave, carga);
+  return carga;
 }
