@@ -43,6 +43,8 @@ export const backfillPrecioFinal = internalMutation({
         updated += 1;
       }
     }
+    // Precio de filas publicadas: una corrida = una invalidación.
+    if (updated > 0) await bumpCatalogVersion(ctx);
     return { scanned: rows.length, updated };
   },
 });
@@ -81,6 +83,8 @@ export const backfillPublishedAt = internalMutation({
       await ctx.db.patch(row._id, { publishedAt: row._creationTime });
     }
 
+    // Corrida a mano sobre filas publicadas: un bump por corrida.
+    await bumpCatalogVersion(ctx);
     return {
       backfilled: eligible.length,
       itemIds: eligible.map((row) => row.itemId),
@@ -1185,6 +1189,8 @@ export const _createItemExplicit = internalMutation({
       auditId,
       mode: 'append',
     });
+    // Siembra explícita de una pieza (publicada o no): un bump por corrida.
+    await bumpCatalogVersion(ctx);
     return { itemId: a.itemId, created: true };
   },
 });
@@ -1387,6 +1393,9 @@ export const _moveItemToLote = internalMutation({
       syncStatus: 'pending' as const,
       syncError: undefined,
     });
+    // Lo usa el bot en vivo, no sólo la migración: mover una pieza publicada
+    // de lote cambia su procedencia proyectada.
+    await bumpCatalogVersionIfPublished(ctx, product, product);
     await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
       itemId,
       auditId,
@@ -1822,6 +1831,8 @@ export const seedManuscrito20260812 = internalMutation({
       despublicados.push({ itemId, antes });
     }
 
+    // Siembra que publica hijas y despublica al padre: un bump por corrida.
+    await bumpCatalogVersion(ctx);
     return {
       creados,
       despublicados,
@@ -2715,6 +2726,8 @@ export const seedRemanentes20260812 = internalMutation({
       creados.push({ itemId: a.itemId, created: true });
     }
 
+    // Siembra de lote + piezas: un bump por corrida.
+    await bumpCatalogVersion(ctx);
     return {
       lote: loteCreado,
       creados,

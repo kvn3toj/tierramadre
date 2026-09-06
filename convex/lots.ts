@@ -23,7 +23,10 @@ import { canReopenLot } from './_lib/lotMath';
 import { errorCierrePreponderancia } from './_lib/cierreLote';
 import { omitInternosV4 } from './_lib/saleSafe';
 import { withPublishStamp } from './_lib/publishState';
-import { bumpCatalogVersion } from './_lib/catalogVersion';
+import {
+  bumpCatalogVersion,
+  bumpCatalogVersionIfShownGroup,
+} from './_lib/catalogVersion';
 import { requireAccessLevel } from './_lib/authz';
 import { requireBotSecret } from './_lib/botAuth';
 import {
@@ -385,6 +388,10 @@ export const _setLoteDisplay = internalMutation({
       patch.syncError = undefined;
     }
     await ctx.db.patch(id, patch);
+    await bumpCatalogVersionIfShownGroup(ctx, lot, {
+      ...lot,
+      ...(patch as { fotoLoteUrl?: string; mostrarComoLote?: boolean }),
+    });
     if (mostrarComoLote !== undefined) {
       await ctx.scheduler.runAfter(0, api.lots._pushToSheet, {
         id,
@@ -519,12 +526,17 @@ export const _cancel = internalMutation({
       }
     }
 
+    // Cancelar un lote DESPUBLICA en masa. Sin bump, cada pieza seguiría
+    // comprable en la caché de cada visitante hasta vencer el TTL — el mismo
+    // agujero que Fix 1C existe para cerrar, por la puerta de salida.
+    let anyPublished = false;
     for (const li of lotItemRows) {
       const product = await ctx.db
         .query('productInventory')
         .withIndex('by_itemId', (q) => q.eq('itemId', li.itemId))
         .first();
       if (product) {
+        if (product.mostrarEnCatalogo === true) anyPublished = true;
         await ctx.db.patch(product._id, {
           loteId: undefined,
           preponderancia: undefined,
@@ -534,6 +546,7 @@ export const _cancel = internalMutation({
       }
       await ctx.db.delete(li._id);
     }
+    if (anyPublished) await bumpCatalogVersion(ctx);
 
     const trimmedReason = reason?.trim();
     const notasNext = trimmedReason

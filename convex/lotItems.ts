@@ -640,6 +640,9 @@ export const _attachExistingToLote = internalMutation({
       syncStatus: 'pending' as const,
       syncError: undefined,
     });
+    // Ganar loteId es ganar membresía en publishedCatalog para una fila ya
+    // publicada; y mina/tratamiento se re-proyectan.
+    await bumpCatalogVersionIfPublished(ctx, product, product);
 
     await ctx.scheduler.runAfter(0, api.products.pushToSheet, {
       itemId,
@@ -1429,6 +1432,9 @@ export const _remove = internalMutation({
         preponderancia: undefined,
         costoBaseCOP: undefined,
       });
+      // Sin loteId la fila sale de publishedCatalog (filtra por loteId): una
+      // pieza publicada que se saca del lote tiene que desaparecer ya.
+      await bumpCatalogVersionIfPublished(ctx, product, product);
       // Audit row so the removal is traceable in the item's history — the old
       // remove left no record at all. (ISO-audit C7.) Stays "pending" because
       // the orphan intentionally isn't synced to Sheets (see above).

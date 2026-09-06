@@ -24,6 +24,7 @@ import { filaCasillaParaEspejo, filaLoteParaEspejo } from './_lib/espejoFilas';
 import { motorDelLoteDb, preciosPorItemDb } from './precios';
 import type { Id } from './_generated/dataModel';
 import type { MutationCtx } from './_generated/server';
+import { bumpCatalogVersionIfShownGroup } from './_lib/catalogVersion';
 
 /**
  * Re-encola la fila del lote al espejo.
@@ -373,6 +374,10 @@ export const _publicar = internalMutation({
           casillasIncompletas: score.incompletas,
         },
       });
+      await bumpCatalogVersionIfShownGroup(ctx, lote, {
+        ...lote,
+        estado: 'publicado',
+      });
       await encolarLote(ctx, lote._id);
       return {
         publicado: true,
@@ -383,6 +388,11 @@ export const _publicar = internalMutation({
     }
 
     await ctx.db.patch(lote._id, { estado: 'publicado' });
+    // Publicar un lote que se muestra agrupado lo hace aparecer en el catálogo.
+    await bumpCatalogVersionIfShownGroup(ctx, lote, {
+      ...lote,
+      estado: 'publicado',
+    });
     await encolarLote(ctx, lote._id);
     return {
       publicado: true,
