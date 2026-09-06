@@ -2377,6 +2377,9 @@ export const _upsertFromSheet = internalMutation({
       ...baseUpdate,
       syncStatus: 'synced' as const,
     });
+    // El pull de UNA fila puede traer VENDIDA, precio o nombre nuevos para una
+    // pieza publicada: mismo bump que su gemela por lotes (`_upsertManyFromSheet`).
+    await bumpCatalogVersionIfPublished(ctx, existing, existing);
     return { upserted: false, rebased: rowIndexShifted };
   },
 });
@@ -2883,6 +2886,8 @@ export const _bulkPublishCertificados = internalMutation({
       await ctx.db.patch(row._id, withPublishStamp(row, true));
       published++;
     }
+    // Un bump por corrida, no por fila: publicar N piezas es UNA invalidación.
+    if (published > 0) await bumpCatalogVersion(ctx);
 
     return { published, alreadyPublished, skippedInsumo, skippedNoCert };
   },

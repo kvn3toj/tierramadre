@@ -5,6 +5,7 @@ import {
   internalQuery,
   type MutationCtx,
 } from './_generated/server';
+import { bumpCatalogVersionIfShownGroup } from './_lib/catalogVersion';
 import { v } from 'convex/values';
 import { api, internal } from './_generated/api';
 import type { Id } from './_generated/dataModel';
@@ -285,6 +286,9 @@ export const _addItems = internalMutation({
       syncStatus: 'pending' as const,
       syncError: undefined,
     });
+    // Si el sublote se muestra como tarjeta agrupada, su membresía/nombre es
+    // parte de lo que el catálogo público pinta.
+    await bumpCatalogVersionIfShownGroup(ctx, sub, sub);
     await ctx.scheduler.runAfter(0, api.subLotes._pushToSheet, {
       id: sub._id,
       mode: 'patch',
@@ -322,6 +326,9 @@ export const _removeItems = internalMutation({
       syncStatus: 'pending' as const,
       syncError: undefined,
     });
+    // Si el sublote se muestra como tarjeta agrupada, su membresía/nombre es
+    // parte de lo que el catálogo público pinta.
+    await bumpCatalogVersionIfShownGroup(ctx, sub, sub);
     await ctx.scheduler.runAfter(0, api.subLotes._pushToSheet, {
       id: sub._id,
       mode: 'patch',
@@ -362,6 +369,9 @@ export const _updateMeta = internalMutation({
       syncStatus: 'pending' as const,
       syncError: undefined,
     });
+    // Si el sublote se muestra como tarjeta agrupada, su membresía/nombre es
+    // parte de lo que el catálogo público pinta.
+    await bumpCatalogVersionIfShownGroup(ctx, sub, sub);
     await ctx.scheduler.runAfter(0, api.subLotes._pushToSheet, {
       id: sub._id,
       mode: 'patch',
@@ -393,6 +403,9 @@ export const _setEstado = internalMutation({
       syncStatus: 'pending' as const,
       syncError: undefined,
     });
+    // Archivar o reactivar un sublote que se muestra como tarjeta agrupada
+    // cambia lo que ve el visitante: el centinela tiene que moverse.
+    await bumpCatalogVersionIfShownGroup(ctx, sub, { ...sub, estado });
     await ctx.scheduler.runAfter(0, api.subLotes._pushToSheet, {
       id: sub._id,
       mode: 'patch',
@@ -441,6 +454,10 @@ export const _setDisplay = internalMutation({
       patch.syncError = undefined;
     }
     await ctx.db.patch(sub._id, patch);
+    await bumpCatalogVersionIfShownGroup(ctx, sub, {
+      ...sub,
+      ...(patch as { fotoUrl?: string; mostrarComoLote?: boolean }),
+    });
     if (mostrarComoLote !== undefined) {
       await ctx.scheduler.runAfter(0, api.subLotes._pushToSheet, {
         id: sub._id,

@@ -16,6 +16,8 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   bumpCatalogVersion,
   bumpCatalogVersionIfPublished,
+  bumpCatalogVersionIfShownGroup,
+  isShownGroup,
 } from '../convex/_lib/catalogVersion';
 
 /** Minimal MutationCtx double — only the `db` surface the helper touches. */
@@ -116,5 +118,79 @@ describe('bumpCatalogVersionIfPublished — the load-bearing guard', () => {
     await bumpCatalogVersionIfPublished(ctx, null, undefined);
     expect(patch).not.toHaveBeenCalled();
     expect(insert).not.toHaveBeenCalled();
+  });
+});
+
+describe('bumpCatalogVersionIfShownGroup — the publishedGroups twin', () => {
+  it('a lot is shown only when publicado AND mostrarComoLote', () => {
+    expect(isShownGroup({ estado: 'publicado', mostrarComoLote: true })).toBe(
+      true,
+    );
+    expect(isShownGroup({ estado: 'publicado', mostrarComoLote: false })).toBe(
+      false,
+    );
+    expect(isShownGroup({ estado: 'abierto', mostrarComoLote: true })).toBe(
+      false,
+    );
+    expect(isShownGroup({ estado: 'cerrado', mostrarComoLote: true })).toBe(
+      false,
+    );
+  });
+
+  it('a sublote is shown only when activa AND mostrarComoLote', () => {
+    expect(isShownGroup({ estado: 'activa', mostrarComoLote: true })).toBe(
+      true,
+    );
+    expect(isShownGroup({ estado: 'archivada', mostrarComoLote: true })).toBe(
+      false,
+    );
+    expect(isShownGroup({ estado: 'activa' })).toBe(false);
+    expect(isShownGroup(null)).toBe(false);
+  });
+
+  it('does NOT bump when the group is hidden before and after', async () => {
+    // The common case: editing an open lot, or a sublote nobody shows as a card.
+    const { ctx, patch, insert } = makeCtx({ _id: 'cv1', v: 3 });
+    await bumpCatalogVersionIfShownGroup(
+      ctx,
+      { estado: 'activa', mostrarComoLote: false },
+      { estado: 'archivada', mostrarComoLote: false },
+    );
+    expect(patch).not.toHaveBeenCalled();
+    expect(insert).not.toHaveBeenCalled();
+  });
+
+  it('bumps when a shown group changes (membership, name, photo)', async () => {
+    const { ctx, patch } = makeCtx({ _id: 'cv1', v: 3 });
+    const sub = { estado: 'activa', mostrarComoLote: true };
+    await bumpCatalogVersionIfShownGroup(ctx, sub, sub);
+    expect(patch).toHaveBeenCalledTimes(1);
+  });
+
+  it('bumps on hide (mostrarComoLote true → false) and on archive', async () => {
+    const a = makeCtx({ _id: 'cv1', v: 3 });
+    await bumpCatalogVersionIfShownGroup(
+      a.ctx,
+      { estado: 'activa', mostrarComoLote: true },
+      { estado: 'activa', mostrarComoLote: false },
+    );
+    expect(a.patch).toHaveBeenCalledTimes(1);
+    const b = makeCtx({ _id: 'cv1', v: 3 });
+    await bumpCatalogVersionIfShownGroup(
+      b.ctx,
+      { estado: 'activa', mostrarComoLote: true },
+      { estado: 'archivada', mostrarComoLote: true },
+    );
+    expect(b.patch).toHaveBeenCalledTimes(1);
+  });
+
+  it('bumps on publish of a lot flagged to show as a group', async () => {
+    const { ctx, patch } = makeCtx({ _id: 'cv1', v: 3 });
+    await bumpCatalogVersionIfShownGroup(
+      ctx,
+      { estado: 'cerrado', mostrarComoLote: true },
+      { estado: 'publicado', mostrarComoLote: true },
+    );
+    expect(patch).toHaveBeenCalledTimes(1);
   });
 });

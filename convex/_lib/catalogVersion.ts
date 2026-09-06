@@ -102,3 +102,35 @@ export async function bumpCatalogVersionIfPublished(
   if (!wasVisible && !isVisible) return;
   await bumpCatalogVersion(ctx);
 }
+
+/** Minimal shape needed to decide whether a lot/sublote shows as a group card. */
+type GroupState =
+  | { estado?: string; mostrarComoLote?: boolean }
+  | null
+  | undefined;
+
+/**
+ * Is this lot/sublote rendered by `products.publishedGroups`? A lot shows as a
+ * bundle card when `estado === 'publicado'`, a sublote when `estado === 'activa'`,
+ * and both only with `mostrarComoLote === true`.
+ */
+export function isShownGroup(row: GroupState): boolean {
+  if (!row || row.mostrarComoLote !== true) return false;
+  return row.estado === 'publicado' || row.estado === 'activa';
+}
+
+/**
+ * The `publishedGroups` twin of `bumpCatalogVersionIfPublished`. Same doctrine:
+ * bump only when the touched lot/sublote is, or is becoming, a visible group
+ * card — either side shown is enough, so archiving or hiding a group
+ * invalidates too. Membership, name, photo and estado changes of a shown group
+ * all go through here.
+ */
+export async function bumpCatalogVersionIfShownGroup(
+  ctx: MutationCtx,
+  before: GroupState,
+  after: GroupState,
+): Promise<void> {
+  if (!isShownGroup(before) && !isShownGroup(after)) return;
+  await bumpCatalogVersion(ctx);
+}
