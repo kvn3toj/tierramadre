@@ -29,6 +29,7 @@ import {
   getSheetNames,
 } from './_lib/index.js';
 import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
+import { conCache } from './_lib/catalogCache.js';
 import { api } from '../convex/_generated/api.js';
 import { loadAsesorRoster } from './_lib/asesorRoster.js';
 import { resolveGrant } from './_lib/catalogGrant.js';
@@ -63,10 +64,19 @@ export async function handleResaleOffers(
     return sendSuccess(res, { offers: [] });
   }
 
-  const rows = (await convexClient.query(
-    api.ambassadorCuration.listResale,
-    {},
-  )) as CurationRow[];
+  // `listResale` no recibe argumentos: escanea la tabla `ambassadorCuration`
+  // entera en cada request del catálogo (506 llamadas del 1 al 5 de sep-2026,
+  // medido en el dashboard). Va por la caché del centinela igual que el
+  // catálogo publicado. Una oferta de reventa es una insignia, no una venta:
+  // que tarde hasta el TTL en aparecer es aceptable, y por eso las mutaciones
+  // de curaduría NO mueven el centinela — moverlo haría que cada navegador
+  // conectado rebaje el catálogo entero por un cambio de favoritos.
+  const rows = await conCache<CurationRow[]>('resaleOffers', async () => {
+    return (await convexClient!.query(
+      api.ambassadorCuration.listResale,
+      {},
+    )) as CurationRow[];
+  });
 
   if (rows.length === 0) return sendSuccess(res, { offers: [] });
 
