@@ -221,6 +221,16 @@ export default withApiHandler(
     const colAResp = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: `${targetSheet}!A:A`,
+      // La misma razón que en la lectura de la fila, y con una consecuencia
+      // peor. `resolveRowTarget` compara `String(celda) === String(itemId)`, y
+      // FORMATTED_VALUE le da a la celda su apariencia: en cuanto un ítem pase
+      // de 999, la columna A rendería "1,001" y jamás igualaría a "1001". No
+      // sería un error visible — sería un APPEND: el endpoint daría el ítem
+      // por inexistente y crearía una fila duplicada en vez de actualizar la
+      // suya. Es la clase exacta del incidente del 2026-08-03 (21 filas para
+      // 10 ítems). Hoy el ítem más alto es 585, así que está dormido; se cierra
+      // ahora porque cuesta una línea y despierta solo.
+      valueRenderOption: 'UNFORMATTED_VALUE',
     });
     const colA = (colAResp.data.values ?? []) as string[][];
     // Localización + fila destino en un helper puro (api/_lib/sheet-row-target.js)

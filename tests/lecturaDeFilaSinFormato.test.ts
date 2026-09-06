@@ -78,6 +78,28 @@ describe('la lectura de ida y vuelta pide el valor sin formato', () => {
   );
 
   it.each(IDA_Y_VUELTA)(
+    '%s busca la fila por una columna A sin formato',
+    (ruta) => {
+      const fuente = readFileSync(ruta, 'utf8');
+      // El barrido de A:A localiza la fila comparando String(celda) contra
+      // String(itemId). Formateada, un ítem de cuatro cifras rendiría "1,001"
+      // y nunca igualaría a "1001": el endpoint lo daría por inexistente y
+      // APPENDEARÍA una fila duplicada en vez de actualizar la suya.
+      const apertura = fuente.indexOf('colAResp = await');
+      expect(
+        apertura,
+        `no se encontró el barrido de A:A en ${ruta}`,
+      ).toBeGreaterThan(0);
+      const llamada = fuente.slice(apertura, apertura + 1400);
+      expect(
+        llamada.includes("valueRenderOption: 'UNFORMATTED_VALUE'"),
+        `${ruta} barre la columna A FORMATEADA. Una clave con separador de ` +
+          `miles no iguala a la clave real y el endpoint duplica la fila.`,
+      ).toBe(true);
+    },
+  );
+
+  it.each(IDA_Y_VUELTA)(
     '%s conserva las celdas intactas con preservar(), no con s()',
     (ruta) => {
       const fuente = readFileSync(ruta, 'utf8');

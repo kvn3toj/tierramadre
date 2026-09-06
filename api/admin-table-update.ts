@@ -139,6 +139,10 @@ export default withApiHandler(
     const colAResp = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: `${targetSheet}!A:A`,
+      // Ver la nota en admin-product-update.ts: una clave formateada no iguala
+      // a la clave real y el endpoint APPENDEA una fila duplicada en vez de
+      // actualizar. Acá las claves son de ventas, lotes y comisiones.
+      valueRenderOption: 'UNFORMATTED_VALUE',
     });
     const colA = (colAResp.data.values ?? []) as string[][];
     const { targetRow, willAppend, matchedKey } = resolveTableRowTarget(
