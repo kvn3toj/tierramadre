@@ -1201,6 +1201,26 @@ async function applyMediaToProduct(
     syncError: undefined,
   });
 
+  // El centinela tiene que moverse cuando cambia una FOTO.
+  //
+  // `convex/_lib/catalogVersion.ts` lo dice en su propia firma —«publish/
+  // unpublish, estado, precio, FOTO»— y este camino, que es justamente por
+  // donde el bot sube las fotos, nunca lo llamaba. La consecuencia no era
+  // visible mientras el único consumidor del centinela era el navegador con su
+  // TTL de 5 minutos: una foto nueva simplemente tardaba hasta 5 minutos.
+  //
+  // Pasa a importar ahora que `api/_lib/catalogCache.ts` cachea el overlay de
+  // fotos contra este mismo número: sin el bump, una foto recién subida se
+  // quedaría fuera del catálogo hasta que venciera el TTL, que es exactamente
+  // el retraso que el overlay existe para evitar (incidente 2026-08-15).
+  //
+  // `IfPublished` y no el bump pelado: una foto de un ítem no publicado no
+  // cambia nada de lo que el catálogo pinta, y invalidar por eso obligaría a
+  // releer el catálogo entero sin motivo. Se pasa el mismo producto como
+  // `before` y `after` porque este camino NO toca `mostrarEnCatalogo`: lo que
+  // se pregunta es «¿está publicado?», no «¿cambió su publicación?».
+  await bumpCatalogVersionIfPublished(ctx, product, product);
+
   const now = new Date().toISOString();
   const auditId = await ctx.db.insert('productEdits', {
     itemId: product.itemId,
