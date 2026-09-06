@@ -26,6 +26,7 @@ import {
   _vaciarCache,
   CATALOGO_TTL_MS,
 } from '../api/_lib/catalogCache';
+import { CATALOG_CACHE_TTL_MS } from '../src/constants/catalogTtl';
 
 describe('entradaVigente — las dos redes', () => {
   const base = { version: 7, vencimiento: 1000, valor: 'x' };
@@ -51,10 +52,49 @@ describe('entradaVigente — las dos redes', () => {
     expect(entradaVigente(undefined, 7, 0)).toBe(false);
   });
 
-  it('el TTL es el mismo que el del navegador (5 min)', () => {
+  it('el TTL es el mismo que el del navegador — la misma constante', () => {
     // Las dos puntas tienen que envejecer igual; si divergen, una sirve datos
-    // que la otra ya descartó.
-    expect(CATALOGO_TTL_MS).toBe(5 * 60 * 1000);
+    // que la otra ya descartó. Por eso no se compara con un número: se
+    // compara con la constante que importa el hook.
+    expect(CATALOGO_TTL_MS).toBe(CATALOG_CACHE_TTL_MS);
+  });
+});
+
+describe('conCache — con centinela (versión inyectada, sólo pruebas)', () => {
+  beforeEach(() => _vaciarCache());
+
+  it('dos fallos concurrentes sobre la misma llave comparten UNA carga', async () => {
+    let cargas = 0;
+    let liberar!: () => void;
+    const cargar = () =>
+      new Promise<string[]>((res) => {
+        cargas++;
+        liberar = () => res(['a']);
+      });
+    const a = conCache('k', cargar, { version: 1, ahora: 0 });
+    const b = conCache('k', cargar, { version: 1, ahora: 0 });
+    liberar();
+    expect(await a).toEqual(['a']);
+    expect(await b).toEqual(['a']);
+    expect(cargas).toBe(1);
+  });
+
+  it('respeta un TTL por llave distinto del compartido', async () => {
+    let cargas = 0;
+    const cargar = async () => ++cargas;
+    await conCache('reventa', cargar, { version: 1, ahora: 0, ttlMs: 100 });
+    await conCache('reventa', cargar, { version: 1, ahora: 99, ttlMs: 100 });
+    expect(cargas).toBe(1);
+    await conCache('reventa', cargar, { version: 1, ahora: 100, ttlMs: 100 });
+    expect(cargas).toBe(2);
+  });
+
+  it('un bump invalida aunque el TTL no haya vencido', async () => {
+    let cargas = 0;
+    const cargar = async () => ++cargas;
+    await conCache('k', cargar, { version: 1, ahora: 0 });
+    await conCache('k', cargar, { version: 2, ahora: 1 });
+    expect(cargas).toBe(2);
   });
 });
 

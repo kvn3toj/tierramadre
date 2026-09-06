@@ -40,7 +40,6 @@ import {
   bumpCatalogVersion,
   bumpCatalogVersionIfPublished,
 } from './_lib/catalogVersion';
-import { precioEspecialDeObservacion } from './_lib/precioEspecial';
 import { omitFotosintesisOnly } from './_lib/saleSafe';
 
 // =============================================================================
@@ -347,8 +346,11 @@ export const getByItem = query({
       .withIndex('by_itemId', (q) => q.eq('itemId', itemId))
       .first();
     if (!row) return null;
-    // `precioEspecial` se DERIVA de la observación (ver _lib/precioEspecial.ts);
-    // no existe como columna. Ausente cuando no aplica o ya venció.
+    // `precioEspecial` ya no se deriva acá (2026-09-06): la promoción venció el
+    // 2026-08-31 y derivarla leía `Date.now()` por fila dentro de la query —
+    // Convex pide queries deterministas. Si vuelve una promo, el instante lo
+    // pone el cliente (ver _lib/precioEspecial.ts); el campo sigue opcional en
+    // los tipos.
     //
     // El spread manda la fila ENTERA, así que toda columna nueva del SOT sale
     // por acá sin que nadie lo decida. Esta query alimenta la ficha de producto,
@@ -357,7 +359,6 @@ export const getByItem = query({
     // Ver convex/_lib/saleSafe.ts.
     return {
       ...omitFotosintesisOnly(row),
-      precioEspecial: precioEspecialDeObservacion(row.observacion),
     };
   },
 });
@@ -527,8 +528,9 @@ export const CAMPOS_RESERVADOS_CATALOGO = [
   // anuncia". Las 6 restantes tampoco eran copy de cliente ("canutillos para
   // lapidar", "Reserva para péndulos"). No se pierde nada publicable.
   //
-  // `precioEspecial` NO se rompe: `precioEspecialDeObservacion()` lee
-  // `row.observacion` del documento crudo, antes de esta proyección.
+  // `precioEspecial` dejó de derivarse en las queries (2026-09-06, promo
+  // vencida + determinismo); si vuelve, se lee `row.observacion` del documento
+  // crudo, antes de esta proyección, y el instante lo pone el cliente.
   //
   // Si algún día hace falta una descripción pública de verdad, va en un campo
   // propio (`descripcionPublica`), no reutilizando la bitácora: el error acá
@@ -607,8 +609,6 @@ export const getPublicByItem = query({
     // ya no: nadie lo lee — la ficha arma su propio QR desde la ruta.
     return {
       ...proyectaCatalogoPublico(row),
-      // Promoción de cierre de temporada, derivada de `observacion`.
-      precioEspecial: precioEspecialDeObservacion(row.observacion),
       // La procedencia del LOTE pisa la denormalizada de la fila: acá se
       // resuelve por lectura porque un QR escaneado tiene que resolver
       // cualquier ítem, incluso uno que nunca pasó por publicación.
@@ -758,11 +758,12 @@ export const publishedCatalog = query({
     // (egress and client memory both matter) but do not mistake it for a
     // bandwidth fix. See docs/audits/2026-08-12-convex-usage-audit.md §3.
     return published.map((row) => {
+      // Sin `Date.now()` ni derivados por fila: esta query se cachea contra el
+      // centinela en dos puntas (navegador y api/_lib/catalogCache.ts) y Convex
+      // sólo reutiliza el resultado de una query determinista. Ver
+      // tests/consultasDeterministas.test.ts.
       return {
         ...proyectaCatalogoPublico(row),
-        // Promoción de cierre de temporada, derivada de `observacion` (no es
-        // columna; ver _lib/precioEspecial.ts). Ausente si venció o no aplica.
-        precioEspecial: precioEspecialDeObservacion(row.observacion),
       };
     });
   },

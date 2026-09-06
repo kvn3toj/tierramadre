@@ -253,9 +253,17 @@ const CATALOG_CACHE_KEY = STORAGE_KEYS.PUBLISHED_CATALOG_CACHE;
  * maintained by hand across several mutations (see convex/_lib/catalogVersion.ts)
  * and a future write path could forget to bump it. This TTL is what makes that
  * a performance nit instead of a correctness bug: worst case the catalog is
- * stale for five minutes — exactly a plain cached catalog — never forever.
+ * stale for one TTL — exactly a plain cached catalog — never forever.
+ *
+ * The value lives in src/constants/catalogTtl.ts, shared with the server-side
+ * cache (api/_lib/catalogCache.ts) so both ends age identically. Re-exported
+ * here for the existing importers.
+ *
+ * Deliberately NO timer: the refetch effect below depends only on the sentinel
+ * and on remount. A timer would multiply calls by open tabs.
  */
-export const CATALOG_CACHE_TTL_MS = 5 * 60 * 1000;
+export { CATALOG_CACHE_TTL_MS } from '../constants/catalogTtl';
+import { CATALOG_CACHE_TTL_MS } from '../constants/catalogTtl';
 
 interface CachedCatalog {
   /** Sentinel value this payload was fetched at. */

@@ -62,11 +62,17 @@ export type PrecioEspecial = {
  * Puro y sin IO de Convex, para poder testearlo.
  *
  * @param observacion  La observación cruda de la fila (puede faltar).
- * @param ahora        Instante de evaluación (ms epoch o Date). Por defecto, ya.
+ * @param ahora        Instante de evaluación (ms epoch o Date). OBLIGATORIO:
+ *                     antes tenía `= Date.now()` por defecto y las tres queries
+ *                     públicas de `convex/products.ts` lo omitían, así que cada
+ *                     fila de `publishedCatalog` leía el reloj dentro de la
+ *                     transacción. Convex pide queries deterministas
+ *                     («Don't use Date.now() in queries»); el instante lo pone
+ *                     quien llama — un cliente, un script — nunca la query.
  */
 export function precioEspecialDeObservacion(
-  observacion?: string | null,
-  ahora: number | Date = Date.now(),
+  observacion: string | null | undefined,
+  ahora: number | Date,
 ): PrecioEspecial | undefined {
   if (!observacion) return undefined;
 
