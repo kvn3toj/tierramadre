@@ -1,5 +1,6 @@
 import type { TreasureItem } from '../../src/types/index.ts';
 import { convexClient, isConvexEnabled } from './convex-client.js';
+import { conCache } from './catalogCache.js';
 
 /**
  * Overlay de `fotoUrl` desde Convex sobre los ítems que get-treasure-sheets
@@ -41,11 +42,18 @@ export async function overlayConvexFotoUrls(
 ): Promise<TreasureItem[]> {
   if (!isConvexEnabled || !convexClient) return items;
   try {
-    const { api } = await import('../../convex/_generated/api.js');
-    const fotos = (await convexClient.query(
-      api.products.fotoUrls,
-      {},
-    )) as FotoRow[];
+    // Cacheado contra el centinela `catalogVersion`: esta consulta escanea las
+    // 576 filas COMPLETAS para devolver 576 pares {itemId, fotoUrl}, y se
+    // llamaba en cada request del catálogo. Convex cobra por documento
+    // escaneado, no por bytes devueltos, así que la proyección no ahorraba
+    // nada. Ver api/_lib/catalogCache.ts.
+    const fotos = await conCache<FotoRow[]>('fotoUrls', async () => {
+      const { api } = await import('../../convex/_generated/api.js');
+      return (await convexClient!.query(
+        api.products.fotoUrls,
+        {},
+      )) as FotoRow[];
+    });
     return applyFotoOverlay(items, fotos);
   } catch (err) {
     console.warn(

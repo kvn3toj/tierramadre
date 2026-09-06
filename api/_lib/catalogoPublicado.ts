@@ -1,5 +1,6 @@
 import type { TreasureItem } from '../../src/types/index.ts';
 import { convexClient, isConvexEnabled } from './convex-client.js';
+import { conCache } from './catalogCache.js';
 
 /**
  * Filtro de publicación para `get-treasure-sheets`, con Convex como fuente.
@@ -56,12 +57,30 @@ export async function filtrarNoPublicados(
 ): Promise<TreasureItem[]> {
   if (!isConvexEnabled || !convexClient) return items;
   try {
-    const { api } = await import('../../convex/_generated/api.js');
-    const filas = (await convexClient.query(
-      api.products.publishedCatalog,
-      {},
-    )) as Array<{ itemId: string }>;
-    const publicados = new Set(filas.map((f) => String(f.itemId)));
+    // Cacheado contra el centinela `catalogVersion`.
+    //
+    // Ésta es la consulta #1 de la auditoría del 2026-08-12: 759,76 MB, el 63%
+    // del I/O del equipo. El arreglo 1C se hizo del lado del navegador
+    // (useFotosintesisCatalog) y esta llamada, que corre en el SERVIDOR y en
+    // cada request del catálogo público, se quedó sin puerta.
+    //
+    // Se cachea el CONJUNTO de itemIds, no las filas: es lo único que se usa
+    // acá, y así una entrada vieja no puede filtrar campos de más.
+    //
+    // El centinela se mueve con toda venta y toda (des)publicación, así que la
+    // ventana en que una piedra vendida seguiría visible es de segundos, no del
+    // TTL. Ver api/_lib/catalogCache.ts.
+    const publicados = await conCache<Set<string>>(
+      'publishedCatalog:itemIds',
+      async () => {
+        const { api } = await import('../../convex/_generated/api.js');
+        const filas = (await convexClient!.query(
+          api.products.publishedCatalog,
+          {},
+        )) as Array<{ itemId: string }>;
+        return new Set(filas.map((f) => String(f.itemId)));
+      },
+    );
     return aplicarFiltroPublicado(items, publicados);
   } catch (err) {
     console.warn(
