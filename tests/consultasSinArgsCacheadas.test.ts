@@ -32,6 +32,11 @@
  * agranda nada; sólo reinicia el contador.
  *
  * Esta prueba es la que impide la cuarta vez.
+ *
+ * La primera versión del patrón no admitía coma final (`{},\n)`) y por eso
+ * `api/resale-offers.ts` pasó limpia el mismo día en que se escribió la guarda.
+ * Una guarda que no ve la forma con que Prettier formatea la llamada no guarda
+ * nada.
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -58,7 +63,7 @@ describe('las consultas sin argumentos van cacheadas', () => {
       const src = readFileSync(archivo, 'utf8');
       // `convexClient.query(api.modulo.fn, {})` — objeto de args VACÍO.
       const re =
-        /convexClient!?\s*\.query\(\s*(api\.[A-Za-z0-9_.]+)\s*,\s*\{\s*\}\s*\)/g;
+        /convexClient!?\s*\.query\(\s*(api\.[A-Za-z0-9_.]+)\s*,\s*\{\s*\}\s*,?\s*\)/g;
       for (const m of src.matchAll(re)) {
         const nombre = m[1];
         if (EXENTAS.has(nombre)) continue;
