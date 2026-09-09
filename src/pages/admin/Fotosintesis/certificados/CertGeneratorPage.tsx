@@ -72,6 +72,8 @@ import {
   EMPTY_ORIGEN,
   MAX_PHOTO_ZOOM,
   MIN_PHOTO_ZOOM,
+  ORIGEN_CLAIMS,
+  ORIGEN_QUOTE,
   slugify,
   type CarnetDraft,
   type CertTypeId,
@@ -145,6 +147,8 @@ function treasureToOrigen(t: TreasureItem): OrigenDraft {
     corte: t.talla ?? '',
     cantidad: t.cantidad != null && t.cantidad > 0 ? String(t.cantidad) : '',
     joya: t.metalType ?? (t.isJewelry ? (t.categoria ?? '') : ''),
+    claims: ORIGEN_CLAIMS,
+    quote: ORIGEN_QUOTE,
     photo: t.imagen ?? '',
     // Autofill never invents custom rows; the operator adds those by hand.
     customDetails: [],
@@ -1074,30 +1078,69 @@ function Field({
   value,
   onChange,
   placeholder,
+  rows,
+  onReset,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
+  /** when set, renders a multiline textarea with this many rows */
+  rows?: number;
+  /** when set, a "Restablecer" link next to the label (shown only when
+   *  the value differs from its default) */
+  onReset?: { isDefault: boolean; reset: () => void };
 }) {
   const inputId = useId();
   return (
     <Box sx={{ mb: 1.5 }}>
-      <Typography
-        component="label"
-        htmlFor={inputId}
+      <Box
         sx={{
-          display: 'block',
-          fontSize: 11,
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '.6px',
-          color: foto.ink.tertiary,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           mb: 0.75,
         }}
       >
-        {label}
-      </Typography>
+        <Typography
+          component="label"
+          htmlFor={inputId}
+          sx={{
+            display: 'block',
+            fontSize: 11,
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '.6px',
+            color: foto.ink.tertiary,
+          }}
+        >
+          {label}
+        </Typography>
+        {onReset && !onReset.isDefault && (
+          <Box
+            component="button"
+            type="button"
+            onClick={onReset.reset}
+            sx={{
+              border: 'none',
+              background: 'transparent',
+              color: foto.ink.tertiary,
+              fontSize: 11,
+              fontWeight: 600,
+              cursor: 'pointer',
+              px: 0.5,
+              borderRadius: '6px',
+              '&:hover': { textDecoration: 'underline' },
+              '&:focus-visible': {
+                outline: '2px solid transparent',
+                boxShadow: `0 0 0 2px ${foto.surfaces.canvas}, 0 0 0 4px ${foto.accent.primary}`,
+              },
+            }}
+          >
+            Restablecer
+          </Box>
+        )}
+      </Box>
       <TextField
         id={inputId}
         value={value}
@@ -1105,6 +1148,8 @@ function Field({
         placeholder={placeholder}
         size="small"
         fullWidth
+        multiline={rows !== undefined}
+        minRows={rows}
         InputProps={{ sx: inputSx }}
       />
     </Box>
@@ -1493,6 +1538,11 @@ function OrigenForm({
     setDraft((d) => ({ ...d, [k]: v }));
   };
 
+  // The fixed-copy blocks (claims, message) are template copy, not piece
+  // identity, so editing them keeps the product linkage too.
+  const setCopy = (k: 'claims' | 'quote') => (v: string) =>
+    setDraft((d) => ({ ...d, [k]: v }));
+
   // Custom detail rows are additive operator info, not piece identity, so they
   // do NOT drop the product linkage the way editing a core field does.
   const addCustom = () =>
@@ -1577,13 +1627,41 @@ function OrigenForm({
         onUpdate={updateCustom}
         onRemove={removeCustom}
       />
+      <Box sx={{ mt: 2 }}>
+        <Field
+          label="Atributos"
+          value={draft.claims}
+          onChange={setCopy('claims')}
+          rows={3}
+          placeholder={ORIGEN_CLAIMS}
+          onReset={{
+            isDefault: draft.claims === ORIGEN_CLAIMS,
+            reset: () => setCopy('claims')(ORIGEN_CLAIMS),
+          }}
+        />
+        <Field
+          label="Mensaje"
+          value={draft.quote}
+          onChange={setCopy('quote')}
+          rows={2}
+          placeholder={ORIGEN_QUOTE}
+          onReset={{
+            isDefault: draft.quote === ORIGEN_QUOTE,
+            reset: () => setCopy('quote')(ORIGEN_QUOTE),
+          }}
+        />
+        <Typography sx={{ fontSize: 11, color: foto.ink.tertiary, mt: -0.5 }}>
+          Una línea en blanco separa párrafos. Tamaño y alineación se ajustan
+          desde la vista previa.
+        </Typography>
+      </Box>
       <PhotoInput
         value={draft.photo}
         onUrl={set('photo')}
         onUpload={onUploadPhoto}
         adjust={photoAdjust}
       />
-      <LockNote text="El mensaje, el sello, el logo y la marca de agua se conservan de la plantilla del equipo de diseño. El nombre, los detalles y el mensaje se pueden reubicar desde el modo de ajuste de la vista previa." />
+      <LockNote text="El sello, el logo y la marca de agua se conservan de la plantilla del equipo de diseño. Los bloques de texto se pueden reubicar, redimensionar y alinear desde el modo de ajuste de la vista previa." />
     </>
   );
 }

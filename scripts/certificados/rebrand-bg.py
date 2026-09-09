@@ -7,7 +7,10 @@ For a given preset this script:
   1. masks the old logo (symbol + wordmark + tagline) and inpaints each row
      from its nearest unmasked neighbours, so the paper texture around it is
      preserved instead of being flattened to a swatch;
-  2. rasterizes docs/brand/renovacion-2026/tierra-madre-lockup-vertical.svg
+  2. erases the SAMPLE TEXT the design team left baked in (a sample name,
+     detail lines, message) the same way, so the overlay fields can render on
+     bare paper with no cover swatch behind them;
+  3. rasterizes docs/brand/renovacion-2026/tierra-madre-lockup-vertical.svg
      (the vector master) in the certificate's own ink colour and composites it
      at the same width and centre the old block occupied.
 
@@ -55,6 +58,9 @@ class Preset:
     content: Box
     """which pixels inside `box` are the old logo's ink"""
     is_ink: Callable[[np.ndarray], np.ndarray]
+    """regions of baked sample text to erase, and what counts as text ink there"""
+    clear: tuple[Box, ...] = ()
+    is_text: Callable[[np.ndarray], np.ndarray] | None = None
 
 
 def _green(rgb: np.ndarray) -> np.ndarray:
@@ -67,22 +73,48 @@ def _burgundy(rgb: np.ndarray) -> np.ndarray:
     return (r > 90) & (r > g + 40) & (r > b + 30) & (g < 140)
 
 
+def _burgundy_soft(rgb: np.ndarray) -> np.ndarray:
+    """Burgundy text INCLUDING its anti-aliased edge (down to ~20% ink). The
+    cream paper has r−g ≈ 18 / r−b ≈ 48, a 20% ink pixel has r−g ≈ 42."""
+    r, g, b = (rgb[..., i].astype(int) for i in range(3))
+    return (r - g > 35) & (r - b > 35) & (g < 215)
+
+
+def _dark_or_green(rgb: np.ndarray) -> np.ndarray:
+    """Origen sample text: near-black values + green labels. The paper is
+    beige (r > g > b, all > 150), so neither predicate touches it."""
+    r, g, b = (rgb[..., i].astype(int) for i in range(3))
+    dark = (r < 150) & (g < 150) & (b < 150)
+    return dark | _green(rgb)
+
+
 PRESETS: dict[str, Preset] = {
     # 2160×3840 portrait. Old logo dominant pixel (0,89,54).
     "origen": Preset(
-        out="bg_origen-2026.jpg",
+        out="bg_origen-2026-v2.jpg",
         color="#005936",
         box=(900, 250, 1700, 690),
         content=(933, 283, 1669, 655),
         is_ink=_green,
+        # sample name / detail lines / long message (measured dark-text bboxes
+        # 869–1433×1913–2094, 869–1675×2176–2468, 867–1840×2619–2966)
+        clear=((840, 1890, 1720, 2110), (840, 2160, 1900, 2490), (840, 2600, 1900, 2990)),
+        is_text=_dark_or_green,
     ),
     # 3168×2446 landscape. Old logo dominant pixel (155,41,31).
     "embajador": Preset(
-        out="bg_embajador-2026.jpg",
+        out="bg_embajador-2026-v2.jpg",
         color="#9B291F",
         box=(1800, 300, 2430, 660),
         content=(1856, 352, 2375, 614),
         is_ink=_burgundy,
+        # sample name "Luis Alfonso Ospina" (page 339–719 × 279–323 → ×4).
+        # The box ends exactly where the rule under the name starts (row 1268,
+        # measured): the rule is part of the design and must survive. Where
+        # the dilated mask still nicks the rule's first rows, the row-wise
+        # interpolation rebuilds it from the rule pixels on either side.
+        clear=((1340, 1110, 2900, 1268),),
+        is_text=_burgundy_soft,
     ),
 }
 
@@ -131,6 +163,16 @@ def main(preset: Preset, src: Path) -> None:
     print(f"masking {int(mask.sum())} px of old logo")
     inpaint_rows(arr, mask, preset.box)
 
+    if preset.clear and preset.is_text is not None:
+        for cb in preset.clear:
+            cx0, cy0, cx1, cy1 = cb
+            m = np.zeros(arr.shape[:2], dtype=bool)
+            m[cy0:cy1, cx0:cx1] = preset.is_text(arr[cy0:cy1, cx0:cx1])
+            m = np.array(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(5))) > 0
+            print(f"erasing {int(m.sum())} px of sample text in {cb}")
+            inpaint_rows(arr, m, cb)
+            mask |= m
+
     # Soften the seam only inside the mask so interpolation banding never reads
     # as vertical streaks.
     filled = Image.fromarray(arr)
@@ -147,6 +189,7 @@ def main(preset: Preset, src: Path) -> None:
     print(f"lockup {lockup.width}×{lockup.height} at ({left},{top})")
 
     dest = ASSETS / preset.out
+    dest.parent.mkdir(parents=True, exist_ok=True)
     out.save(dest, quality=92, subsampling=0, optimize=True)
     print(f"wrote {dest.relative_to(ROOT)} ({dest.stat().st_size // 1024} KiB)")
 

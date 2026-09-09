@@ -351,8 +351,9 @@ function OverlayField({
     );
   }
 
-  // text — fixed template copy (blank-line separated paragraphs) or a draft key
-  const paragraphs = (field.text ?? data[field.key] ?? "")
+  // text — the draft value under `key`, else the template default copy
+  // (blank-line separated paragraphs)
+  const paragraphs = (data[field.key] ?? field.text ?? "")
     .split(/\n\s*\n/)
     .filter((par) => par.length > 0);
   return (
@@ -599,16 +600,16 @@ function FieldDragOverlay({
         aria-hidden
         style={{
           position: "absolute",
-          top: -22 / scale,
-          left: -px,
+          top: px,
+          right: px,
           padding: `${2 / scale}px ${6 / scale}px`,
           fontFamily: "system-ui, sans-serif",
           fontSize: 11 / scale,
           lineHeight: 1.4,
           fontWeight: 600,
           color: "#fff",
-          background: "rgba(15,92,58,.9)",
-          borderRadius: `${4 / scale}px ${4 / scale}px 0 0`,
+          background: "rgba(15,92,58,.75)",
+          borderRadius: `${4 / scale}px`,
           whiteSpace: "nowrap",
           pointerEvents: "none",
         }}

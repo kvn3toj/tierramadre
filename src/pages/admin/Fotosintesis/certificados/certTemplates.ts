@@ -55,8 +55,8 @@ export interface TemplateField {
   vignette?: boolean;
   /** details only — color of the "Tipo:" etc. labels */
   labelColor?: string;
-  /** text only — fixed copy baked into the template (not a draft key). Blank
-   *  lines ("\n\n") separate paragraphs. */
+  /** text only — default copy for the block, used when the draft has no value
+   *  under `key`. Blank lines ("\n\n") separate paragraphs. */
   text?: string;
   /** text only — extra vertical space between paragraphs of `text` (px) */
   paragraphGap?: number;
@@ -268,7 +268,7 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
     // /assets with a one-year immutable cache, so a re-rendered artwork under
     // the SAME name never reaches a browser that already cached the old one.
     // Rebranding again = new file name here, never an in-place overwrite.
-    background: "/assets/certificados/bg_origen-2026.jpg",
+    background: "/assets/certificados/bg_origen-2026-v2.jpg",
     page: { w: 1080, h: 1920 },
     print: { w: 1080, h: 1920, orientation: "portrait" },
     detailLines: ORIGEN_DETAIL_LINES,
@@ -305,7 +305,6 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
         w: 560,
         h: 142,
         align: "left",
-        cover: "#FCF7EC",
         font: {
           family: CORMORANT,
           style: "italic",
@@ -320,16 +319,13 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
         kind: "details",
         label: "Detalles",
         movable: true,
-        // Box starts at the baked sample's first line (artwork y 2176 → 1088)
-        // so the cover keeps masking it, and holds the full 7-line set of the
-        // 2026-09 layout at 30 px pitch. The field still auto-fits if custom
-        // rows push it past the box.
+        // Holds the full 7-line set of the 2026-09 layout at 30 px pitch. The
+        // field still auto-fits if custom rows push it past the box.
         x: 434,
         y: 1085,
         w: 540,
         h: 240,
         align: "left",
-        cover: "#FCF7EC",
         labelColor: "#0F5C3A",
         font: {
           family: CORMORANT,
@@ -339,15 +335,13 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
           color: "#2c2c2c",
         },
       },
-      // The artwork still carries the OLD long message baked in (dark text
-      // bbox 867–1840 × 2619–2966 on the 2160×3840 artwork → page 434–920 ×
-      // 1309–1483). The details, claims and message covers are laid out
-      // OVERLAPPING over that area so together they mask it: details
-      // 1085–1325, claims 1322–1442, message 1438–1495 (tests/certFieldAdjust
-      // checks the chain). They overlap by a few px on purpose: boxes that
-      // merely touch leave a half-pixel seam at fractional zooms through which
-      // a sliver of the baked text shows.
+      // No covers anywhere on this template: the v2 artwork has the sample
+      // name/details/message erased (rebrand-bg.py `clear`), so every block
+      // renders straight onto the paper. Re-adding a `cover` here brings the
+      // cream boxes back — tests/certFieldAdjust guards against it.
       {
+        // `text` is the default; the draft's `claims` key (editable in the
+        // panel) wins when present.
         key: "claims",
         kind: "text",
         label: "Atributos",
@@ -359,7 +353,6 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
         w: 500,
         h: 120,
         align: "left",
-        cover: "#FCF7EC",
         font: {
           family: CORMORANT,
           style: "italic",
@@ -370,7 +363,8 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
         },
       },
       {
-        // Fixed copy on purpose — the message stays the design team's (SPEC Q-6).
+        // Default copy is the design team's; the draft's `quote` key (editable
+        // in the panel, with a reset to the default) wins when present.
         key: "quote",
         kind: "text",
         label: "Mensaje",
@@ -381,7 +375,6 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
         w: 500,
         h: 57,
         align: "left",
-        cover: "#FCF7EC",
         font: {
           family: CORMORANT,
           style: "italic",
@@ -400,7 +393,7 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
     label: "Certificado Embajador",
     swatch: "linear-gradient(135deg,#8a2230,#a83d44)",
     // Versioned name — see the Origen note above.
-    background: "/assets/certificados/bg_embajador-2026.jpg",
+    background: "/assets/certificados/bg_embajador-2026-v2.jpg",
     page: { w: 792, h: 612 },
     print: { w: 792, h: 612, orientation: "landscape" },
     fields: [
@@ -430,7 +423,6 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
         h: 44,
         centerX: true,
         align: "center",
-        cover: "#F7F2E4",
         font: {
           family: CORMORANT,
           weight: 600,
@@ -470,6 +462,10 @@ export interface OrigenDraft {
   corte: string;
   cantidad: string;
   joya: string;
+  /** the attributes block ("~ …" lines); defaults to ORIGEN_CLAIMS */
+  claims: string;
+  /** the closing message; defaults to ORIGEN_QUOTE */
+  quote: string;
   photo: string;
   /** operator-added detail lines, appended to the template detail block */
   customDetails: CustomDetail[];
@@ -498,6 +494,8 @@ export const EMPTY_ORIGEN: OrigenDraft = {
   corte: "",
   cantidad: "",
   joya: "",
+  claims: ORIGEN_CLAIMS,
+  quote: ORIGEN_QUOTE,
   photo: "",
   customDetails: [],
 };

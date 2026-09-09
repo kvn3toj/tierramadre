@@ -132,17 +132,24 @@ describe('hasFieldAdjust', () => {
 });
 
 describe('CERT_TEMPLATES movable blocks', () => {
-  it('every movable field has a cover (so the baked original stays masked) and a label', () => {
+  it('every movable field has a label and a size', () => {
     for (const tpl of Object.values(CERT_TEMPLATES)) {
       for (const f of tpl.fields.filter((x) => x.movable)) {
-        expect(f.cover, `${tpl.id}.${f.key} cover`).toBeTruthy();
         expect(f.label, `${tpl.id}.${f.key} label`).toBeTruthy();
         expect(f.w && f.h, `${tpl.id}.${f.key} size`).toBeTruthy();
       }
     }
   });
 
-  it('the Origen claims and message are fixed copy inside the page', () => {
+  it('no field paints a cover swatch — the v2 artwork has no baked sample text to hide', () => {
+    for (const tpl of Object.values(CERT_TEMPLATES)) {
+      for (const f of tpl.fields) {
+        expect(f.cover, `${tpl.id}.${f.key} cover`).toBeUndefined();
+      }
+    }
+  });
+
+  it('the Origen claims and message defaults sit inside the page', () => {
     const claims = CERT_TEMPLATES.origen.fields.find((f) => f.key === 'claims');
     const quote = CERT_TEMPLATES.origen.fields.find((f) => f.key === 'quote');
     expect(claims?.text).toBe(
@@ -154,33 +161,6 @@ describe('CERT_TEMPLATES movable blocks', () => {
       expect(left + (f.w ?? 0)).toBeLessThanOrEqual(page.w);
       expect(top + (f.h ?? 0)).toBeLessThanOrEqual(page.h);
     }
-  });
-
-  it('the Origen covers form a contiguous chain over the old baked message (page 434–920 × 1309–1483)', () => {
-    const chain = ['details', 'claims', 'quote'].map(
-      (k) => CERT_TEMPLATES.origen.fields.find((f) => f.key === k)!,
-    );
-    const boxes = chain.map((f) => {
-      const { left, top } = fieldTopLeft(f);
-      return {
-        left,
-        right: left + f.w!,
-        top,
-        bottom: top + f.h!,
-        cover: f.cover,
-      };
-    });
-    for (const b of boxes) {
-      expect(b.cover).toBeTruthy();
-      expect(b.left).toBeLessThanOrEqual(434);
-      expect(b.right).toBeGreaterThanOrEqual(920);
-    }
-    for (let i = 1; i < boxes.length; i++) {
-      // overlap, never just touch (half-pixel seams at fractional zooms)
-      expect(boxes[i].top).toBeLessThan(boxes[i - 1].bottom);
-    }
-    expect(boxes[0].top).toBeLessThanOrEqual(1309);
-    expect(boxes[boxes.length - 1].bottom).toBeGreaterThanOrEqual(1483);
   });
 
   it('the Origen detail lines follow the 2026-09 order', () => {
@@ -196,9 +176,9 @@ describe('CERT_TEMPLATES movable blocks', () => {
   });
 
   it('artwork filenames carry the brand generation (immutable CDN cache)', () => {
-    expect(CERT_TEMPLATES.origen.background).toMatch(/bg_origen-2026\.jpg$/);
+    expect(CERT_TEMPLATES.origen.background).toMatch(/bg_origen-2026-v2\.jpg$/);
     expect(CERT_TEMPLATES.embajador.background).toMatch(
-      /bg_embajador-2026\.jpg$/,
+      /bg_embajador-2026-v2\.jpg$/,
     );
   });
 });

@@ -329,4 +329,14 @@ Origen page space is 1080×1920; embajador 792×612 (background exported larger,
   contenido y el auto-ajuste de los detalles se desactiva. Todo sale en PDF/PNG.
 - **Embajador.** `bg_embajador-2026.jpg` lleva el mismo bloqueo en el borgoña del
   arte; `scripts/certificados/rebrand-bg.py <origen|embajador> <original.jpg>`.
+- **Sin covers (2026-09-09, tarde).** Las cajas crema detrás de cada bloque existían
+  sólo para tapar el texto de muestra horneado en el arte. `rebrand-bg.py` ahora
+  también borra ese texto (paso `clear` por preset), los artes pasan a
+  `bg_origen-2026-v2.jpg` / `bg_embajador-2026-v2.jpg` y ningún campo lleva
+  `cover`: los bloques se pintan directo sobre el papel. El test lo vigila.
+- **Atributos y mensaje editables.** El panel lateral trae «Atributos» (multilínea) y
+  «Mensaje» con el texto del diseño como valor inicial y un «Restablecer» cuando
+  se cambia; una línea en blanco separa párrafos. Tamaño y alineación siguen en la
+  barra flotante de la vista previa. Los rótulos de los bloques en modo de ajuste
+  van dentro de su caja (esquina superior derecha) para no tapar al bloque vecino.
 
