@@ -64,7 +64,7 @@ const Home: React.FC = () => {
   const isDarkMode = muiTheme.palette.mode === 'dark';
   const { treasure } = useTreasure();
 
-  // Fetch newest products based on image upload date in Google Drive (SOURCE OF TRUTH)
+  // Newest inventory (highest item number first): Convex-published items + legacy Drive scan
   const { newestProducts: newProducts, isLoading: isLoadingNewProducts } =
     useNewestProducts(treasure, MAX_PRODUCTS_DISPLAY);
 

@@ -39,7 +39,10 @@ function driveCandidate(
 }
 
 describe('mergeNewestCandidates', () => {
-  it('sorts legacy (Drive) and Fotosíntesis items together, newest first', () => {
+  it('sorts legacy (Drive) and Fotosíntesis items together by item number, highest first', () => {
+    // "Newest" is the inventory number, not the publish stamp: item 542
+    // published on 2026-08-23 must not outrank item 585 published on
+    // 2026-08-20 (the production situation on 2026-09-09).
     const treasure = [
       treasureItem({ item: 1 }),
       treasureItem({
@@ -60,7 +63,49 @@ describe('mergeNewestCandidates', () => {
 
     const result = mergeNewestCandidates(drive, treasure, 10);
 
-    expect(result.map((i) => i.item)).toEqual([2, 1, 3]);
+    expect(result.map((i) => i.item)).toEqual([3, 2, 1]);
+  });
+
+  it('ranks a higher item number above a more recent publishedAt', () => {
+    const treasure = [
+      treasureItem({
+        item: 542,
+        publishedAt: new Date('2026-08-23T20:01:00.000Z').getTime(),
+      }),
+      treasureItem({
+        item: 585,
+        publishedAt: new Date('2026-08-20T02:38:00.000Z').getTime(),
+      }),
+    ];
+
+    const result = mergeNewestCandidates([], treasure, 10);
+
+    expect(result.map((i) => i.item)).toEqual([585, 542]);
+  });
+
+  it('breaks an item-number tie (93A / 93B both parse to 93) by publishedAt', () => {
+    const treasure = [
+      treasureItem({ item: 93, itemId: '93A', publishedAt: 1000 }),
+      treasureItem({ item: 93, itemId: '93B', publishedAt: 2000 }),
+    ];
+
+    const result = mergeNewestCandidates([], treasure, 10);
+
+    expect(result.map((i) => i.itemId)).toEqual(['93B', '93A']);
+  });
+
+  it('excludes a sold item (estado VENDIDA) but keeps ASESOR / CONSIGNACION', () => {
+    const treasure = [
+      treasureItem({ item: 10, publishedAt: 1, estado: 'VENDIDA' }),
+      treasureItem({ item: 9, publishedAt: 1, estado: 'ASESOR' }),
+      treasureItem({ item: 8, publishedAt: 1, estado: 'CONSIGNACION' }),
+      // Withheld for anon/guest: unknown is not "sold".
+      treasureItem({ item: 7, publishedAt: 1, estado: undefined }),
+    ];
+
+    const result = mergeNewestCandidates([], treasure, 10);
+
+    expect(result.map((i) => i.item)).toEqual([9, 8, 7]);
   });
 
   it('excludes lote/sublote bundle cards even if they carry publishedAt', () => {
@@ -125,15 +170,21 @@ describe('mergeNewestCandidates', () => {
     expect(result.map((i) => i.item)).toEqual([7]);
   });
 
-  it('treats a malformed Drive imageCreatedTime as oldest rather than corrupting sort order', () => {
+  it('treats a malformed Drive imageCreatedTime as oldest in a tie rather than corrupting sort order', () => {
     const treasure = [treasureItem({ item: 1, publishedAt: Date.now() })];
     const drive = [
-      driveCandidate({ itemNumber: 2, imageCreatedTime: 'not-a-date' }),
+      driveCandidate({ itemNumber: 1, imageCreatedTime: 'not-a-date' }),
     ];
+    // Same number, one side dated, one side not: the dated one wins the tie,
+    // and the merge still returns a well-formed list.
+    const treasureUnpublished = [treasureItem({ item: 1 })];
 
-    const result = mergeNewestCandidates(drive, treasure, 10);
-
-    expect(result.map((i) => i.item)).toEqual([1, 2]);
+    expect(
+      mergeNewestCandidates(drive, treasure, 10).map((i) => i.item),
+    ).toEqual([1]);
+    expect(
+      mergeNewestCandidates(drive, treasureUnpublished, 10).map((i) => i.item),
+    ).toEqual([1]);
   });
 
   it('excludes a published Fotosíntesis item that has no photo yet', () => {

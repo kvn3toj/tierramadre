@@ -1,8 +1,11 @@
 /**
  * useNewestProducts Hook
  *
- * Fetches the newest products based on when images were uploaded to Google Drive.
- * This is the SOURCE OF TRUTH for "new products" - sorted by image upload date.
+ * Feeds the "Estrenos" carousel. Fetches Drive-scanned legacy candidates
+ * (photos uploaded to the `products/` folder) and merges them with the
+ * Fotosíntesis items already published in `treasure` (Convex); the merged list
+ * is ordered as newest INVENTORY — highest item number first — see
+ * utils/newestProductsMerge.ts for the why (2026-09-09).
  *
  * @author CoomÜnity Council (Aria, Cronos)
  */
@@ -131,7 +134,7 @@ async function fetchNewestProducts(
 }
 
 /**
- * Hook to fetch newest products based on image upload date
+ * Hook for the newest-inventory carousel (highest item number first)
  *
  * @param treasure - All treasure items (for merging metadata)
  * @param limit - Maximum number of products to return
@@ -195,7 +198,8 @@ export function useNewestProducts(
   }, [limit, fetchTrigger]);
 
   // Merge Drive-scanned legacy candidates with published Fotosíntesis items
-  // (already present in `treasure` via useFotosintesisCatalog), newest first.
+  // (already present in `treasure` via useFotosintesisCatalog), highest item
+  // number first.
   const newestProducts: TreasureItem[] = mergeNewestCandidates(
     newestProductsData,
     treasure,
