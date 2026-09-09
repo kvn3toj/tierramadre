@@ -38,6 +38,29 @@ cuenta — y su ausencia ya costó caro: ver la entrada del 2026-08-23 16:10.
 ```
 
 ## Historial
+### 2026-09-09 17:45 — `feat/nuevos-clientes-google` (worktree `.claude/worktrees/new-clients`) → `main` — clientes autorregistrados con Google
+- Tocó: `api/validate.ts` (acción `register-client`, lectura de `new-users`, mint-session sellado),
+  `api/_lib/newUsers.ts` (nuevo), `api/_lib/catalogGrant.ts` + `catalogProjection.ts` (grant
+  `cliente`), `api/_lib/sessionToken.ts` + espejo `convex/_lib/sessionToken.ts` (campo `lvl`
+  opcional), `convex/_lib/authz.ts` (sólo el tipo `AccessLevel`), y en el front el rol `cliente`
+  (AuthContext/permissions, PriceShare, rutas, tab bar, producto, selección, 6 locales).
+- Vercel: sí, push directo a `main` (versión `2026.09.09.1064`).
+- Convex: **no hubo deploy manual**. Los cambios en `convex/` son de tipos solamente (una unión
+  y una interfaz); el `convex deploy` que hace el build de Vercel desde `main` no cambia ninguna
+  función ni el esquema.
+- Verificación: `npm run lint` limpio (app + api + convex), `vitest` 220 archivos / 2242 tests
+  en verde (10 nuevos: sello del token en Node y Convex, grant y proyección de cliente, upsert y
+  bloqueo de la hoja `new-users`), `npm run build` OK. **Sin probar todavía** un sign-in real
+  con un Gmail nuevo: la hoja `new-users` en la SOT v3 se crea sola en el primer registro.
+- Sobre la alerta roja del 2026-08-23 («`main` no se puede desplegar»): medido hoy con
+  `vercel ls --prod`, los 6 despliegues de producción de las últimas 4 h (los 8 commits de
+  certificados en `main`) están `Ready`. La condición ya no se cumple; la alerta del encabezado
+  quedó vieja y no la reescribí — es decisión de quien mergeó la pila de checkout.
+- Pendiente / riesgo para la próxima sesión: probar el alta real (fresh Gmail → fila en
+  `new-users` → catálogo con precio, WhatsApp a la línea de la casa). Un cliente comparte el
+  bucket de caché `:staff` del catálogo en su propio navegador; `signOut` lo limpia, así que no
+  cruza usuarios, pero si se quiere separar, `treasureCacheKey` puede leer el `lvl` del token.
+
 ### 2026-08-23 16:10 — `deploy/fuga-observacion` (base `chore/wompi-sandbox`) — cierre de la fuga de `observacion` en el catálogo público
 
 - **Qué:** `products:getPublicByItem` devolvía `observacion` **sin autenticación**. Medido sobre
