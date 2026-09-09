@@ -8,7 +8,7 @@
  * rendered here is the same pixels an operator gets from the admin page.
  *
  * `publicDir` points at the repo's real `public/` so the template background
- * (`/assets/certificados/bg_origen.jpg`) resolves exactly as it does in the app.
+ * (`/assets/certificados/bg_origen-2026.jpg`) resolves exactly as it does in the app.
  */
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';

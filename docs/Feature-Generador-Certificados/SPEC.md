@@ -282,7 +282,10 @@ Origen page space is 1080×1920; embajador 792×612 (background exported larger,
 
 ## Addendum 2026-09-09 — marca 2026, bloques movibles y guías
 
-- **Logo.** `bg_origen.jpg` lleva ahora el bloqueo vertical de la renovación 2026
+- **Logo.** El arte del Origen vive ahora en `bg_origen-2026.jpg` (nombre nuevo a
+  propósito: `/assets` se sirve con caché inmutable de un año, así que un arte
+  regenerado bajo el mismo nombre no llega a los navegadores que ya lo tenían) y
+  lleva el bloqueo vertical de la renovación 2026
   (símbolo de cuatro lazos + "tierra mädre" + eslogan), horneado en el arte con el
   verde del certificado. Se regenera con `scripts/certificados/rebrand-bg-origen.py`
   a partir del arte original en git y del maestro SVG de `docs/brand/renovacion-2026/`.

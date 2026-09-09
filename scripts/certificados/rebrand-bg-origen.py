@@ -2,7 +2,7 @@
 """
 Re-brand the Origen certificate artwork with the 2026 lockup.
 
-The logo is baked into public/assets/certificados/bg_origen.jpg. This script:
+The logo is baked into the Origen artwork under public/assets/certificados/. This script:
   1. masks the old green logo (symbol + wordmark + tagline) and inpaints each
      row from its nearest unmasked neighbours, so the cream paper texture
      around it is preserved instead of being flattened to a swatch;
@@ -12,7 +12,7 @@ The logo is baked into public/assets/certificados/bg_origen.jpg. This script:
 
 Idempotent on the already-rebranded artwork only if the old block is still
 present; run it against the ORIGINAL (git) artwork:
-    git show HEAD:public/assets/certificados/bg_origen.jpg > /tmp/bg_orig.jpg
+    git show 03a31e9:public/assets/certificados/bg_origen.jpg > /tmp/bg_orig.jpg
     python3 scripts/certificados/rebrand-bg-origen.py /tmp/bg_orig.jpg
 
 Requires: Pillow, numpy, ImageMagick (`magick`) for the SVG rasterization.
@@ -28,7 +28,10 @@ import numpy as np
 from PIL import Image, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[2]
-BG_OUT = ROOT / "public/assets/certificados/bg_origen.jpg"
+# Versioned filename: /assets is served immutable for a year, so an overwrite
+# under the old name would stay invisible to browsers that cached it. A new
+# artwork generation gets a NEW name (and certTemplates.ts follows).
+BG_OUT = ROOT / "public/assets/certificados/bg_origen-2026.jpg"
 LOCKUP_SVG = ROOT / "docs/brand/renovacion-2026/tierra-madre-lockup-vertical.svg"
 
 # Certificate green, sampled from the old logo pixels (dominant (0,89,54)).

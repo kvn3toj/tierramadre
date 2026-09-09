@@ -218,13 +218,17 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
     id: "origen",
     label: "Certificación de Origen",
     swatch: "linear-gradient(135deg,#0f5c3a,#2f8c5c)",
-    background: "/assets/certificados/bg_origen.jpg",
+    // The filename carries the brand generation on purpose: Vercel serves
+    // /assets with a one-year immutable cache, so a re-rendered artwork under
+    // the SAME name never reaches a browser that already cached the old one.
+    // Rebranding again = new file name here, never an in-place overwrite.
+    background: "/assets/certificados/bg_origen-2026.jpg",
     page: { w: 1080, h: 1920 },
     print: { w: 1080, h: 1920, orientation: "portrait" },
     detailLines: ORIGEN_DETAIL_LINES,
     fields: [
       {
-        // Circle-fit against the printed emerald ring in bg_origen.jpg (2160×3840
+        // Circle-fit against the printed emerald ring in bg_origen-2026.jpg (2160×3840
         // artwork → page coords ÷2). The ring is a near-perfect circle centered at
         // (650.4, 636.2) with inner edge Ø433.7px and outer edge Ø445.2px (page).
         // The photo is sized to Ø435 (radius 217.5) so it covers the cream hole
@@ -290,7 +294,7 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
         },
       },
       {
-        // The design team's fixed message. It is ALSO baked into bg_origen.jpg
+        // The design team's fixed message. It is ALSO baked into bg_origen-2026.jpg
         // (dark text bbox 867–1840 × 2619–2966 on the 2160×3840 artwork, line
         // pitch 64 px, paragraph gap 96 px); this overlay re-renders the same
         // copy in the same typeface at the same spot so the operator can move
