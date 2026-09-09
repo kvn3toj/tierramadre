@@ -142,13 +142,57 @@ describe('CERT_TEMPLATES movable blocks', () => {
     }
   });
 
-  it('the Origen quote is fixed copy inside the page', () => {
+  it('the Origen claims and message are fixed copy inside the page', () => {
+    const claims = CERT_TEMPLATES.origen.fields.find((f) => f.key === 'claims');
     const quote = CERT_TEMPLATES.origen.fields.find((f) => f.key === 'quote');
-    expect(quote?.text).toMatch(/^"Tu elección hoy/);
-    expect(quote?.text).toMatch(/el alma\."$/);
-    const { left, top } = fieldTopLeft(quote!);
-    expect(left + (quote!.w ?? 0)).toBeLessThanOrEqual(page.w);
-    expect(top + (quote!.h ?? 0)).toBeLessThanOrEqual(page.h);
+    expect(claims?.text).toBe(
+      '~ Esmeraldas Colombianas\n\n~ 100% Natural\n\n~ ADN de Paz',
+    );
+    expect(quote?.text).toBe('Origen, legado y propósito.');
+    for (const f of [claims!, quote!]) {
+      const { left, top } = fieldTopLeft(f);
+      expect(left + (f.w ?? 0)).toBeLessThanOrEqual(page.w);
+      expect(top + (f.h ?? 0)).toBeLessThanOrEqual(page.h);
+    }
+  });
+
+  it('the Origen covers form a contiguous chain over the old baked message (page 434–920 × 1309–1483)', () => {
+    const chain = ['details', 'claims', 'quote'].map(
+      (k) => CERT_TEMPLATES.origen.fields.find((f) => f.key === k)!,
+    );
+    const boxes = chain.map((f) => {
+      const { left, top } = fieldTopLeft(f);
+      return {
+        left,
+        right: left + f.w!,
+        top,
+        bottom: top + f.h!,
+        cover: f.cover,
+      };
+    });
+    for (const b of boxes) {
+      expect(b.cover).toBeTruthy();
+      expect(b.left).toBeLessThanOrEqual(434);
+      expect(b.right).toBeGreaterThanOrEqual(920);
+    }
+    for (let i = 1; i < boxes.length; i++) {
+      // overlap, never just touch (half-pixel seams at fractional zooms)
+      expect(boxes[i].top).toBeLessThan(boxes[i - 1].bottom);
+    }
+    expect(boxes[0].top).toBeLessThanOrEqual(1309);
+    expect(boxes[boxes.length - 1].bottom).toBeGreaterThanOrEqual(1483);
+  });
+
+  it('the Origen detail lines follow the 2026-09 order', () => {
+    expect(CERT_TEMPLATES.origen.detailLines?.map((l) => l.key)).toEqual([
+      'tipo',
+      'calidad',
+      'corte',
+      'color',
+      'peso',
+      'cantidad',
+      'joya',
+    ]);
   });
 
   it('artwork filenames carry the brand generation (immutable CDN cache)', () => {

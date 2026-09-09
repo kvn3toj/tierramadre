@@ -237,23 +237,26 @@ export interface CertTemplate {
   approxArt?: boolean;
 }
 
-/** Detail block order for the Origen certificate (one line per non-empty value). */
+/** Detail block order for the Origen certificate (one line per non-empty value).
+ *  Order and set follow the design team's 2026-09 layout ("5to Elemento"). */
 export const ORIGEN_DETAIL_LINES: DetailLine[] = [
   { key: "tipo", label: "Tipo" },
   { key: "calidad", label: "Calidad" },
+  { key: "corte", label: "Corte" },
   { key: "color", label: "Color" },
   { key: "peso", label: "Peso" },
-  { key: "corte", label: "Corte" },
+  { key: "cantidad", label: "Cantidad" },
   { key: "joya", label: "Joya" },
-  { key: "tecnica", label: "Técnica" },
 ];
 
 const CORMORANT = "'Cormorant Garamond', Cormorant, Georgia, serif";
 
-/** Fixed message on the Origen certificate (SPEC §Origen, "quote"). */
-export const ORIGEN_QUOTE =
-  '"Tu elección hoy siembra semillas de abundancia que el universo convierte en paz verdadera.\n\n' +
-  'Esta esmeralda es más que una gema: es un pacto entre la tierra y el alma."';
+/** Fixed claims block on the Origen certificate (design 2026-09). */
+export const ORIGEN_CLAIMS =
+  "~ Esmeraldas Colombianas\n\n~ 100% Natural\n\n~ ADN de Paz";
+
+/** Fixed message on the Origen certificate (design 2026-09). */
+export const ORIGEN_QUOTE = "Origen, legado y propósito.";
 
 export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
   // ── Certificación de Origen — gem/treasure certificate. Portrait. ──
@@ -306,10 +309,10 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
         font: {
           family: CORMORANT,
           style: "italic",
-          weight: 600,
-          size: 50,
-          lineHeight: 51,
-          color: "#2c2c2c",
+          weight: 700,
+          size: 54,
+          lineHeight: 54,
+          color: "#1E3A2B",
         },
       },
       {
@@ -317,52 +320,74 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
         kind: "details",
         label: "Detalles",
         movable: true,
+        // Box starts at the baked sample's first line (artwork y 2176 → 1088)
+        // so the cover keeps masking it, and holds the full 7-line set of the
+        // 2026-09 layout at 30 px pitch. The field still auto-fits if custom
+        // rows push it past the box.
         x: 434,
-        y: 1082,
+        y: 1085,
         w: 540,
-        h: 210,
+        h: 240,
         align: "left",
         cover: "#FCF7EC",
         labelColor: "#0F5C3A",
-        // Roomier line height + size so the typical 5-line block fills its
-        // reserved area instead of leaving a blank gap above the baked quote.
-        // The details field auto-fits, so the all-lines-filled case still never
-        // overflows.
         font: {
           family: CORMORANT,
           weight: 400,
-          size: 30,
-          lineHeight: 37,
+          size: 28,
+          lineHeight: 30,
           color: "#2c2c2c",
         },
       },
+      // The artwork still carries the OLD long message baked in (dark text
+      // bbox 867–1840 × 2619–2966 on the 2160×3840 artwork → page 434–920 ×
+      // 1309–1483). The details, claims and message covers are laid out
+      // OVERLAPPING over that area so together they mask it: details
+      // 1085–1325, claims 1322–1442, message 1438–1495 (tests/certFieldAdjust
+      // checks the chain). They overlap by a few px on purpose: boxes that
+      // merely touch leave a half-pixel seam at fractional zooms through which
+      // a sliver of the baked text shows.
       {
-        // The design team's fixed message. It is ALSO baked into bg_origen-2026.jpg
-        // (dark text bbox 867–1840 × 2619–2966 on the 2160×3840 artwork, line
-        // pitch 64 px, paragraph gap 96 px); this overlay re-renders the same
-        // copy in the same typeface at the same spot so the operator can move
-        // it, while the cover masks the baked original. Copy is not a draft
-        // key on purpose — the legal message (SPEC Q-6) stays fixed.
+        key: "claims",
+        kind: "text",
+        label: "Atributos",
+        movable: true,
+        text: ORIGEN_CLAIMS,
+        paragraphGap: 2,
+        x: 434,
+        y: 1322,
+        w: 500,
+        h: 120,
+        align: "left",
+        cover: "#FCF7EC",
+        font: {
+          family: CORMORANT,
+          style: "italic",
+          weight: 700,
+          size: 30,
+          lineHeight: 36,
+          color: "#164B33",
+        },
+      },
+      {
+        // Fixed copy on purpose — the message stays the design team's (SPEC Q-6).
         key: "quote",
         kind: "text",
         label: "Mensaje",
         movable: true,
         text: ORIGEN_QUOTE,
-        paragraphGap: 16,
         x: 434,
-        y: 1308,
+        y: 1438,
         w: 500,
-        h: 190,
+        h: 57,
         align: "left",
         cover: "#FCF7EC",
-        // Measured against the baked text in the harness: weight 400 / 37px
-        // reproduces the baked line widths (486 px) and wraps identically.
         font: {
           family: CORMORANT,
           style: "italic",
-          weight: 400,
-          size: 37,
-          lineHeight: 32,
+          weight: 500,
+          size: 32,
+          lineHeight: 36,
           color: "#2c2c2c",
         },
       },
@@ -443,8 +468,8 @@ export interface OrigenDraft {
   color: string;
   peso: string;
   corte: string;
+  cantidad: string;
   joya: string;
-  tecnica: string;
   photo: string;
   /** operator-added detail lines, appended to the template detail block */
   customDetails: CustomDetail[];
@@ -471,8 +496,8 @@ export const EMPTY_ORIGEN: OrigenDraft = {
   color: "",
   peso: "",
   corte: "",
+  cantidad: "",
   joya: "",
-  tecnica: "",
   photo: "",
   customDetails: [],
 };

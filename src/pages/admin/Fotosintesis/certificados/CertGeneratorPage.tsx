@@ -143,8 +143,8 @@ function treasureToOrigen(t: TreasureItem): OrigenDraft {
     color: t.color ?? '',
     peso: t.peso != null ? String(t.peso) : '',
     corte: t.talla ?? '',
+    cantidad: t.cantidad != null && t.cantidad > 0 ? String(t.cantidad) : '',
     joya: t.metalType ?? (t.isJewelry ? (t.categoria ?? '') : ''),
-    tecnica: '',
     photo: t.imagen ?? '',
     // Autofill never invents custom rows; the operator adds those by hand.
     customDetails: [],
@@ -1555,12 +1555,22 @@ function OrigenForm({
           value={draft.calidad}
           onChange={set('calidad')}
         />
+        <Field label="Corte" value={draft.corte} onChange={set('corte')} />
         <Field label="Color" value={draft.color} onChange={set('color')} />
         <Field label="Peso" value={draft.peso} onChange={set('peso')} />
-        <Field label="Corte" value={draft.corte} onChange={set('corte')} />
-        <Field label="Joya" value={draft.joya} onChange={set('joya')} />
+        <Field
+          label="Cantidad"
+          value={draft.cantidad}
+          onChange={set('cantidad')}
+          placeholder="p. ej. 5"
+        />
       </Box>
-      <Field label="Técnica" value={draft.tecnica} onChange={set('tecnica')} />
+      <Field
+        label="Joya"
+        value={draft.joya}
+        onChange={set('joya')}
+        placeholder="p. ej. 3,8g Plata rodinada"
+      />
       <CustomDetailsEditor
         items={draft.customDetails}
         onAdd={addCustom}

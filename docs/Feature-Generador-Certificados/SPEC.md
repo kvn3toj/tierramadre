@@ -305,4 +305,28 @@ Origen page space is 1080×1920; embajador 792×612 (background exported larger,
   página mientras dura el arrastre (nunca se captura).
 - Los criterios de aceptación que hablan de «píxel-idéntico» para logo y mensaje
   quedan reemplazados por lo anterior.
+- **Embajador (2026-09-09, misma sesión).** `bg_embajador-2026.jpg` lleva el mismo
+  bloqueo vertical en el borgoña del certificado; el script pasó a
+  `scripts/certificados/rebrand-bg.py <origen|embajador> <original.jpg>` con un
+  preset por arte.
+- **Tamaño y alineación.** En modo de ajuste, un clic sobre un bloque abre una barra
+  flotante (sin escalar, nunca capturada): alinear a la izquierda / centro / derecha
+  / justificar, tamaño en px (−/+ de a 2, o escribiendo; entre 10 px y 3× el de
+  plantilla) y restablecer el bloque. Con tamaño propio el bloque crece con su
+  contenido en vez de recortarse y el auto-ajuste de los detalles se desactiva.
+  Todo sale en PDF/PNG.
+- **Origen, diseño 2026-09 ("5to Elemento").** Líneas de detalle: Tipo, Calidad,
+  Corte, Color, Peso, Cantidad, Joya (Técnica sale; Cantidad se autocompleta desde
+  el catálogo). Bajo los detalles, un bloque fijo de atributos («~ Esmeraldas
+  Colombianas / ~ 100% Natural / ~ ADN de Paz») y el mensaje corto «Origen, legado
+  y propósito.» reemplazan a la cita larga, que sigue horneada en el arte y queda
+  tapada por la cadena de covers detalles → atributos → mensaje (se solapan unos px
+  a propósito; `tests/certFieldAdjust` vigila la cadena).
+- **Tamaño y alineación.** En modo de ajuste, un clic sobre un bloque abre una barra
+  flotante (sin escalar, nunca capturada): alinear a la izquierda / centro / derecha
+  / justificar, tamaño en px (−/+ de a 2, o escribiendo; entre 10 px y 3× el de
+  plantilla) y restablecer el bloque. Con tamaño propio el bloque crece con su
+  contenido y el auto-ajuste de los detalles se desactiva. Todo sale en PDF/PNG.
+- **Embajador.** `bg_embajador-2026.jpg` lleva el mismo bloqueo en el borgoña del
+  arte; `scripts/certificados/rebrand-bg.py <origen|embajador> <original.jpg>`.
 
