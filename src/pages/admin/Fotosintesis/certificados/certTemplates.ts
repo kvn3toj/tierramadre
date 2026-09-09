@@ -218,6 +218,8 @@ export interface CustomDetail {
   id: string;
   label: string;
   value: string;
+  /** a blank half-line between rows (label/value ignored) */
+  spacer?: boolean;
 }
 
 export interface CertTemplate {

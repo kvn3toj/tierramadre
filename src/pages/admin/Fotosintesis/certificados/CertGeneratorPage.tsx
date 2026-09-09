@@ -36,6 +36,7 @@ import {
   Image as ImageIcon,
   Lock,
   Move,
+  MoveVertical,
   Plus,
   Printer,
   RotateCcw,
@@ -958,6 +959,30 @@ export default function CertGeneratorPage() {
 
 // ── small UI helpers ────────────────────────────────────────────────────────
 
+const dashedBtnSx = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 0.75,
+  flex: 1,
+  py: 1,
+  border: `1px dashed ${foto.surfaces.edgeStrong}`,
+  borderRadius: '9px',
+  background: 'transparent',
+  color: foto.ink.secondary,
+  fontSize: 12,
+  fontWeight: 600,
+  cursor: 'pointer',
+  '&:hover': {
+    borderColor: foto.accent.primary,
+    color: foto.ink.primary,
+  },
+  '&:focus-visible': {
+    outline: '2px solid transparent',
+    boxShadow: `0 0 0 2px ${foto.surfaces.canvas}, 0 0 0 4px ${foto.accent.primary}`,
+  },
+} as const;
+
 const ghostBtnSx = {
   textTransform: 'none',
   fontWeight: 700,
@@ -1384,11 +1409,14 @@ function newCustomDetailId(): string {
 function CustomDetailsEditor({
   items,
   onAdd,
+  onAddSpacer,
   onUpdate,
   onRemove,
 }: {
   items: CustomDetail[];
   onAdd: () => void;
+  /** insert a blank half-line between rows */
+  onAddSpacer: () => void;
   onUpdate: (id: string, patch: Partial<CustomDetail>) => void;
   onRemove: (id: string) => void;
 }) {
@@ -1426,14 +1454,18 @@ function CustomDetailsEditor({
             }}
           >
             <Typography sx={{ fontSize: 11, color: foto.ink.tertiary }}>
-              Campo {i + 1}
+              {item.spacer ? 'Espacio entre líneas' : `Campo ${i + 1}`}
             </Typography>
             <Box
               component="button"
               type="button"
               onClick={() => onRemove(item.id)}
-              aria-label={`Eliminar el campo ${i + 1}`}
-              title="Eliminar campo"
+              aria-label={
+                item.spacer
+                  ? `Eliminar el espacio ${i + 1}`
+                  : `Eliminar el campo ${i + 1}`
+              }
+              title={item.spacer ? 'Eliminar espacio' : 'Eliminar campo'}
               sx={{
                 width: 28,
                 height: 28,
@@ -1457,56 +1489,54 @@ function CustomDetailsEditor({
               <Trash2 size={14} />
             </Box>
           </Box>
-          <TextField
-            value={item.label}
-            onChange={(e) => onUpdate(item.id, { label: e.target.value })}
-            placeholder="Nombre del campo (p. ej. Certificado N°)"
-            aria-label={`Nombre del campo ${i + 1}`}
-            size="small"
-            fullWidth
-            sx={{ mb: 0.75 }}
-            InputProps={{ sx: inputSx }}
-          />
-          <TextField
-            value={item.value}
-            onChange={(e) => onUpdate(item.id, { value: e.target.value })}
-            placeholder="Contenido (p. ej. TM-0042)"
-            aria-label={`Contenido del campo ${i + 1}`}
-            size="small"
-            fullWidth
-            InputProps={{ sx: inputSx }}
-          />
+          {item.spacer ? (
+            <Box
+              aria-hidden
+              sx={{
+                height: 10,
+                borderRadius: '5px',
+                background: `repeating-linear-gradient(90deg, ${foto.surfaces.edgeStrong} 0 6px, transparent 6px 12px)`,
+                opacity: 0.6,
+              }}
+            />
+          ) : (
+            <>
+              <TextField
+                value={item.label}
+                onChange={(e) => onUpdate(item.id, { label: e.target.value })}
+                placeholder="Nombre del campo (p. ej. Certificado N°)"
+                aria-label={`Nombre del campo ${i + 1}`}
+                size="small"
+                fullWidth
+                sx={{ mb: 0.75 }}
+                InputProps={{ sx: inputSx }}
+              />
+              <TextField
+                value={item.value}
+                onChange={(e) => onUpdate(item.id, { value: e.target.value })}
+                placeholder="Contenido (p. ej. TM-0042)"
+                aria-label={`Contenido del campo ${i + 1}`}
+                size="small"
+                fullWidth
+                InputProps={{ sx: inputSx }}
+              />
+            </>
+          )}
         </Box>
       ))}
-      <Box
-        component="button"
-        type="button"
-        onClick={onAdd}
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 0.75,
-          width: '100%',
-          py: 1,
-          border: `1px dashed ${foto.surfaces.edgeStrong}`,
-          borderRadius: '9px',
-          background: 'transparent',
-          color: foto.ink.secondary,
-          fontSize: 12,
-          fontWeight: 600,
-          cursor: 'pointer',
-          '&:hover': {
-            borderColor: foto.accent.primary,
-            color: foto.ink.primary,
-          },
-          '&:focus-visible': {
-            outline: '2px solid transparent',
-            boxShadow: `0 0 0 2px ${foto.surfaces.canvas}, 0 0 0 4px ${foto.accent.primary}`,
-          },
-        }}
-      >
-        <Plus size={14} /> Agregar campo
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box component="button" type="button" onClick={onAdd} sx={dashedBtnSx}>
+          <Plus size={14} /> Agregar campo
+        </Box>
+        <Box
+          component="button"
+          type="button"
+          onClick={onAddSpacer}
+          title="Inserta una línea en blanco entre los detalles"
+          sx={dashedBtnSx}
+        >
+          <MoveVertical size={14} /> Agregar espacio
+        </Box>
       </Box>
     </Box>
   );
@@ -1530,27 +1560,24 @@ function OrigenForm({
   onSelectPiece: (piece: TreasureItem | null) => void;
   photoAdjust: PhotoAdjustControl;
 }) {
-  // Editing any field by hand drops the linkage attribution: the form may no
-  // longer describe the originally-picked piece, so we won't auto-link a cert
-  // to a product whose data was changed after autofill.
-  const set = (k: keyof OrigenDraft) => (v: string) => {
-    onSelectPiece(null);
+  // Hand edits KEEP the product linkage. The catalog row is often sparse
+  // (a bare "Joya" type, weight 0), so the normal flow is: pick the piece,
+  // correct the certificate text, save it to that piece. Until 2026-09-09 any
+  // edit silently dropped the linkage and disabled «Guardar al producto»,
+  // which made that flow impossible. The linkage now only clears when the
+  // operator clears the picker.
+  const set = (k: keyof OrigenDraft) => (v: string) =>
     setDraft((d) => ({ ...d, [k]: v }));
-  };
 
-  // The fixed-copy blocks (claims, message) are template copy, not piece
-  // identity, so editing them keeps the product linkage too.
   const setCopy = (k: 'claims' | 'quote') => (v: string) =>
     setDraft((d) => ({ ...d, [k]: v }));
 
-  // Custom detail rows are additive operator info, not piece identity, so they
-  // do NOT drop the product linkage the way editing a core field does.
-  const addCustom = () =>
+  const addCustom = (spacer = false) =>
     setDraft((d) => ({
       ...d,
       customDetails: [
         ...d.customDetails,
-        { id: newCustomDetailId(), label: '', value: '' },
+        { id: newCustomDetailId(), label: '', value: '', spacer },
       ],
     }));
   const updateCustom = (id: string, patch: Partial<CustomDetail>) =>
@@ -1623,7 +1650,8 @@ function OrigenForm({
       />
       <CustomDetailsEditor
         items={draft.customDetails}
-        onAdd={addCustom}
+        onAdd={() => addCustom(false)}
+        onAddSpacer={() => addCustom(true)}
         onUpdate={updateCustom}
         onRemove={removeCustom}
       />

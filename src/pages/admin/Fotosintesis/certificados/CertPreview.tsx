@@ -153,12 +153,17 @@ function DetailsField({
   guides?: boolean;
 }) {
   const lines = useMemo(() => {
-    const base = (template.detailLines ?? [])
+    type Line = { label: string; value: string; spacer?: boolean };
+    const base: Line[] = (template.detailLines ?? [])
       .map((dl) => ({ label: dl.label, value: (data[dl.key] ?? "").trim() }))
       .filter((l) => l.value.length > 0);
-    const custom = (customDetails ?? [])
-      .map((cd) => ({ label: cd.label.trim(), value: cd.value.trim() }))
-      .filter((l) => l.label.length > 0 || l.value.length > 0);
+    const custom: Line[] = (customDetails ?? [])
+      .map((cd) =>
+        cd.spacer
+          ? { label: "", value: "", spacer: true }
+          : { label: cd.label.trim(), value: cd.value.trim() },
+      )
+      .filter((l) => l.spacer || l.label.length > 0 || l.value.length > 0);
     return [...base, ...custom];
   }, [template.detailLines, data, customDetails]);
 
@@ -171,7 +176,8 @@ function DetailsField({
   // is fixed at 100% of the box — so this measurement is stable and can't
   // oscillate with `fit`. Re-runs only when the line set or box height changes.
   const linesKey = useMemo(
-    () => lines.map((l) => `${l.label}${l.value}`).join(""),
+    () =>
+      lines.map((l) => (l.spacer ? "\u0000" : `${l.label}${l.value}`)).join(""),
     [lines],
   );
   // An operator size override disables the auto-fit: the box grows instead
@@ -197,18 +203,29 @@ function DetailsField({
           transform: fit !== 1 ? `scale(${fit})` : undefined,
         }}
       >
-        {lines.map((l, i) => (
-          <div key={`${l.label}-${i}`}>
-            {l.label ? (
-              <>
-                <span style={{ color: field.labelColor, fontWeight: 700 }}>
-                  {l.label}:
-                </span>{" "}
-              </>
-            ) : null}
-            {l.value}
-          </div>
-        ))}
+        {lines.map((l, i) =>
+          l.spacer ? (
+            // A blank half-line: the operator's "breathing room" between rows.
+            <div
+              key={`spacer-${i}`}
+              aria-hidden
+              style={{
+                height: Math.round((field.font?.lineHeight ?? 30) * 0.55),
+              }}
+            />
+          ) : (
+            <div key={`${l.label}-${i}`}>
+              {l.label ? (
+                <>
+                  <span style={{ color: field.labelColor, fontWeight: 700 }}>
+                    {l.label}:
+                  </span>{" "}
+                </>
+              ) : null}
+              {l.value}
+            </div>
+          ),
+        )}
       </div>
     </div>
   );
