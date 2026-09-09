@@ -778,4 +778,15 @@ export const zh = {
     whatsappMessage: '这些宝石是为你挑选的 💚（{n} 件）\n{link}',
     whatsappMessageOne: '这件宝石是为你挑选的 💚\n{link}',
   },
+
+  // Clientes autorregistrados con Google (2026-09-09): catálogo con precio,
+  // consulta por WhatsApp a la línea de la casa, y el descargo bajo el precio.
+  cliente: {
+    priceDisclaimer:
+      '我们的所有价格如有变动，恕不另行通知。把握“永恒当下”的价格。',
+    consultWhatsApp: '通过 WhatsApp 咨询',
+    addToSelection: '加入选品',
+    inSelection: '已在选品中 · 查看',
+    cartBanner: '您的咨询将通过 WhatsApp 发送给 Tierra Madre',
+  },
 };

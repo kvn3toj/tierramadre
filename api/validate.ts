@@ -22,6 +22,7 @@ import {
   verifySessionToken,
   SESSION_TTL_SECONDS,
 } from './_lib/sessionToken.js';
+import { findClientRow, upsertClient } from './_lib/newUsers.js';
 
 type Sheets = sheets_v4.Sheets;
 
@@ -30,7 +31,16 @@ type Sheets = sheets_v4.Sheets;
  * google-auth-library pattern as api/vitrina.ts / api/fotosintesis-ai.ts
  * (lazy import so the common validate path pays no cold-start cost).
  */
-async function verifyGoogleIdTokenEmail(token: string): Promise<string | null> {
+interface VerifiedGoogleProfile {
+  email: string;
+  name?: string;
+  picture?: string;
+  locale?: string;
+}
+
+async function verifyGoogleIdToken(
+  token: string,
+): Promise<VerifiedGoogleProfile | null> {
   const audiences = [
     process.env.GOOGLE_OAUTH_CLIENT_ID,
     process.env.VITE_GOOGLE_CLIENT_ID,
@@ -45,13 +55,21 @@ async function verifyGoogleIdTokenEmail(token: string): Promise<string | null> {
       audience: audiences,
     });
     const payload = ticket.getPayload();
-    return payload?.email && payload.email_verified
-      ? payload.email.toLowerCase().trim()
-      : null;
+    if (!payload?.email || !payload.email_verified) return null;
+    return {
+      email: payload.email.toLowerCase().trim(),
+      name: payload.name,
+      picture: payload.picture,
+      locale: payload.locale,
+    };
   } catch {
     // Invalid or expired token — treat as unauthenticated.
     return null;
   }
+}
+
+async function verifyGoogleIdTokenEmail(token: string): Promise<string | null> {
+  return (await verifyGoogleIdToken(token))?.email ?? null;
 }
 
 interface ValidatedUser {
@@ -364,6 +382,7 @@ export default withApiHandler(
 
       const sheetNames = await getSheetNames(sheets);
       const rosterUser = await validateUser(sheets, verifiedEmail, sheetNames);
+      let lvl: 'cliente' | undefined;
       if (!rosterUser) {
         const provider = await validateProvider(
           sheets,
@@ -371,17 +390,78 @@ export default withApiHandler(
           sheetNames,
         );
         if (!provider) {
-          return sendError(res, 403, 'No autorizado');
+          // Cliente autorregistrado (hoja new-users): recibe token, pero
+          // SELLADO. El sello es lo que baja su grant de catálogo a la
+          // proyección de vitrina (api/_lib/catalogGrant.ts); sin él, el
+          // token sería indistinguible del de un asesor.
+          const client = await findClientRow(sheets, verifiedEmail);
+          if (!client) {
+            return sendError(res, 403, 'No autorizado');
+          }
+          lvl = 'cliente';
         }
       }
 
-      const sessionToken = mintSessionToken(verifiedEmail);
+      const sessionToken = mintSessionToken(verifiedEmail, { lvl });
       if (!sessionToken) {
         return sendError(res, 500, 'Sesión no disponible en el servidor');
       }
       return sendSuccess(res, {
         sessionToken,
         expiresInSeconds: SESSION_TTL_SECONDS,
+      });
+    }
+
+    // Alta de cliente: un correo de Google que no está en ningún roster entra
+    // como `cliente` y queda anotado en `new-users`. SÓLO desde un ID token
+    // verificado — la lectura por email de abajo no está autenticada, y si
+    // registrara, cualquiera podría llenar la hoja con correos ajenos.
+    // Los rosters mandan: si el correo resulta ser de staff o proveedor se
+    // devuelve ese rol y no se escribe nada en new-users.
+    if (action === 'register-client') {
+      if (req.method !== 'POST') {
+        return sendError(res, 405, 'POST required');
+      }
+      const body = (req.body ?? {}) as { idToken?: unknown };
+      const profile =
+        typeof body.idToken === 'string' && body.idToken
+          ? await verifyGoogleIdToken(body.idToken)
+          : null;
+      if (!profile) {
+        return sendError(res, 401, 'Token inválido o expirado');
+      }
+
+      const sheetNames = await getSheetNames(sheets);
+      const rosterUser = await validateUser(sheets, profile.email, sheetNames);
+      if (rosterUser) {
+        return sendSuccess(res, {
+          isAuthorized: true,
+          user: rosterUser,
+          accountType: 'user',
+        });
+      }
+      const provider = await validateProvider(sheets, profile.email, sheetNames);
+      if (provider) {
+        return sendSuccess(res, {
+          isProvider: true,
+          provider,
+          accountType: 'provider',
+        });
+      }
+
+      const client = await upsertClient(sheets, profile);
+      if (!client) {
+        return sendSuccess(res, {
+          isAuthorized: false,
+          isProvider: false,
+          reason: 'blocked',
+          error: 'Cuenta de cliente bloqueada',
+        });
+      }
+      return sendSuccess(res, {
+        isAuthorized: true,
+        user: client,
+        accountType: 'cliente',
       });
     }
 
@@ -433,6 +513,17 @@ export default withApiHandler(
         isProvider: true,
         provider,
         accountType: 'provider',
+      });
+    }
+
+    // Clientes autorregistrados. Lectura solamente: registrar desde acá sería
+    // registrar a partir de un email sin verificar (ver register-client).
+    const client = await findClientRow(sheets, normalizedEmail);
+    if (client) {
+      return sendSuccess(res, {
+        isAuthorized: true,
+        user: client,
+        accountType: 'cliente',
       });
     }
 

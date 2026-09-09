@@ -28,6 +28,7 @@ import {
 } from './browser';
 import VitrinaShareDialog from '../vitrina/VitrinaShareDialog';
 import { useCurrentAsesor } from '../../hooks/useCurrentAsesor';
+import { useIsCliente } from '../../hooks/useAuth';
 import TreasureErrorState from './browser/TreasureErrorState';
 import ScrollToTop from '../shared/ScrollToTop';
 import { useTreasureBrowserController } from '../../hooks/useTreasureBrowserController';
@@ -66,6 +67,7 @@ export default function TreasureBrowser({
   defaultViewMode,
 }: TreasureBrowserProps = {}) {
   const { t } = useLanguage();
+  const isCliente = useIsCliente();
   const theme = useTheme();
 
   // Scroll restoration: key the grid's internal scroll offset by the history
@@ -222,6 +224,21 @@ export default function TreasureBrowser({
         px: { xs: 0, sm: 2, md: 3, lg: 3, xl: 4 },
       }}
     >
+      {isCliente && (
+        <Typography
+          variant="caption"
+          component="p"
+          sx={{
+            px: { xs: 2, sm: 0 },
+            pt: 1,
+            pb: 0.5,
+            color: 'text.secondary',
+            lineHeight: 1.45,
+          }}
+        >
+          {t.cliente.priceDisclaimer}
+        </Typography>
+      )}
       {!isMobile && (
         <CatalogHeader
           count={headerCount}

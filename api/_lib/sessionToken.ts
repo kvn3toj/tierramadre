@@ -44,6 +44,18 @@ export interface SessionTokenPayload {
   email: string;
   iat: number;
   exp: number;
+  /**
+   * Nivel del portador cuando NO es staff. Ausente = staff (roster de
+   * Asesores/Proveedores), que es lo que significaban todos los tokens
+   * emitidos antes del 2026-09-09. `'cliente'` = autorregistrado con Google
+   * (hoja `new-users`): el resolvedor de grants del catálogo lo baja a la
+   * proyección de vitrina en vez de darle el catálogo crudo.
+   */
+  lvl?: 'cliente';
+}
+
+export interface MintSessionOptions {
+  lvl?: SessionTokenPayload['lvl'];
 }
 
 function hmacHex(secret: string, message: string): string {
@@ -61,7 +73,10 @@ export function isSessionToken(token: string): boolean {
  * membership before calling. Returns null when ADMIN_SYNC_TOKEN isn't
  * configured (fail closed).
  */
-export function mintSessionToken(email: string): string | null {
+export function mintSessionToken(
+  email: string,
+  options: MintSessionOptions = {},
+): string | null {
   const secret = process.env.ADMIN_SYNC_TOKEN;
   if (!secret) return null;
   const now = Math.floor(Date.now() / 1000);
@@ -69,6 +84,7 @@ export function mintSessionToken(email: string): string | null {
     email: email.toLowerCase().trim(),
     iat: now,
     exp: now + SESSION_TTL_SECONDS,
+    ...(options.lvl ? { lvl: options.lvl } : {}),
   };
   const b64 = Buffer.from(JSON.stringify(payload), 'utf8').toString(
     'base64url',

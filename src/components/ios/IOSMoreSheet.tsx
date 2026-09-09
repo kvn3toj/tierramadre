@@ -65,7 +65,7 @@ import {
 } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
-import { useCanCreateInvitations } from '../../hooks/useAuth';
+import { useCanCreateInvitations, useIsCliente } from '../../hooks/useAuth';
 import {
   useIsAdmin,
   useIsStaff,
@@ -352,9 +352,12 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
     [t, isAdmin, isStaff, canCreateInvitations, canCreateCotizaciones],
   );
 
+  // Clientes autorregistrados: /mi-perfil es una superficie de asesor, así
+  // que para ellos el menú se queda en ajustes + salir.
+  const isCliente = useIsCliente();
   const bottomTools = useMemo(
-    () => getBottomTools(t, isStaff, !!googleUser),
-    [t, isStaff, googleUser],
+    () => getBottomTools(t, isStaff, !!googleUser && !isCliente),
+    [t, isStaff, googleUser, isCliente],
   );
 
   // Flat Quiet Emerald surface for the sheet

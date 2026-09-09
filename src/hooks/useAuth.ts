@@ -24,6 +24,12 @@ export const useIsGuest = () => {
   return accessLevel === 'guest';
 };
 
+/** Self-registered client (Google sign-in, `new-users` tab). */
+export const useIsCliente = () => {
+  const { accessLevel } = useAuthContext();
+  return accessLevel === 'cliente';
+};
+
 export const useHasFullAccess = () => {
   const { accessLevel } = useAuthContext();
   // Full access = asesor or embajador (staff members)
@@ -64,7 +70,8 @@ export const useCanSeeComunidadPrice = () => {
  */
 export const useCanCreateInvitations = () => {
   const { accessLevel } = useAuthContext();
-  return accessLevel !== 'guest';
+  // Clientes are not sheet entries either — they are the audience.
+  return accessLevel !== 'guest' && accessLevel !== 'cliente';
 };
 
 /**

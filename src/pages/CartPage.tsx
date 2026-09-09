@@ -33,7 +33,11 @@ import { useCart } from '../hooks/useCart';
 import { useWhatsAppContact } from '../hooks/useWhatsAppContact';
 import { useCurrentAsesor } from '../hooks/useCurrentAsesor';
 import VitrinaShareDialog from '../components/vitrina/VitrinaShareDialog';
-import { useIsGuest, useGuestCanSeePrices } from '../hooks/useAuth';
+import {
+  useIsGuest,
+  useIsCliente,
+  useGuestCanSeePrices,
+} from '../hooks/useAuth';
 import { useCanShareVitrina } from '../hooks/usePermissions';
 import { useThemeMode } from '../contexts/ThemeContext';
 import AdminSelectDialog from '../components/cart/AdminSelectDialog';
@@ -59,6 +63,7 @@ export default function CartPage() {
   const { mode } = useThemeMode();
   const isLight = mode === 'light';
   const isGuest = useIsGuest();
+  const isCliente = useIsCliente();
   const canSeePrices = useGuestCanSeePrices();
   const canShareVitrina = useCanShareVitrina();
 
@@ -68,6 +73,7 @@ export default function CartPage() {
   const {
     openWhatsAppToInviter,
     openWhatsAppToAdmin,
+    openWhatsAppToHouse,
     isLoading,
     error,
     admins,
@@ -134,6 +140,12 @@ export default function CartPage() {
 
     if (cartItems.length === 0) {
       setSendError('No hay productos en el carrito');
+      return;
+    }
+
+    if (isCliente) {
+      // Self-registered client: the whole selection goes to the house line.
+      openWhatsAppToHouse(cartItems);
       return;
     }
 
@@ -373,6 +385,16 @@ export default function CartPage() {
                 </Typography>
               </Box>
             </Paper>
+          )}
+
+          {isCliente && (
+            <Alert
+              severity="info"
+              sx={{ mb: 3 }}
+              icon={<MessageCircle size={20} />}
+            >
+              {t.cliente.cartBanner}
+            </Alert>
           )}
 
           {/* Guest info banner */}

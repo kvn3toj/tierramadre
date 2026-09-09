@@ -1378,6 +1378,7 @@ export function getActionSpec(kind: ActionKind): {
 
 const LEVEL_RANK: Record<AccessLevel, number> = {
   guest: 0,
+  cliente: 0, // self-registered client; no copilot action powers
   invitado_especial: 0, // limited (browse + share only); no copilot action powers
   asesor: 1,
   provider: 1,

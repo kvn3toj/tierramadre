@@ -31,7 +31,8 @@ import AdminSelectDialog from '../../../components/cart/AdminSelectDialog';
 import { useThemeMode } from '../../../contexts/ThemeContext';
 import { usePriceShare } from '../../../contexts/PriceShareContext';
 import { useIsAdmin, useIsProvider } from '../../../hooks/usePermissions';
-import { useIsGuest } from '../../../hooks/useAuth';
+import { useIsGuest, useIsCliente } from '../../../hooks/useAuth';
+import { useLanguage } from '../../../contexts/LanguageContext';
 import { useTreasure } from '../../../hooks/useTreasure';
 import { MemberBenefitsTeaser } from '../../../components/guest';
 import { MediaGallery } from '../../../components/media';
@@ -87,7 +88,9 @@ export default function ProductDetail() {
   const { mode } = useThemeMode();
   const isAdmin = useIsAdmin();
   const isGuest = useIsGuest();
+  const isCliente = useIsCliente();
   const isProvider = useIsProvider();
+  const { t } = useLanguage();
   const { shouldShowPrices } = usePriceShare();
   const { isLiteral, isFaithful } = useRedesignVariant();
   const qe = getQuietEmerald(mode);
@@ -106,8 +109,13 @@ export default function ProductDetail() {
   const { shareProduct, isNativeShareSupported } = useShare();
   const { trigger: triggerHaptic } = useHaptics();
   const { addToCart, isInCart, cartCount } = useCart();
-  const { openWhatsAppToInviter, openWhatsAppToAdmin, admins, hasInviter } =
-    useWhatsAppContact();
+  const {
+    openWhatsAppToInviter,
+    openWhatsAppToAdmin,
+    openWhatsAppToHouse,
+    admins,
+    hasInviter,
+  } = useWhatsAppContact();
 
   // Current gallery image index (drives the per-item price on lote bundles)
   const [galleryIndex, setGalleryIndex] = useState(0);
@@ -524,6 +532,13 @@ export default function ProductDetail() {
 
     triggerHaptic('light');
 
+    if (isCliente) {
+      // Self-registered client: straight to the house line, product details
+      // only (the message format carries no price).
+      openWhatsAppToHouse([treasureToCartItem(product)]);
+      return;
+    }
+
     if (isGuest) {
       if (!hasInviter) {
         setSnackbarMessage('No se encontro el contacto de tu invitador');
@@ -535,7 +550,15 @@ export default function ProductDetail() {
     } else {
       setAdminDialogOpen(true);
     }
-  }, [product, isGuest, hasInviter, openWhatsAppToInviter, triggerHaptic]);
+  }, [
+    product,
+    isGuest,
+    isCliente,
+    hasInviter,
+    openWhatsAppToInviter,
+    openWhatsAppToHouse,
+    triggerHaptic,
+  ]);
 
   // Handle admin selected (for staff contact flow)
   const handleAdminSelected = useCallback(
@@ -676,11 +699,13 @@ export default function ProductDetail() {
     .filter(Boolean)
     .join(' · ')
     .toUpperCase();
-  const ctaLabel = isLiteral
-    ? 'Añadir a cotización'
-    : isInCart(product.item)
-      ? 'En tu selección · Ver'
-      : 'Agregar a selección';
+  const ctaLabel = isCliente
+    ? t.cliente.consultWhatsApp
+    : isLiteral
+      ? 'Añadir a cotización'
+      : isInCart(product.item)
+        ? 'En tu selección · Ver'
+        : 'Agregar a selección';
 
   return (
     <Box
@@ -896,6 +921,19 @@ export default function ProductDetail() {
                   />
                 </Box>
               )}
+              {isCliente && (
+                <Typography
+                  variant="caption"
+                  component="p"
+                  sx={{
+                    mt: '10px',
+                    color: 'text.secondary',
+                    lineHeight: 1.45,
+                  }}
+                >
+                  {t.cliente.priceDisclaimer}
+                </Typography>
+              )}
             </Box>
           )}
 
@@ -909,6 +947,12 @@ export default function ProductDetail() {
                 onAddToCart={handleAddToCart}
                 onShare={handleShareProduct}
                 onContact={handleContact}
+                variant={isCliente ? 'cliente' : 'default'}
+                clienteLabels={{
+                  consult: t.cliente.consultWhatsApp,
+                  add: t.cliente.addToSelection,
+                  inSelection: t.cliente.inSelection,
+                }}
                 middleSlot={
                   product && getFeatureFlag('ESMEREOGENESIS') ? (
                     <EsmereogenesisCTA
@@ -938,7 +982,7 @@ export default function ProductDetail() {
           precioInternacional={product.precioInternacional}
           shouldShowPrices={shouldShowPrices}
           ctaLabel={ctaLabel}
-          onCta={handleAddToCart}
+          onCta={isCliente ? handleContact : handleAddToCart}
         />
       )}
 

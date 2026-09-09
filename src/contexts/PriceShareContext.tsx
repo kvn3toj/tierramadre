@@ -7,7 +7,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
-import { useIsGuest } from '../hooks/useAuth';
+import { useIsGuest, useIsCliente } from '../hooks/useAuth';
 import { useIsProvider } from '../hooks/usePermissions';
 import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 import { STORAGE_KEYS } from '../constants/storage-keys';
@@ -44,6 +44,7 @@ interface PriceShareProviderProps {
 export const PriceShareProvider: React.FC<PriceShareProviderProps> = ({ children }) => {
   const isProvider = useIsProvider();
   const isGuest = useIsGuest();
+  const isCliente = useIsCliente();
 
   // Default: showPrices = false (prices private by default)
   const [showPrices, setShowPrices] = useState<boolean>(() => {
@@ -65,8 +66,8 @@ export const PriceShareProvider: React.FC<PriceShareProviderProps> = ({ children
   const guestHasPricesMode =
     isGuest && sessionStorage.getItem(INVITATION_STORAGE_KEYS.PRICING_MODE) === 'with_prices';
 
-  // Only staff can toggle (not providers, not guests)
-  const canToggle = !isProvider && !isGuest;
+  // Only staff can toggle (not providers, not guests, not clientes)
+  const canToggle = !isProvider && !isGuest && !isCliente;
 
   // Final decision on showing prices:
   // - Providers: NEVER show prices (business rule)
@@ -74,6 +75,9 @@ export const PriceShareProvider: React.FC<PriceShareProviderProps> = ({ children
   // - Staff: respect user preference (toggle)
   const shouldShowPrices = (() => {
     if (isProvider) return false;
+    // Self-registered clients always see prices — it is why they signed in.
+    // The server already projects their catalog to price + availability only.
+    if (isCliente) return true;
     if (isGuest) {
       // Guests follow their invitation setting
       if (guestHasNoPricesMode) return false;

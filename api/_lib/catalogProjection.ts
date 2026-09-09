@@ -124,6 +124,13 @@ void _exhaustive;
 export type Grant =
   | { kind: 'staff' }
   | { kind: 'vitrina'; itemIds: number[] }
+  /**
+   * Cliente autorregistrado con Google (hoja `new-users`, 2026-09-09). Ve el
+   * precio de TODO el catálogo publicado —es la razón por la que existe—,
+   * pero con la misma proyección que una vitrina: nada de ubicación, asesor,
+   * costo ni plomería interna.
+   */
+  | { kind: 'cliente' }
   | { kind: 'anon' };
 
 /** Builds a new object containing only PUBLIC_KEYS. Never mutates `item`. */
@@ -273,6 +280,7 @@ export function projectForGrant(
     // precio, no la ubicación de la piedra ni el nombre del asesor.
     return items.map((i) => (granted.has(i.item) ? toVitrinaItem(i) : toPublicItem(i)));
   }
+  if (grant.kind === 'cliente') return items.map(toVitrinaItem);
   return items.map(toPublicItem);
 }
 

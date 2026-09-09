@@ -815,4 +815,15 @@ export const fr = {
     whatsappMessage: 'Ces pièces sont pour vous 💚 ({n} pièces)\n{link}',
     whatsappMessageOne: 'Cette pièce est pour vous 💚\n{link}',
   },
+
+  // Clientes autorregistrados con Google (2026-09-09): catálogo con precio,
+  // consulta por WhatsApp a la línea de la casa, y el descargo bajo el precio.
+  cliente: {
+    priceDisclaimer:
+      'Tous nos prix sont susceptibles d’être modifiés sans préavis. Profitez du tarif de l’éternel présent.',
+    consultWhatsApp: 'Demander sur WhatsApp',
+    addToSelection: 'Ajouter à la sélection',
+    inSelection: 'Dans votre sélection · Voir',
+    cartBanner: 'Votre demande sera envoyée à Tierra Madre sur WhatsApp',
+  },
 };

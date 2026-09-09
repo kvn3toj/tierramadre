@@ -90,6 +90,7 @@ export const SHEETS = {
   INVENTORY: 'Inventario',
   PRICING: 'Modelo-Precios', // ex 'CUALIFICACION -PRECIO' (centralizado en SOT v3)
   ASESORES: null, // Uses index 2 or dynamic lookup
+  NEW_USERS: 'new-users', // clientes autorregistrados con Google (SOT v3)
   INVITATIONS: 'Invitations',
   PRODUCT_VIEWS: 'ProductViews',
   PROVIDER_QUOTATIONS: 'CotizacionesProveedor',

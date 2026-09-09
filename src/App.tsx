@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
   useNavigate,
+  useLocation,
 } from 'react-router-dom';
 import { IOSLayout } from './components/ios';
 import {
@@ -14,7 +15,7 @@ import {
   StaffRoute,
   CotizacionRoute,
 } from './components/auth';
-import { useAuth } from './hooks/useAuth';
+import { useAuth, useIsCliente } from './hooks/useAuth';
 import { useIsProvider } from './hooks/usePermissions';
 import { Asesor } from './hooks/useAsesores';
 import { initPWA } from './utils/pwa';
@@ -337,7 +338,31 @@ export const SECONDARY_TABS: TabValue[] = [];
 // Smart redirect based on user role
 function RoleBasedRedirect() {
   const isProvider = useIsProvider();
-  return <Navigate to={isProvider ? '/provider' : '/home'} replace />;
+  const isCliente = useIsCliente();
+  return (
+    <Navigate
+      to={isProvider ? '/provider' : isCliente ? '/treasure' : '/home'}
+      replace
+    />
+  );
+}
+
+/**
+ * What a self-registered client may open: the treasure catalog, product
+ * detail, their selection, and their profile. Every other path in the shell
+ * (home, ambassadors, cuentas, admin, invitations…) bounces to the catalog.
+ * Guards by PATH rather than by wrapping each route so a new staff route can
+ * never leak to clients by omission.
+ */
+const CLIENTE_PATHS = [/^\/treasure(\/|$)/, /^\/product\//, /^\/p\//, /^\/cart$/];
+
+function ClienteGate({ children }: { children: React.ReactNode }) {
+  const isCliente = useIsCliente();
+  const location = useLocation();
+  if (isCliente && !CLIENTE_PATHS.some((re) => re.test(location.pathname))) {
+    return <Navigate to="/treasure" replace />;
+  }
+  return <>{children}</>;
 }
 
 // Redirect providers away from regular home to provider dashboard
@@ -372,6 +397,7 @@ function AppContent() {
       <CopilotRailProvider>
         <IOSLayout>
           <ComparisonProvider>
+            <ClienteGate>
             <Routes>
               {/* Primary routes - smart redirect based on role */}
               <Route path="/" element={<RoleBasedRedirect />} />
@@ -1008,6 +1034,7 @@ function AppContent() {
                 }
               />
             </Routes>
+            </ClienteGate>
           </ComparisonProvider>
         </IOSLayout>
       </CopilotRailProvider>

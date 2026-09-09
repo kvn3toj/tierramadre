@@ -23,6 +23,8 @@ export interface SessionTokenPayload {
   email: string;
   iat: number;
   exp: number;
+  /** Ausente = staff. `'cliente'` = autorregistrado (espejo de api/_lib). */
+  lvl?: 'cliente';
 }
 
 /** Cheap shape check so authz can route session tokens vs Google ID tokens. */
