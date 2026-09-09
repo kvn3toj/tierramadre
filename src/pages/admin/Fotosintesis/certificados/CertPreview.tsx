@@ -31,18 +31,32 @@ import {
   useState,
 } from "react";
 import {
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
+  Minus,
+  Plus,
+  RotateCcw,
+} from "lucide-react";
+import {
   CERT_TEMPLATES,
   clampPhotoTransform,
-  DEFAULT_FIELD_OFFSET,
+  DEFAULT_FIELD_ADJUST,
   DEFAULT_PHOTO_TRANSFORM,
   fieldTopLeft,
-  hasFieldOffset,
+  hasFieldAdjust,
+  MAX_FIELD_FONT_FACTOR,
+  MIN_FIELD_FONT_SIZE,
+  resolveFieldFont,
+  TEXT_ALIGNS,
   type CertTemplate,
   type CertTypeId,
   type CustomDetail,
-  type FieldOffset,
+  type FieldAdjust,
   type PhotoTransform,
   type TemplateField,
+  type TextAlign,
 } from "./certTemplates";
 
 export interface CertPreviewProps {
@@ -57,14 +71,14 @@ export interface CertPreviewProps {
   customDetails?: CustomDetail[];
   /** per-type image zoom/pan within the fixed circle (null → default) */
   photoTransform?: PhotoTransform | null;
-  /** displacement per movable field key (missing → as designed) */
-  fieldOffsets?: Record<string, FieldOffset>;
+  /** adjustments (position, size, alignment) per movable field key */
+  fieldAdjusts?: Record<string, FieldAdjust>;
   /** layout mode: render the photo adjust ring + the text drag handles */
   layoutEdit?: boolean;
   /** called with the new transform while the operator pans/zooms the photo */
   onPhotoTransformChange?: (t: PhotoTransform) => void;
-  /** called with the raw (unclamped) offset while the operator drags a block */
-  onFieldOffsetChange?: (key: string, offset: FieldOffset) => void;
+  /** called with the raw (unclamped) adjustment while the operator edits a block */
+  onFieldAdjustChange?: (key: string, adjust: FieldAdjust) => void;
 }
 
 /** smallest auto-fit scale for the details block before we let it clip */
@@ -73,7 +87,7 @@ const MIN_DETAILS_FIT = 0.5;
 function fieldBoxStyle(
   f: TemplateField,
   guides = false,
-  offset: FieldOffset = DEFAULT_FIELD_OFFSET,
+  offset: FieldAdjust = DEFAULT_FIELD_ADJUST,
 ): React.CSSProperties {
   // Center via PIXEL offsets, NOT transform: translate(-50%): html2canvas 1.4.1
   // does not resolve percentage transforms, so a translate-centered box lands in
@@ -90,20 +104,29 @@ function fieldBoxStyle(
     height: f.h,
     overflow: "hidden",
   };
+  // A size override is the operator saying "this block is mine now": the box
+  // grows with the content instead of clipping, and the cover grows with it.
+  if (offset.size !== undefined) {
+    base.height = "auto";
+    base.minHeight = f.h;
+    base.overflow = "visible";
+  }
   if (f.cover) base.background = f.cover;
   if (guides) {
     base.outline = "1.5px solid rgba(255,0,90,.9)";
     base.outlineOffset = "-1px";
   }
   if (f.font) {
+    const metrics = resolveFieldFont(f, offset) ?? f.font;
     base.fontFamily = f.font.family;
     base.fontStyle = f.font.style ?? "normal";
     base.fontWeight = f.font.weight ?? 400;
-    base.fontSize = f.font.size;
-    base.lineHeight = `${f.font.lineHeight}px`;
+    base.fontSize = metrics.size;
+    base.lineHeight = `${metrics.lineHeight}px`;
     base.color = f.font.color;
   }
-  if (f.align) base.textAlign = f.align;
+  const align = offset.align ?? f.align;
+  if (align) base.textAlign = align;
   return base;
 }
 
@@ -126,7 +149,7 @@ function DetailsField({
   field: TemplateField;
   data: Record<string, string>;
   customDetails?: CustomDetail[];
-  offset?: FieldOffset;
+  offset?: FieldAdjust;
   guides?: boolean;
 }) {
   const lines = useMemo(() => {
@@ -151,19 +174,22 @@ function DetailsField({
     () => lines.map((l) => `${l.label}${l.value}`).join(""),
     [lines],
   );
+  // An operator size override disables the auto-fit: the box grows instead
+  // (see fieldBoxStyle), otherwise the fit would silently undo the resize.
+  const sized = offset?.size !== undefined;
   useLayoutEffect(() => {
     const el = contentRef.current;
-    if (!el || boxH <= 0) {
+    if (!el || boxH <= 0 || sized) {
       setFit(1);
       return;
     }
     const natural = el.scrollHeight;
     const next = natural > boxH ? Math.max(MIN_DETAILS_FIT, boxH / natural) : 1;
     setFit(next);
-  }, [linesKey, boxH]);
+  }, [linesKey, boxH, sized]);
 
   return (
-    <div style={fieldBoxStyle(field, guides, offset)}>
+    <div data-field={field.key} style={fieldBoxStyle(field, guides, offset)}>
       <div
         ref={contentRef}
         style={{
@@ -298,7 +324,7 @@ function OverlayField({
   /** clamped transform for the photo field (image zoom/pan within the circle) */
   photoTransform?: PhotoTransform;
   /** clamped displacement for a movable text/details block */
-  offset?: FieldOffset;
+  offset?: FieldAdjust;
   guides?: boolean;
 }) {
   if (field.kind === "photo") {
@@ -330,7 +356,7 @@ function OverlayField({
     .split(/\n\s*\n/)
     .filter((par) => par.length > 0);
   return (
-    <div style={fieldBoxStyle(field, guides, offset)}>
+    <div data-field={field.key} style={fieldBoxStyle(field, guides, offset)}>
       {paragraphs.map((par, i) => (
         <div
           key={i}
@@ -449,7 +475,7 @@ interface SnapGuides {
   y?: number;
 }
 
-function boxEdges(f: TemplateField, o: FieldOffset) {
+function boxEdges(f: TemplateField, o: FieldAdjust) {
   const { left, top } = fieldTopLeft(f);
   const w = f.w ?? 0;
   const h = f.h ?? 0;
@@ -477,9 +503,9 @@ function snapAxis(
 
 function snapOffset(
   field: TemplateField,
-  raw: FieldOffset,
+  raw: FieldAdjust,
   targets: SnapTargets,
-): { offset: FieldOffset; guides: SnapGuides } {
+): { offset: FieldAdjust; guides: SnapGuides } {
   const e = boxEdges(field, raw);
   const sx = snapAxis([e.l, e.cx, e.r], targets.xs);
   const sy = snapAxis([e.t, e.cy, e.b], targets.ys);
@@ -498,15 +524,23 @@ function FieldDragOverlay({
   offset,
   scale,
   snapTargets,
+  selected,
+  boxHeight,
+  onSelect,
   onChange,
   onGuides,
 }: {
   field: TemplateField;
-  offset: FieldOffset;
+  offset: FieldAdjust;
   scale: number;
   /** alignment lines of everything else on the page */
   snapTargets: SnapTargets;
-  onChange: (offset: FieldOffset) => void;
+  /** the selected block shows the text toolbar instead of its label chip */
+  selected: boolean;
+  /** rendered height of the block (grows with a size override) */
+  boxHeight: number;
+  onSelect: () => void;
+  onChange: (offset: FieldAdjust) => void;
   /** guide lines to draw while dragging ({} when idle) */
   onGuides: (g: SnapGuides) => void;
 }) {
@@ -538,17 +572,21 @@ function FieldDragOverlay({
     <div
       role="group"
       tabIndex={0}
-      aria-label={`Mover «${label}»: arrastrá o usá las flechas`}
+      aria-label={`Mover «${label}»: arrastrá o usá las flechas; clic para tamaño y alineación`}
       title={`Mover «${label}»`}
-      onPointerDown={beginDrag}
+      onPointerDown={(e) => {
+        onSelect();
+        beginDrag(e);
+      }}
+      onFocus={onSelect}
       onKeyDown={onKeyDown}
       style={{
         position: "absolute",
         left: left + offset.dx,
         top: top + offset.dy,
         width: field.w,
-        height: field.h,
-        border: `${px}px dashed rgba(15,92,58,.9)`,
+        height: boxHeight,
+        border: `${px}px ${selected ? "solid" : "dashed"} rgba(15,92,58,.9)`,
         borderRadius: 2 / scale,
         boxSizing: "border-box",
         cursor: "move",
@@ -556,6 +594,7 @@ function FieldDragOverlay({
         outlineOffset: `${px}px`,
       }}
     >
+      {selected ? null : (
       <span
         aria-hidden
         style={{
@@ -576,6 +615,202 @@ function FieldDragOverlay({
       >
         {label}
       </span>
+      )}
+    </div>
+  );
+}
+
+const ALIGN_ICONS: Record<TextAlign, { Icon: typeof AlignLeft; label: string }> = {
+  left: { Icon: AlignLeft, label: "Alinear a la izquierda" },
+  center: { Icon: AlignCenter, label: "Centrar" },
+  right: { Icon: AlignRight, label: "Alinear a la derecha" },
+  justify: { Icon: AlignJustify, label: "Justificar" },
+};
+
+const TOOLBAR_GREEN = "#0F5C3A";
+
+function ToolbarButton({
+  label,
+  active,
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  active?: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      aria-pressed={active}
+      disabled={disabled}
+      onClick={onClick}
+      style={{
+        width: 28,
+        height: 28,
+        display: "grid",
+        placeItems: "center",
+        border: "none",
+        borderRadius: 6,
+        background: active ? "rgba(15,92,58,.14)" : "transparent",
+        color: disabled ? "#9aa39e" : active ? TOOLBAR_GREEN : "#2c3330",
+        cursor: disabled ? "default" : "pointer",
+        padding: 0,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+/**
+ * Text toolbar of the selected block, anchored above it. Lives in the scaled
+ * wrapper (never captured) but renders UNscaled — it counter-scales about its
+ * bottom-left corner so buttons keep a real 28 px hit size at any zoom.
+ */
+function FieldToolbar({
+  field,
+  adjust,
+  scale,
+  onChange,
+}: {
+  field: TemplateField;
+  adjust: FieldAdjust;
+  scale: number;
+  onChange: (a: FieldAdjust) => void;
+}) {
+  const { left, top } = fieldTopLeft(field);
+  const font = field.font;
+  const size = adjust.size ?? font?.size ?? 0;
+  const align = adjust.align ?? field.align ?? "left";
+  const label = field.label ?? field.key;
+  const maxSize = font ? font.size * MAX_FIELD_FONT_FACTOR : 0;
+  const setSize = (next: number) => onChange({ ...adjust, size: next });
+  const adjusted = hasFieldAdjust(adjust);
+  const sep = (
+    <span
+      aria-hidden
+      style={{ width: 1, height: 18, background: "rgba(0,0,0,.12)", margin: "0 4px" }}
+    />
+  );
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: left + adjust.dx,
+        top: top + adjust.dy,
+        width: 0,
+        height: 0,
+      }}
+    >
+      <div
+        role="toolbar"
+        aria-label={`Texto de «${label}»`}
+        onPointerDown={(e) => e.stopPropagation()}
+        style={{
+          position: "absolute",
+          bottom: 6 / scale,
+          left: 0,
+          transform: `scale(${1 / scale})`,
+          transformOrigin: "bottom left",
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+          padding: "4px 6px",
+          background: "#fff",
+          border: "1px solid rgba(0,0,0,.10)",
+          borderRadius: 10,
+          boxShadow: "0 8px 24px rgba(0,0,0,.14)",
+          fontFamily: "system-ui, sans-serif",
+          fontSize: 12,
+          color: "#2c3330",
+          whiteSpace: "nowrap",
+        }}
+      >
+        <span
+          style={{
+            fontWeight: 700,
+            color: TOOLBAR_GREEN,
+            padding: "0 6px 0 2px",
+            fontSize: 11,
+            letterSpacing: ".02em",
+          }}
+        >
+          {label}
+        </span>
+        {sep}
+        {TEXT_ALIGNS.map((a) => {
+          const { Icon, label: aLabel } = ALIGN_ICONS[a];
+          return (
+            <ToolbarButton
+              key={a}
+              label={aLabel}
+              active={align === a}
+              onClick={() => onChange({ ...adjust, align: a })}
+            >
+              <Icon size={15} />
+            </ToolbarButton>
+          );
+        })}
+        {font ? (
+          <>
+            {sep}
+            <ToolbarButton
+              label="Reducir el texto"
+              disabled={size <= MIN_FIELD_FONT_SIZE}
+              onClick={() => setSize(size - 2)}
+            >
+              <Minus size={15} />
+            </ToolbarButton>
+            <input
+              type="number"
+              aria-label="Tamaño del texto en píxeles"
+              value={size}
+              min={MIN_FIELD_FONT_SIZE}
+              max={maxSize}
+              step={1}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                if (Number.isFinite(v)) setSize(v);
+              }}
+              style={{
+                width: 44,
+                height: 26,
+                textAlign: "center",
+                border: "1px solid rgba(0,0,0,.14)",
+                borderRadius: 6,
+                fontSize: 12,
+                fontFamily: "inherit",
+                color: "inherit",
+                background: "#fafafa",
+              }}
+            />
+            <ToolbarButton
+              label="Agrandar el texto"
+              disabled={size >= maxSize}
+              onClick={() => setSize(size + 2)}
+            >
+              <Plus size={15} />
+            </ToolbarButton>
+          </>
+        ) : null}
+        {adjusted ? (
+          <>
+            {sep}
+            <ToolbarButton
+              label="Restablecer este bloque"
+              onClick={() => onChange(DEFAULT_FIELD_ADJUST)}
+            >
+              <RotateCcw size={14} />
+            </ToolbarButton>
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -880,10 +1115,10 @@ const CertNode = forwardRef<
     customDetails?: CustomDetail[];
     photoTransform?: PhotoTransform;
     /** clamped displacement per movable field key */
-    fieldOffsets?: Record<string, FieldOffset>;
+    fieldAdjusts?: Record<string, FieldAdjust>;
   }
 >(function CertNode(
-  { type, data, guides, customDetails, photoTransform, fieldOffsets },
+  { type, data, guides, customDetails, photoTransform, fieldAdjusts },
   ref,
 ) {
   const template = CERT_TEMPLATES[type];
@@ -927,7 +1162,7 @@ const CertNode = forwardRef<
       {/* Masks first so a displaced block always paints ABOVE another block's
           template position (e.g. the name dragged down over the details area). */}
       {template.fields.map((f) =>
-        f.movable && f.cover && hasFieldOffset(fieldOffsets?.[f.key]) ? (
+        f.movable && f.cover && hasFieldAdjust(fieldAdjusts?.[f.key]) ? (
           <CoverMask key={`mask-${f.key}`} field={f} />
         ) : null,
       )}
@@ -939,7 +1174,7 @@ const CertNode = forwardRef<
           data={data}
           customDetails={customDetails}
           photoTransform={f.kind === "photo" ? photoTransform : undefined}
-          offset={f.movable ? fieldOffsets?.[f.key] : undefined}
+          offset={f.movable ? fieldAdjusts?.[f.key] : undefined}
           guides={guides}
         />
       ))}
@@ -961,10 +1196,10 @@ const CertPreview = forwardRef<HTMLDivElement, CertPreviewProps>(
       guides,
       customDetails,
       photoTransform,
-      fieldOffsets,
+      fieldAdjusts,
       layoutEdit,
       onPhotoTransformChange,
-      onFieldOffsetChange,
+      onFieldAdjustChange,
     },
     ref,
   ) {
@@ -1001,8 +1236,44 @@ const CertPreview = forwardRef<HTMLDivElement, CertPreviewProps>(
       () => template.fields.filter((f) => f.movable),
       [template.fields],
     );
-    const showFieldOverlays = layoutEdit && onFieldOffsetChange;
+    const showFieldOverlays = layoutEdit && onFieldAdjustChange;
     const [snapGuides, setSnapGuides] = useState<SnapGuides>({});
+    // The block whose text toolbar is open. Cleared when layout mode closes or
+    // the certificate type changes (the keys mean something else there).
+    const [selectedKey, setSelectedKey] = useState<string | null>(null);
+    useEffect(() => {
+      if (!layoutEdit) setSelectedKey(null);
+    }, [layoutEdit]);
+    useEffect(() => {
+      setSelectedKey(null);
+    }, [type]);
+    // Rendered heights of the movable blocks: a size override lets a box grow
+    // past its template height, and the handle must follow the real box.
+    const nodeRef = useRef<HTMLDivElement | null>(null);
+    const [boxHeights, setBoxHeights] = useState<Record<string, number>>({});
+    useLayoutEffect(() => {
+      const node = nodeRef.current;
+      if (!node || !showFieldOverlays) return;
+      const next: Record<string, number> = {};
+      for (const f of movableFields) {
+        const el = node.querySelector<HTMLElement>(`[data-field="${f.key}"]`);
+        if (el) next[f.key] = el.offsetHeight;
+      }
+      setBoxHeights((prev) => {
+        const same =
+          Object.keys(next).length === Object.keys(prev).length &&
+          Object.entries(next).every(([k, v]) => prev[k] === v);
+        return same ? prev : next;
+      });
+    }, [showFieldOverlays, movableFields, fieldAdjusts, data, customDetails]);
+    const setNodeRef = useCallback(
+      (el: HTMLDivElement | null) => {
+        nodeRef.current = el;
+        if (typeof ref === "function") ref(el);
+        else if (ref) ref.current = el;
+      },
+      [ref],
+    );
     // Everything a dragged block can align to: the page centre, the photo's
     // centre lines, and the other movable blocks' edges/centres where they
     // currently sit.
@@ -1011,19 +1282,19 @@ const CertPreview = forwardRef<HTMLDivElement, CertPreviewProps>(
         const xs = [template.page.w / 2];
         const ys: number[] = [];
         if (photoField) {
-          const e = boxEdges(photoField, DEFAULT_FIELD_OFFSET);
+          const e = boxEdges(photoField, DEFAULT_FIELD_ADJUST);
           xs.push(e.l, e.cx, e.r);
           ys.push(e.t, e.cy, e.b);
         }
         for (const f of movableFields) {
           if (f.key === key) continue;
-          const e = boxEdges(f, fieldOffsets?.[f.key] ?? DEFAULT_FIELD_OFFSET);
+          const e = boxEdges(f, fieldAdjusts?.[f.key] ?? DEFAULT_FIELD_ADJUST);
           xs.push(e.l, e.cx, e.r);
           ys.push(e.t, e.cy, e.b);
         }
         return { xs, ys };
       },
-      [template.page.w, photoField, movableFields, fieldOffsets],
+      [template.page.w, photoField, movableFields, fieldAdjusts],
     );
 
     return (
@@ -1036,26 +1307,41 @@ const CertPreview = forwardRef<HTMLDivElement, CertPreviewProps>(
           }}
         >
           <CertNode
-            ref={ref}
+            ref={setNodeRef}
             type={type}
             data={data}
             guides={guides}
             customDetails={customDetails}
             photoTransform={effTransform}
-            fieldOffsets={fieldOffsets}
+            fieldAdjusts={fieldAdjusts}
           />
           {showFieldOverlays &&
             movableFields.map((f) => (
               <FieldDragOverlay
                 key={f.key}
                 field={f}
-                offset={fieldOffsets?.[f.key] ?? DEFAULT_FIELD_OFFSET}
+                offset={fieldAdjusts?.[f.key] ?? DEFAULT_FIELD_ADJUST}
                 scale={scale}
                 snapTargets={snapTargetsFor(f.key)}
-                onChange={(o) => onFieldOffsetChange(f.key, o)}
+                selected={selectedKey === f.key}
+                boxHeight={boxHeights[f.key] ?? f.h ?? 0}
+                onSelect={() => setSelectedKey(f.key)}
+                onChange={(o) => onFieldAdjustChange(f.key, o)}
                 onGuides={setSnapGuides}
               />
             ))}
+          {showFieldOverlays &&
+            movableFields
+              .filter((f) => f.key === selectedKey)
+              .map((f) => (
+                <FieldToolbar
+                  key={`toolbar-${f.key}`}
+                  field={f}
+                  adjust={fieldAdjusts?.[f.key] ?? DEFAULT_FIELD_ADJUST}
+                  scale={scale}
+                  onChange={(a) => onFieldAdjustChange(f.key, a)}
+                />
+              ))}
           {showFieldOverlays && (
             <SnapGuideLines
               guides={snapGuides}

@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   CERT_TEMPLATES,
-  clampFieldOffset,
+  clampFieldAdjust,
   fieldTopLeft,
-  hasFieldOffset,
+  hasFieldAdjust,
+  MAX_FIELD_FONT_FACTOR,
+  MIN_FIELD_FONT_SIZE,
+  resolveFieldFont,
   type TemplateField,
 } from '../src/pages/admin/Fotosintesis/certificados/certTemplates';
 
@@ -16,6 +19,12 @@ const topLeftField: TemplateField = {
   y: 940,
   w: 560,
   h: 142,
+  font: {
+    family: 'serif',
+    size: 50,
+    lineHeight: 51,
+    color: '#000',
+  },
 };
 
 const centeredField: TemplateField = {
@@ -26,53 +35,99 @@ const centeredField: TemplateField = {
   w: 380,
   h: 44,
   centerX: true,
+  align: 'center',
 };
 
-describe('clampFieldOffset', () => {
+describe('clampFieldAdjust — position', () => {
   it('keeps an in-page offset, rounded to whole px', () => {
     expect(
-      clampFieldOffset({ dx: 10.4, dy: -20.6 }, topLeftField, page),
-    ).toEqual({
-      dx: 10,
-      dy: -21,
-    });
+      clampFieldAdjust({ dx: 10.4, dy: -20.6 }, topLeftField, page),
+    ).toEqual({ dx: 10, dy: -21 });
   });
 
   it('never lets the box leave the page on the left/top', () => {
     expect(
-      clampFieldOffset({ dx: -9999, dy: -9999 }, topLeftField, page),
-    ).toEqual({
-      dx: -434,
-      dy: -940,
-    });
+      clampFieldAdjust({ dx: -9999, dy: -9999 }, topLeftField, page),
+    ).toEqual({ dx: -434, dy: -940 });
   });
 
   it('never lets the box leave the page on the right/bottom', () => {
     expect(
-      clampFieldOffset({ dx: 9999, dy: 9999 }, topLeftField, page),
-    ).toEqual({
-      dx: page.w - 560 - 434,
-      dy: page.h - 142 - 940,
-    });
+      clampFieldAdjust({ dx: 9999, dy: 9999 }, topLeftField, page),
+    ).toEqual({ dx: page.w - 560 - 434, dy: page.h - 142 - 940 });
   });
 
   it('resolves centerX before clamping', () => {
     const { left } = fieldTopLeft(centeredField);
     expect(left).toBe(529 - 190);
     expect(
-      clampFieldOffset({ dx: -9999, dy: 0 }, centeredField, { w: 792, h: 612 }),
-    ).toEqual({
-      dx: -left,
-      dy: 0,
-    });
+      clampFieldAdjust({ dx: -9999, dy: 0 }, centeredField, {
+        w: 792,
+        h: 612,
+      }),
+    ).toEqual({ dx: -left, dy: 0 });
   });
 });
 
-describe('hasFieldOffset', () => {
-  it('is false for undefined and the zero offset', () => {
-    expect(hasFieldOffset(undefined)).toBe(false);
-    expect(hasFieldOffset({ dx: 0, dy: 0 })).toBe(false);
-    expect(hasFieldOffset({ dx: 0, dy: 1 })).toBe(true);
+describe('clampFieldAdjust — size and alignment', () => {
+  it('keeps a size inside the allowed range and rounds it', () => {
+    expect(
+      clampFieldAdjust({ dx: 0, dy: 0, size: 61.6 }, topLeftField, page).size,
+    ).toBe(62);
+  });
+
+  it('clamps the size to the floor and the template ceiling', () => {
+    expect(
+      clampFieldAdjust({ dx: 0, dy: 0, size: 2 }, topLeftField, page).size,
+    ).toBe(MIN_FIELD_FONT_SIZE);
+    expect(
+      clampFieldAdjust({ dx: 0, dy: 0, size: 9999 }, topLeftField, page).size,
+    ).toBe(50 * MAX_FIELD_FONT_FACTOR);
+  });
+
+  it('drops a size equal to the template size, and any size on a font-less field', () => {
+    expect(
+      clampFieldAdjust({ dx: 0, dy: 0, size: 50 }, topLeftField, page),
+    ).toEqual({ dx: 0, dy: 0 });
+    expect(
+      clampFieldAdjust({ dx: 0, dy: 0, size: 30 }, centeredField, page),
+    ).toEqual({ dx: 0, dy: 0 });
+  });
+
+  it('keeps a real alignment change and drops the template default', () => {
+    expect(
+      clampFieldAdjust({ dx: 0, dy: 0, align: 'justify' }, topLeftField, page)
+        .align,
+    ).toBe('justify');
+    expect(
+      clampFieldAdjust({ dx: 0, dy: 0, align: 'left' }, topLeftField, page),
+    ).toEqual({ dx: 0, dy: 0 });
+    expect(
+      clampFieldAdjust({ dx: 0, dy: 0, align: 'center' }, centeredField, page),
+    ).toEqual({ dx: 0, dy: 0 });
+  });
+});
+
+describe('resolveFieldFont', () => {
+  it('scales the leading with the size override', () => {
+    expect(resolveFieldFont(topLeftField, { dx: 0, dy: 0, size: 100 })).toEqual(
+      { size: 100, lineHeight: 102 },
+    );
+    expect(resolveFieldFont(topLeftField, undefined)).toEqual({
+      size: 50,
+      lineHeight: 51,
+    });
+    expect(resolveFieldFont(centeredField, undefined)).toBeNull();
+  });
+});
+
+describe('hasFieldAdjust', () => {
+  it('is false for undefined and the zero adjustment', () => {
+    expect(hasFieldAdjust(undefined)).toBe(false);
+    expect(hasFieldAdjust({ dx: 0, dy: 0 })).toBe(false);
+    expect(hasFieldAdjust({ dx: 0, dy: 1 })).toBe(true);
+    expect(hasFieldAdjust({ dx: 0, dy: 0, size: 40 })).toBe(true);
+    expect(hasFieldAdjust({ dx: 0, dy: 0, align: 'right' })).toBe(true);
   });
 });
 
@@ -94,5 +149,12 @@ describe('CERT_TEMPLATES movable blocks', () => {
     const { left, top } = fieldTopLeft(quote!);
     expect(left + (quote!.w ?? 0)).toBeLessThanOrEqual(page.w);
     expect(top + (quote!.h ?? 0)).toBeLessThanOrEqual(page.h);
+  });
+
+  it('artwork filenames carry the brand generation (immutable CDN cache)', () => {
+    expect(CERT_TEMPLATES.origen.background).toMatch(/bg_origen-2026\.jpg$/);
+    expect(CERT_TEMPLATES.embajador.background).toMatch(
+      /bg_embajador-2026\.jpg$/,
+    );
   });
 });

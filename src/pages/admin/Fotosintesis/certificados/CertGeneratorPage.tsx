@@ -63,10 +63,10 @@ import CertPreview from './CertPreview';
 import {
   CERT_TEMPLATES,
   CERT_TYPE_ORDER,
-  clampFieldOffset,
+  clampFieldAdjust,
   clampPhotoTransform,
   DEFAULT_PHOTO_TRANSFORM,
-  hasFieldOffset,
+  hasFieldAdjust,
   EMPTY_CARNET,
   EMPTY_EMBAJADOR,
   EMPTY_ORIGEN,
@@ -77,7 +77,7 @@ import {
   type CertTypeId,
   type CustomDetail,
   type EmbajadorDraft,
-  type FieldOffset,
+  type FieldAdjust,
   type OrigenDraft,
   type PhotoTransform,
 } from './certTemplates';
@@ -226,8 +226,8 @@ export default function CertGeneratorPage() {
   const [photoTransforms, setPhotoTransforms] = useState<
     Partial<Record<CertTypeId, PhotoTransform>>
   >({});
-  const [fieldOffsets, setFieldOffsets] = useState<
-    Partial<Record<CertTypeId, Record<string, FieldOffset>>>
+  const [fieldAdjusts, setFieldAdjusts] = useState<
+    Partial<Record<CertTypeId, Record<string, FieldAdjust>>>
   >({});
   const tabRefs = useRef<Array<HTMLDivElement | null>>([]);
 
@@ -270,26 +270,26 @@ export default function CertGeneratorPage() {
     () => CERT_TEMPLATES[type].fields.some((f) => f.movable),
     [type],
   );
-  const typeFieldOffsets = fieldOffsets[type];
-  const textAdjusted = Object.values(typeFieldOffsets ?? {}).some(
-    hasFieldOffset,
+  const typeFieldAdjusts = fieldAdjusts[type];
+  const textAdjusted = Object.values(typeFieldAdjusts ?? {}).some(
+    hasFieldAdjust,
   );
-  const setFieldOffset = useCallback(
-    (key: string, offset: FieldOffset) => {
+  const setFieldAdjust = useCallback(
+    (key: string, adjust: FieldAdjust) => {
       const tpl = CERT_TEMPLATES[type];
       const field = tpl.fields.find((f) => f.key === key);
       if (!field) return;
-      const clamped = clampFieldOffset(offset, field, tpl.page);
-      setFieldOffsets((prev) => ({
+      const clamped = clampFieldAdjust(adjust, field, tpl.page);
+      setFieldAdjusts((prev) => ({
         ...prev,
         [type]: { ...(prev[type] ?? {}), [key]: clamped },
       }));
     },
     [type],
   );
-  const resetFieldOffsets = useCallback(
+  const resetFieldAdjusts = useCallback(
     () =>
-      setFieldOffsets((prev) => {
+      setFieldAdjusts((prev) => {
         if (!(type in prev)) return prev;
         const next = { ...prev };
         delete next[type];
@@ -300,8 +300,8 @@ export default function CertGeneratorPage() {
   const layoutAdjusted = photoAdjusted || textAdjusted;
   const resetLayout = useCallback(() => {
     resetPhotoTransform();
-    resetFieldOffsets();
-  }, [resetPhotoTransform, resetFieldOffsets]);
+    resetFieldAdjusts();
+  }, [resetPhotoTransform, resetFieldAdjusts]);
   const canEditLayout = templateHasPhoto || templateHasMovable;
 
   // Auto-frame: detect the gem against its flat catalog background and zoom/center
@@ -801,7 +801,7 @@ export default function CertGeneratorPage() {
             )}
             {canEditLayout && layoutAdjusted && (
               <IconBtn
-                label="Restablecer el encuadre de la foto y la posición de los textos"
+                label="Restablecer el encuadre de la foto y los ajustes de los textos"
                 onClick={resetLayout}
               >
                 <RotateCcw size={15} />
@@ -881,10 +881,10 @@ export default function CertGeneratorPage() {
                 type === 'origen' ? origen.customDetails : undefined
               }
               photoTransform={photoTransform}
-              fieldOffsets={typeFieldOffsets}
+              fieldAdjusts={typeFieldAdjusts}
               layoutEdit={layoutEdit}
               onPhotoTransformChange={setPhotoTransform}
-              onFieldOffsetChange={setFieldOffset}
+              onFieldAdjustChange={setFieldAdjust}
             />
             {isEmptyDraft && (
               <Box
@@ -939,10 +939,10 @@ export default function CertGeneratorPage() {
               >
                 <Move size={15} strokeWidth={2} style={{ flexShrink: 0 }} />
                 {templateHasPhoto && templateHasMovable
-                  ? 'Arrastrá la foto dentro del círculo o cualquier bloque de texto para reubicarlo (flechas para afinar). Los aros y marcos no salen en la exportación.'
+                  ? 'Arrastrá la foto dentro del círculo o cualquier bloque de texto para reubicarlo (flechas para afinar). Hacé clic en un bloque para cambiar su tamaño y alineación. Los aros y marcos no salen en la exportación.'
                   : templateHasPhoto
                     ? 'Arrastrá la foto para reposicionarla dentro del círculo; usá la rueda o «Zoom de la foto» para acercarla. La imagen queda recortada al círculo y el aro no aparece en la exportación.'
-                    : 'Arrastrá cualquier bloque de texto para reubicarlo (flechas para afinar). Los marcos no salen en la exportación.'}
+                    : 'Arrastrá cualquier bloque de texto para reubicarlo (flechas para afinar) y hacé clic en él para cambiar su tamaño y alineación. Los marcos no salen en la exportación.'}
               </Box>
             )}
           </Box>

@@ -1,19 +1,27 @@
 #!/usr/bin/env python3
 """
-Re-brand the Origen certificate artwork with the 2026 lockup.
+Re-brand a certificate artwork with the 2026 lockup.
 
-The logo is baked into the Origen artwork under public/assets/certificados/. This script:
-  1. masks the old green logo (symbol + wordmark + tagline) and inpaints each
-     row from its nearest unmasked neighbours, so the cream paper texture
-     around it is preserved instead of being flattened to a swatch;
+The logo is baked into the JPEG backgrounds under public/assets/certificados/.
+For a given preset this script:
+  1. masks the old logo (symbol + wordmark + tagline) and inpaints each row
+     from its nearest unmasked neighbours, so the paper texture around it is
+     preserved instead of being flattened to a swatch;
   2. rasterizes docs/brand/renovacion-2026/tierra-madre-lockup-vertical.svg
-     (the vector master) in the certificate's dark green and composites it at
-     the same width and centre the old block occupied.
+     (the vector master) in the certificate's own ink colour and composites it
+     at the same width and centre the old block occupied.
 
-Idempotent on the already-rebranded artwork only if the old block is still
-present; run it against the ORIGINAL (git) artwork:
-    git show 03a31e9:public/assets/certificados/bg_origen.jpg > /tmp/bg_orig.jpg
-    python3 scripts/certificados/rebrand-bg-origen.py /tmp/bg_orig.jpg
+Run it against the ORIGINAL artwork from git (the presets measure that one):
+    git show 03a31e9:public/assets/certificados/bg_origen.jpg > /tmp/bg.jpg
+    python3 scripts/certificados/rebrand-bg.py origen /tmp/bg.jpg
+
+    git show 03a31e9:public/assets/certificados/bg_embajador.jpg > /tmp/bg.jpg
+    python3 scripts/certificados/rebrand-bg.py embajador /tmp/bg.jpg
+
+Output filenames carry the brand generation on purpose: /assets is served
+with a one-year immutable cache, so an overwrite under the old name would stay
+invisible to browsers that cached it. A new artwork generation gets a NEW name
+(and certTemplates.ts follows).
 
 Requires: Pillow, numpy, ImageMagick (`magick`) for the SVG rasterization.
 """
@@ -22,33 +30,64 @@ from __future__ import annotations
 import subprocess
 import sys
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 
 import numpy as np
 from PIL import Image, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[2]
-# Versioned filename: /assets is served immutable for a year, so an overwrite
-# under the old name would stay invisible to browsers that cached it. A new
-# artwork generation gets a NEW name (and certTemplates.ts follows).
-BG_OUT = ROOT / "public/assets/certificados/bg_origen-2026.jpg"
+ASSETS = ROOT / "public/assets/certificados"
 LOCKUP_SVG = ROOT / "docs/brand/renovacion-2026/tierra-madre-lockup-vertical.svg"
 
-# Certificate green, sampled from the old logo pixels (dominant (0,89,54)).
-CERT_GREEN = "#005936"
-
-# Old logo block, measured on the 2160×3840 artwork (green-pixel bbox + margin).
-OLD_BOX = (900, 250, 1700, 690)  # x0, y0, x1, y1
-OLD_CONTENT = (933, 283, 1669, 655)  # tight bbox of the old symbol+wordmark+tagline
+Box = tuple[int, int, int, int]  # x0, y0, x1, y1
 
 
-def is_logo_ink(rgb: np.ndarray) -> np.ndarray:
-    """Green-ish, non-cream pixels inside the search box."""
-    r, g, b = rgb[..., 0].astype(int), rgb[..., 1].astype(int), rgb[..., 2].astype(int)
+@dataclass(frozen=True)
+class Preset:
+    out: str
+    """ink colour of the new lockup (sampled from the old logo pixels)"""
+    color: str
+    """search box around the old logo, with margin"""
+    box: Box
+    """tight bbox of the old symbol+wordmark+tagline"""
+    content: Box
+    """which pixels inside `box` are the old logo's ink"""
+    is_ink: Callable[[np.ndarray], np.ndarray]
+
+
+def _green(rgb: np.ndarray) -> np.ndarray:
+    r, g, b = (rgb[..., i].astype(int) for i in range(3))
     return (g > r + 18) & (g > b + 10) & (r < 200)
 
 
-def inpaint_rows(img: np.ndarray, mask: np.ndarray, box: tuple[int, int, int, int]) -> None:
+def _burgundy(rgb: np.ndarray) -> np.ndarray:
+    r, g, b = (rgb[..., i].astype(int) for i in range(3))
+    return (r > 90) & (r > g + 40) & (r > b + 30) & (g < 140)
+
+
+PRESETS: dict[str, Preset] = {
+    # 2160×3840 portrait. Old logo dominant pixel (0,89,54).
+    "origen": Preset(
+        out="bg_origen-2026.jpg",
+        color="#005936",
+        box=(900, 250, 1700, 690),
+        content=(933, 283, 1669, 655),
+        is_ink=_green,
+    ),
+    # 3168×2446 landscape. Old logo dominant pixel (155,41,31).
+    "embajador": Preset(
+        out="bg_embajador-2026.jpg",
+        color="#9B291F",
+        box=(1800, 300, 2430, 660),
+        content=(1856, 352, 2375, 614),
+        is_ink=_burgundy,
+    ),
+}
+
+
+def inpaint_rows(img: np.ndarray, mask: np.ndarray, box: Box) -> None:
     """For every masked pixel, linearly interpolate between the nearest unmasked
     pixels to its left and right on the same row (in place)."""
     x0, y0, x1, y1 = box
@@ -79,18 +118,18 @@ def rasterize_lockup(width_px: int, color: str) -> Image.Image:
     return big.resize((width_px, round(big.height * scale)), Image.LANCZOS)
 
 
-def main(src: Path) -> None:
+def main(preset: Preset, src: Path) -> None:
     im = Image.open(src).convert("RGB")
     arr = np.array(im)
 
-    x0, y0, x1, y1 = OLD_BOX
+    x0, y0, x1, y1 = preset.box
     mask = np.zeros(arr.shape[:2], dtype=bool)
-    mask[y0:y1, x0:x1] = is_logo_ink(arr[y0:y1, x0:x1])
+    mask[y0:y1, x0:x1] = preset.is_ink(arr[y0:y1, x0:x1])
     # Dilate so the anti-aliased halo around the glyphs goes too.
     mask_img = Image.fromarray((mask * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(7))
     mask = np.array(mask_img) > 0
     print(f"masking {int(mask.sum())} px of old logo")
-    inpaint_rows(arr, mask, OLD_BOX)
+    inpaint_rows(arr, mask, preset.box)
 
     # Soften the seam only inside the mask so interpolation banding never reads
     # as vertical streaks.
@@ -98,18 +137,21 @@ def main(src: Path) -> None:
     blurred = filled.filter(ImageFilter.GaussianBlur(2))
     arr = np.where(mask[..., None], np.array(blurred), np.array(filled))
 
-    cx0, cy0, cx1, cy1 = OLD_CONTENT
+    cx0, cy0, cx1, cy1 = preset.content
     width = cx1 - cx0
-    lockup = rasterize_lockup(width, CERT_GREEN)
+    lockup = rasterize_lockup(width, preset.color)
     left = cx0
     top = round((cy0 + cy1) / 2 - lockup.height / 2)
     out = Image.fromarray(arr)
     out.paste(lockup, (left, top), lockup)
     print(f"lockup {lockup.width}×{lockup.height} at ({left},{top})")
 
-    out.save(BG_OUT, quality=92, subsampling=0, optimize=True)
-    print(f"wrote {BG_OUT.relative_to(ROOT)} ({BG_OUT.stat().st_size // 1024} KiB)")
+    dest = ASSETS / preset.out
+    out.save(dest, quality=92, subsampling=0, optimize=True)
+    print(f"wrote {dest.relative_to(ROOT)} ({dest.stat().st_size // 1024} KiB)")
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]) if len(sys.argv) > 1 else BG_OUT)
+    if len(sys.argv) != 3 or sys.argv[1] not in PRESETS:
+        sys.exit(f"usage: rebrand-bg.py <{'|'.join(PRESETS)}> <original.jpg>")
+    main(PRESETS[sys.argv[1]], Path(sys.argv[2]))

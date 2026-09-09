@@ -16,6 +16,9 @@ export type CertTypeId = "origen" | "embajador" | "carnet";
 
 export type FieldKind = "text" | "details" | "photo";
 
+export type TextAlign = "left" | "center" | "right" | "justify";
+export const TEXT_ALIGNS: TextAlign[] = ["left", "center", "right", "justify"];
+
 export interface TemplateFieldFont {
   family: string;
   style?: "normal" | "italic";
@@ -38,7 +41,7 @@ export interface TemplateField {
   center?: boolean;
   /** when true, only X is centered (translateX -50%) — y is the top */
   centerX?: boolean;
-  align?: "left" | "center";
+  align?: TextAlign;
   font?: TemplateFieldFont;
   /** hex swatch painted under the field to mask the baked sample text */
   cover?: string;
@@ -66,18 +69,43 @@ export interface TemplateField {
 }
 
 /**
- * Operator displacement of a movable text block, native px relative to the
- * template position. (0,0) = as designed.
+ * Operator adjustments of a movable text block, relative to the template:
+ * displacement in native px (0,0 = as designed), an optional font size
+ * override (px, template size when absent) and an optional alignment override.
  */
-export interface FieldOffset {
+export interface FieldAdjust {
   dx: number;
   dy: number;
+  size?: number;
+  align?: TextAlign;
 }
 
-export const DEFAULT_FIELD_OFFSET: FieldOffset = { dx: 0, dy: 0 };
+export const DEFAULT_FIELD_ADJUST: FieldAdjust = { dx: 0, dy: 0 };
+export const MIN_FIELD_FONT_SIZE = 10;
+/** a block may grow up to this many times its template size */
+export const MAX_FIELD_FONT_FACTOR = 3;
 
-export function hasFieldOffset(o: FieldOffset | undefined): boolean {
-  return !!o && (o.dx !== 0 || o.dy !== 0);
+export function hasFieldAdjust(o: FieldAdjust | undefined): boolean {
+  return (
+    !!o &&
+    (o.dx !== 0 || o.dy !== 0 || o.size !== undefined || o.align !== undefined)
+  );
+}
+
+/**
+ * The font metrics a block renders with: the template's, scaled uniformly by
+ * the operator's size override so leading keeps its designed ratio.
+ */
+export function resolveFieldFont(
+  f: TemplateField,
+  a: FieldAdjust | undefined,
+): { size: number; lineHeight: number } | null {
+  if (!f.font) return null;
+  const size = a?.size ?? f.font.size;
+  return {
+    size,
+    lineHeight: Math.round((f.font.lineHeight * size) / f.font.size),
+  };
 }
 
 /** Top-left of a field's box in page px (resolves `center` / `centerX`). */
@@ -91,16 +119,19 @@ export function fieldTopLeft(f: TemplateField): { left: number; top: number } {
 }
 
 /**
- * Clamp an offset so the block's box stays fully inside the page (the artwork
+ * Clamp an adjustment: the block's box stays fully inside the page (the artwork
  * clips anything outside, so an off-page block would silently vanish from the
- * export). Values are rounded to whole px: the export rasterizes at integer
- * device pixels and fractional offsets only blur the text edges.
+ * export), the size stays within [MIN_FIELD_FONT_SIZE, template × factor], and
+ * a size equal to the template's or an unknown alignment is dropped so "no
+ * adjustment" has exactly one representation. Offsets are rounded to whole px:
+ * the export rasterizes at integer device pixels and fractional offsets only
+ * blur the text edges.
  */
-export function clampFieldOffset(
-  o: FieldOffset,
+export function clampFieldAdjust(
+  o: FieldAdjust,
   f: TemplateField,
   page: { w: number; h: number },
-): FieldOffset {
+): FieldAdjust {
   const { left, top } = fieldTopLeft(f);
   const w = f.w ?? 0;
   const h = f.h ?? 0;
@@ -108,10 +139,22 @@ export function clampFieldOffset(
   const maxDx = page.w - w - left;
   const minDy = -top;
   const maxDy = page.h - h - top;
-  return {
+  const out: FieldAdjust = {
     dx: Math.round(Math.min(Math.max(o.dx, minDx), maxDx)),
     dy: Math.round(Math.min(Math.max(o.dy, minDy), maxDy)),
   };
+  if (o.size !== undefined && f.font && Number.isFinite(o.size)) {
+    const size = Math.round(
+      Math.min(
+        Math.max(o.size, MIN_FIELD_FONT_SIZE),
+        f.font.size * MAX_FIELD_FONT_FACTOR,
+      ),
+    );
+    if (size !== f.font.size) out.size = size;
+  }
+  if (o.align && TEXT_ALIGNS.includes(o.align) && o.align !== (f.align ?? "left"))
+    out.align = o.align;
+  return out;
 }
 
 export interface DetailLine {
@@ -331,7 +374,8 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
     id: "embajador",
     label: "Certificado Embajador",
     swatch: "linear-gradient(135deg,#8a2230,#a83d44)",
-    background: "/assets/certificados/bg_embajador.jpg",
+    // Versioned name — see the Origen note above.
+    background: "/assets/certificados/bg_embajador-2026.jpg",
     page: { w: 792, h: 612 },
     print: { w: 792, h: 612, orientation: "landscape" },
     fields: [
