@@ -14,6 +14,11 @@
  *    CertNode; the (non-captured) adjust ring renders in the scaled wrapper.
  *  - extra detail lines ("custom fields") render after the template detail lines
  *    and auto-fit so added content never overflows the artwork.
+ *  - movable text blocks (name, details, the fixed message) can be dragged in
+ *    layout mode. The displacement is applied INSIDE the captured node (so the
+ *    export reflects it) and the block's cover swatch stays painted at the
+ *    template position as well, masking the sample text baked into the artwork.
+ *    The drag handles live in the (non-captured) scaled wrapper.
  */
 
 import {
@@ -28,10 +33,14 @@ import {
 import {
   CERT_TEMPLATES,
   clampPhotoTransform,
+  DEFAULT_FIELD_OFFSET,
   DEFAULT_PHOTO_TRANSFORM,
+  fieldTopLeft,
+  hasFieldOffset,
   type CertTemplate,
   type CertTypeId,
   type CustomDetail,
+  type FieldOffset,
   type PhotoTransform,
   type TemplateField,
 } from "./certTemplates";
@@ -48,27 +57,35 @@ export interface CertPreviewProps {
   customDetails?: CustomDetail[];
   /** per-type image zoom/pan within the fixed circle (null → default) */
   photoTransform?: PhotoTransform | null;
-  /** when true, render the pan/zoom adjust ring for the photo */
-  photoEdit?: boolean;
+  /** displacement per movable field key (missing → as designed) */
+  fieldOffsets?: Record<string, FieldOffset>;
+  /** layout mode: render the photo adjust ring + the text drag handles */
+  layoutEdit?: boolean;
   /** called with the new transform while the operator pans/zooms the photo */
   onPhotoTransformChange?: (t: PhotoTransform) => void;
+  /** called with the raw (unclamped) offset while the operator drags a block */
+  onFieldOffsetChange?: (key: string, offset: FieldOffset) => void;
 }
 
 /** smallest auto-fit scale for the details block before we let it clip */
 const MIN_DETAILS_FIT = 0.5;
 
-function fieldBoxStyle(f: TemplateField, guides = false): React.CSSProperties {
-  const w = f.w ?? 0;
-  const h = f.h ?? 0;
+function fieldBoxStyle(
+  f: TemplateField,
+  guides = false,
+  offset: FieldOffset = DEFAULT_FIELD_OFFSET,
+): React.CSSProperties {
   // Center via PIXEL offsets, NOT transform: translate(-50%): html2canvas 1.4.1
   // does not resolve percentage transforms, so a translate-centered box lands in
   // the wrong place (bottom-right) in the exported raster while looking correct
   // on screen. Pixel left/top is layout-equivalent and renders identically in
-  // both the browser preview and the html2canvas capture.
+  // both the browser preview and the html2canvas capture. The operator offset
+  // is folded into the same left/top for the same reason.
+  const { left, top } = fieldTopLeft(f);
   const base: React.CSSProperties = {
     position: "absolute",
-    left: f.center || f.centerX ? f.x - w / 2 : f.x,
-    top: f.center ? f.y - h / 2 : f.y,
+    left: left + offset.dx,
+    top: top + offset.dy,
     width: f.w,
     height: f.h,
     overflow: "hidden",
@@ -102,12 +119,14 @@ function DetailsField({
   field,
   data,
   customDetails,
+  offset,
   guides,
 }: {
   template: CertTemplate;
   field: TemplateField;
   data: Record<string, string>;
   customDetails?: CustomDetail[];
+  offset?: FieldOffset;
   guides?: boolean;
 }) {
   const lines = useMemo(() => {
@@ -144,7 +163,7 @@ function DetailsField({
   }, [linesKey, boxH]);
 
   return (
-    <div style={fieldBoxStyle(field, guides)}>
+    <div style={fieldBoxStyle(field, guides, offset)}>
       <div
         ref={contentRef}
         style={{
@@ -269,6 +288,7 @@ function OverlayField({
   data,
   customDetails,
   photoTransform,
+  offset,
   guides,
 }: {
   template: CertTemplate;
@@ -277,6 +297,8 @@ function OverlayField({
   customDetails?: CustomDetail[];
   /** clamped transform for the photo field (image zoom/pan within the circle) */
   photoTransform?: PhotoTransform;
+  /** clamped displacement for a movable text/details block */
+  offset?: FieldOffset;
   guides?: boolean;
 }) {
   if (field.kind === "photo") {
@@ -297,15 +319,263 @@ function OverlayField({
         field={field}
         data={data}
         customDetails={customDetails}
+        offset={offset}
         guides={guides}
       />
     );
   }
 
-  // text
+  // text — fixed template copy (blank-line separated paragraphs) or a draft key
+  const paragraphs = (field.text ?? data[field.key] ?? "")
+    .split(/\n\s*\n/)
+    .filter((par) => par.length > 0);
   return (
-    <div style={fieldBoxStyle(field, guides)}>
-      <span>{data[field.key] || ""}</span>
+    <div style={fieldBoxStyle(field, guides, offset)}>
+      {paragraphs.map((par, i) => (
+        <div
+          key={i}
+          style={i > 0 ? { marginTop: field.paragraphGap ?? 0 } : undefined}
+        >
+          {par}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The cover swatch of a DISPLACED block, painted at its template position.
+ * The artwork carries sample text under every covered block; once the block
+ * moves away, this keeps that sample masked. Captured in the export.
+ */
+function CoverMask({ field }: { field: TemplateField }) {
+  const { left, top } = fieldTopLeft(field);
+  return (
+    <div
+      aria-hidden
+      style={{
+        position: "absolute",
+        left,
+        top,
+        width: field.w,
+        height: field.h,
+        background: field.cover,
+      }}
+    />
+  );
+}
+
+/**
+ * Pointer drag → native-px delta, shared by the photo pan and the text block
+ * handles. Listeners go on `document` so a fast drag that leaves the handle
+ * keeps tracking; the teardown ref removes them on unmount mid-drag.
+ */
+function usePointerDrag(
+  scale: number,
+  getStart: () => { x: number; y: number },
+  onMove: (x: number, y: number) => void,
+  onEnd?: () => void,
+) {
+  const stateRef = useRef({ scale, getStart, onMove, onEnd });
+  stateRef.current = { scale, getStart, onMove, onEnd };
+  const teardown = useRef<(() => void) | null>(null);
+  useEffect(() => () => teardown.current?.(), []);
+
+  return useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    const start = stateRef.current.getStart();
+    const startClientX = e.clientX;
+    const startClientY = e.clientY;
+    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+
+    const onPointerMove = (ev: PointerEvent) => {
+      if (ev.buttons === 0) {
+        onUp();
+        return;
+      }
+      const { scale, onMove } = stateRef.current;
+      onMove(
+        start.x + (ev.clientX - startClientX) / scale,
+        start.y + (ev.clientY - startClientY) / scale,
+      );
+    };
+    const onUp = () => {
+      teardown.current = null;
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", onUp);
+      document.removeEventListener("pointercancel", onUp);
+      stateRef.current.onEnd?.();
+    };
+    teardown.current = onUp;
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onUp);
+    document.addEventListener("pointercancel", onUp);
+  }, []);
+}
+
+/** Arrow-key nudge shared by the drag handles: 8 px, 24 px with Shift. */
+function arrowDelta(e: React.KeyboardEvent): { dx: number; dy: number } | null {
+  const step = e.shiftKey ? 24 : 8;
+  switch (e.key) {
+    case "ArrowLeft":
+      return { dx: -step, dy: 0 };
+    case "ArrowRight":
+      return { dx: step, dy: 0 };
+    case "ArrowUp":
+      return { dx: 0, dy: -step };
+    case "ArrowDown":
+      return { dx: 0, dy: step };
+    default:
+      return null;
+  }
+}
+
+/**
+ * Alignment guides, canvas-editor style. While a block is dragged, its edges
+ * and centre are compared with the other blocks' edges/centres, the photo's
+ * centre line and the page centre; within SNAP_PX the block snaps and a guide
+ * line is drawn across the page so the operator can SEE the alignment.
+ */
+const SNAP_PX = 6;
+
+interface SnapTargets {
+  xs: number[];
+  ys: number[];
+}
+
+/** active guide lines (page px) */
+interface SnapGuides {
+  x?: number;
+  y?: number;
+}
+
+function boxEdges(f: TemplateField, o: FieldOffset) {
+  const { left, top } = fieldTopLeft(f);
+  const w = f.w ?? 0;
+  const h = f.h ?? 0;
+  const l = left + o.dx;
+  const t = top + o.dy;
+  return { l, cx: l + w / 2, r: l + w, t, cy: t + h / 2, b: t + h };
+}
+
+/** Snap one axis: returns the shift to apply and the matched guide line. */
+function snapAxis(
+  edges: number[],
+  targets: number[],
+): { shift: number; guide?: number } {
+  let best: { shift: number; guide: number; dist: number } | null = null;
+  for (const e of edges) {
+    for (const tg of targets) {
+      const dist = Math.abs(tg - e);
+      if (dist <= SNAP_PX && (!best || dist < best.dist)) {
+        best = { shift: tg - e, guide: tg, dist };
+      }
+    }
+  }
+  return best ? { shift: best.shift, guide: best.guide } : { shift: 0 };
+}
+
+function snapOffset(
+  field: TemplateField,
+  raw: FieldOffset,
+  targets: SnapTargets,
+): { offset: FieldOffset; guides: SnapGuides } {
+  const e = boxEdges(field, raw);
+  const sx = snapAxis([e.l, e.cx, e.r], targets.xs);
+  const sy = snapAxis([e.t, e.cy, e.b], targets.ys);
+  return {
+    offset: { dx: raw.dx + sx.shift, dy: raw.dy + sy.shift },
+    guides: { x: sx.guide, y: sy.guide },
+  };
+}
+
+/**
+ * Drag handle for a movable text block, rendered in the SCALED wrapper (never
+ * captured). Sits exactly over the displaced box; drag or arrow keys move it.
+ */
+function FieldDragOverlay({
+  field,
+  offset,
+  scale,
+  snapTargets,
+  onChange,
+  onGuides,
+}: {
+  field: TemplateField;
+  offset: FieldOffset;
+  scale: number;
+  /** alignment lines of everything else on the page */
+  snapTargets: SnapTargets;
+  onChange: (offset: FieldOffset) => void;
+  /** guide lines to draw while dragging ({} when idle) */
+  onGuides: (g: SnapGuides) => void;
+}) {
+  const stateRef = useRef({ offset, onChange, onGuides, snapTargets, field });
+  stateRef.current = { offset, onChange, onGuides, snapTargets, field };
+  const beginDrag = usePointerDrag(
+    scale,
+    () => ({ x: stateRef.current.offset.dx, y: stateRef.current.offset.dy }),
+    (x, y) => {
+      const { field, snapTargets, onChange, onGuides } = stateRef.current;
+      const snapped = snapOffset(field, { dx: x, dy: y }, snapTargets);
+      onChange(snapped.offset);
+      onGuides(snapped.guides);
+    },
+    () => stateRef.current.onGuides({}),
+  );
+  const onKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const d = arrowDelta(e);
+    if (!d) return;
+    e.preventDefault();
+    const { offset, onChange } = stateRef.current;
+    onChange({ dx: offset.dx + d.dx, dy: offset.dy + d.dy });
+  }, []);
+
+  const { left, top } = fieldTopLeft(field);
+  const px = 1.5 / scale;
+  const label = field.label ?? field.key;
+  return (
+    <div
+      role="group"
+      tabIndex={0}
+      aria-label={`Mover «${label}»: arrastrá o usá las flechas`}
+      title={`Mover «${label}»`}
+      onPointerDown={beginDrag}
+      onKeyDown={onKeyDown}
+      style={{
+        position: "absolute",
+        left: left + offset.dx,
+        top: top + offset.dy,
+        width: field.w,
+        height: field.h,
+        border: `${px}px dashed rgba(15,92,58,.9)`,
+        borderRadius: 2 / scale,
+        boxSizing: "border-box",
+        cursor: "move",
+        touchAction: "none",
+        outlineOffset: `${px}px`,
+      }}
+    >
+      <span
+        aria-hidden
+        style={{
+          position: "absolute",
+          top: -22 / scale,
+          left: -px,
+          padding: `${2 / scale}px ${6 / scale}px`,
+          fontFamily: "system-ui, sans-serif",
+          fontSize: 11 / scale,
+          lineHeight: 1.4,
+          fontWeight: 600,
+          color: "#fff",
+          background: "rgba(15,92,58,.9)",
+          borderRadius: `${4 / scale}px ${4 / scale}px 0 0`,
+          whiteSpace: "nowrap",
+          pointerEvents: "none",
+        }}
+      >
+        {label}
+      </span>
     </div>
   );
 }
@@ -340,15 +610,6 @@ function PhotoAdjustOverlay({
   // listeners always read fresh values without re-binding.
   const stateRef = useRef({ transform, onChange, scale });
   stateRef.current = { transform, onChange, scale };
-  const panning = useRef<{
-    startClientX: number;
-    startClientY: number;
-    startX: number;
-    startY: number;
-  } | null>(null);
-  // In-flight teardown so an unmount mid-drag still removes document listeners.
-  const teardown = useRef<(() => void) | null>(null);
-  useEffect(() => () => teardown.current?.(), []);
 
   // Wheel-to-zoom needs a non-passive listener to preventDefault the stage scroll.
   useEffect(() => {
@@ -364,71 +625,34 @@ function PhotoAdjustOverlay({
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
-  const beginPan = useCallback((e: React.PointerEvent) => {
-    e.preventDefault();
-    const { transform } = stateRef.current;
-    panning.current = {
-      startClientX: e.clientX,
-      startClientY: e.clientY,
-      startX: transform.offsetX,
-      startY: transform.offsetY,
-    };
-    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
-
-    const onMove = (ev: PointerEvent) => {
-      const p = panning.current;
-      if (!p) return;
-      if (ev.buttons === 0) {
-        onUp();
-        return;
-      }
-      const { scale, transform, onChange } = stateRef.current;
-      onChange({
-        ...transform,
-        offsetX: p.startX + (ev.clientX - p.startClientX) / scale,
-        offsetY: p.startY + (ev.clientY - p.startClientY) / scale,
-      });
-    };
-    const onUp = () => {
-      panning.current = null;
-      teardown.current = null;
-      document.removeEventListener("pointermove", onMove);
-      document.removeEventListener("pointerup", onUp);
-      document.removeEventListener("pointercancel", onUp);
-    };
-    teardown.current = onUp;
-    document.addEventListener("pointermove", onMove);
-    document.addEventListener("pointerup", onUp);
-    document.addEventListener("pointercancel", onUp);
-  }, []);
+  const beginPan = usePointerDrag(
+    scale,
+    () => {
+      const { transform } = stateRef.current;
+      return { x: transform.offsetX, y: transform.offsetY };
+    },
+    (x, y) => {
+      const { transform, onChange } = stateRef.current;
+      onChange({ ...transform, offsetX: x, offsetY: y });
+    },
+  );
 
   const onKeyDown = useCallback((e: React.KeyboardEvent) => {
     const { transform, onChange } = stateRef.current;
-    const step = e.shiftKey ? 24 : 8;
+    const d = arrowDelta(e);
     let next: PhotoTransform | null = null;
-    switch (e.key) {
-      case "ArrowLeft":
-        next = { ...transform, offsetX: transform.offsetX - step };
-        break;
-      case "ArrowRight":
-        next = { ...transform, offsetX: transform.offsetX + step };
-        break;
-      case "ArrowUp":
-        next = { ...transform, offsetY: transform.offsetY - step };
-        break;
-      case "ArrowDown":
-        next = { ...transform, offsetY: transform.offsetY + step };
-        break;
-      case "+":
-      case "=":
-        next = { ...transform, zoom: transform.zoom + 0.1 };
-        break;
-      case "-":
-      case "_":
-        next = { ...transform, zoom: transform.zoom - 0.1 };
-        break;
-      default:
-        return;
+    if (d) {
+      next = {
+        ...transform,
+        offsetX: transform.offsetX + d.dx,
+        offsetY: transform.offsetY + d.dy,
+      };
+    } else if (e.key === "+" || e.key === "=") {
+      next = { ...transform, zoom: transform.zoom + 0.1 };
+    } else if (e.key === "-" || e.key === "_") {
+      next = { ...transform, zoom: transform.zoom - 0.1 };
+    } else {
+      return;
     }
     e.preventDefault();
     onChange(next);
@@ -458,6 +682,52 @@ function PhotoAdjustOverlay({
         outlineOffset: `${ringPx}px`,
       }}
     />
+  );
+}
+
+/** The active alignment guides, drawn across the whole page (never captured). */
+function SnapGuideLines({
+  guides,
+  page,
+  scale,
+}: {
+  guides: SnapGuides;
+  page: { w: number; h: number };
+  scale: number;
+}) {
+  const px = 1 / scale;
+  const color = "rgba(214, 51, 132, .95)";
+  return (
+    <>
+      {guides.x !== undefined && (
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            left: guides.x - px / 2,
+            top: 0,
+            width: px,
+            height: page.h,
+            background: color,
+            pointerEvents: "none",
+          }}
+        />
+      )}
+      {guides.y !== undefined && (
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            left: 0,
+            top: guides.y - px / 2,
+            width: page.w,
+            height: px,
+            background: color,
+            pointerEvents: "none",
+          }}
+        />
+      )}
+    </>
   );
 }
 
@@ -609,9 +879,11 @@ const CertNode = forwardRef<
     guides?: boolean;
     customDetails?: CustomDetail[];
     photoTransform?: PhotoTransform;
+    /** clamped displacement per movable field key */
+    fieldOffsets?: Record<string, FieldOffset>;
   }
 >(function CertNode(
-  { type, data, guides, customDetails, photoTransform },
+  { type, data, guides, customDetails, photoTransform, fieldOffsets },
   ref,
 ) {
   const template = CERT_TEMPLATES[type];
@@ -652,6 +924,13 @@ const CertNode = forwardRef<
           display: "block",
         }}
       />
+      {/* Masks first so a displaced block always paints ABOVE another block's
+          template position (e.g. the name dragged down over the details area). */}
+      {template.fields.map((f) =>
+        f.movable && f.cover && hasFieldOffset(fieldOffsets?.[f.key]) ? (
+          <CoverMask key={`mask-${f.key}`} field={f} />
+        ) : null,
+      )}
       {template.fields.map((f) => (
         <OverlayField
           key={f.key}
@@ -660,6 +939,7 @@ const CertNode = forwardRef<
           data={data}
           customDetails={customDetails}
           photoTransform={f.kind === "photo" ? photoTransform : undefined}
+          offset={f.movable ? fieldOffsets?.[f.key] : undefined}
           guides={guides}
         />
       ))}
@@ -681,8 +961,10 @@ const CertPreview = forwardRef<HTMLDivElement, CertPreviewProps>(
       guides,
       customDetails,
       photoTransform,
-      photoEdit,
+      fieldOffsets,
+      layoutEdit,
       onPhotoTransformChange,
+      onFieldOffsetChange,
     },
     ref,
   ) {
@@ -714,7 +996,35 @@ const CertPreview = forwardRef<HTMLDivElement, CertPreviewProps>(
       [photoField, photoTransform, frameW, frameH],
     );
 
-    const showOverlay = photoEdit && photoField && onPhotoTransformChange;
+    const showPhotoOverlay = layoutEdit && photoField && onPhotoTransformChange;
+    const movableFields = useMemo(
+      () => template.fields.filter((f) => f.movable),
+      [template.fields],
+    );
+    const showFieldOverlays = layoutEdit && onFieldOffsetChange;
+    const [snapGuides, setSnapGuides] = useState<SnapGuides>({});
+    // Everything a dragged block can align to: the page centre, the photo's
+    // centre lines, and the other movable blocks' edges/centres where they
+    // currently sit.
+    const snapTargetsFor = useCallback(
+      (key: string): SnapTargets => {
+        const xs = [template.page.w / 2];
+        const ys: number[] = [];
+        if (photoField) {
+          const e = boxEdges(photoField, DEFAULT_FIELD_OFFSET);
+          xs.push(e.l, e.cx, e.r);
+          ys.push(e.t, e.cy, e.b);
+        }
+        for (const f of movableFields) {
+          if (f.key === key) continue;
+          const e = boxEdges(f, fieldOffsets?.[f.key] ?? DEFAULT_FIELD_OFFSET);
+          xs.push(e.l, e.cx, e.r);
+          ys.push(e.t, e.cy, e.b);
+        }
+        return { xs, ys };
+      },
+      [template.page.w, photoField, movableFields, fieldOffsets],
+    );
 
     return (
       <div style={{ width: footprint.width, height: footprint.height }}>
@@ -732,8 +1042,28 @@ const CertPreview = forwardRef<HTMLDivElement, CertPreviewProps>(
             guides={guides}
             customDetails={customDetails}
             photoTransform={effTransform}
+            fieldOffsets={fieldOffsets}
           />
-          {showOverlay && (
+          {showFieldOverlays &&
+            movableFields.map((f) => (
+              <FieldDragOverlay
+                key={f.key}
+                field={f}
+                offset={fieldOffsets?.[f.key] ?? DEFAULT_FIELD_OFFSET}
+                scale={scale}
+                snapTargets={snapTargetsFor(f.key)}
+                onChange={(o) => onFieldOffsetChange(f.key, o)}
+                onGuides={setSnapGuides}
+              />
+            ))}
+          {showFieldOverlays && (
+            <SnapGuideLines
+              guides={snapGuides}
+              page={template.page}
+              scale={scale}
+            />
+          )}
+          {showPhotoOverlay && (
             <PhotoAdjustOverlay
               frame={{ x: photoField.x, y: photoField.y, w: frameW, h: frameH }}
               center={!!photoField.center}

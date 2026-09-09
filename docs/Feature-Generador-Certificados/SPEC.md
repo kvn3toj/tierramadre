@@ -277,3 +277,29 @@ Origen page space is 1080×1920; embajador 792×612 (background exported larger,
 - **Phase 1 (this spec):** Origen + Embajador generators, autofill from prod data, editable fields, live preview, PDF + PNG export.
 - **Phase 1.1:** Carnet, once artwork is provided (same pattern, config-only addition).
 - **Later (not committed):** server-stored issued certs, QR verification, bulk generation, delivery — each is an independent follow-up.
+
+---
+
+## Addendum 2026-09-09 — marca 2026, bloques movibles y guías
+
+- **Logo.** `bg_origen.jpg` lleva ahora el bloqueo vertical de la renovación 2026
+  (símbolo de cuatro lazos + "tierra mädre" + eslogan), horneado en el arte con el
+  verde del certificado. Se regenera con `scripts/certificados/rebrand-bg-origen.py`
+  a partir del arte original en git y del maestro SVG de `docs/brand/renovacion-2026/`.
+- **Mensaje.** La cita fija ya no es solo arte horneado: `certTemplates.ts` la
+  declara como campo `quote` (texto fijo, no editable) para que el operador pueda
+  reubicarla. Su `cover` tapa el original horneado. Tipografía medida contra el arte
+  (Cormorant Garamond itálica 400 / 37 px, interlínea 32 px).
+- **Modo de ajuste.** El botón «Mover» de la vista previa abre un modo de diseño
+  único: encuadre de la foto + arrastre de los bloques `movable` (nombre, detalles,
+  mensaje; nombre en Embajador). El desplazamiento se aplica DENTRO del nodo
+  capturado (sale en PDF/PNG), se limita a la página y se restablece con el botón
+  de restablecer. La `cover` del bloque sigue pintada en su posición de plantilla
+  para que el texto de muestra horneado nunca reaparezca.
+- **Guías de alineación.** Al arrastrar, los bordes y el centro del bloque se
+  imantan (6 px) al centro de la página, a las líneas de la foto y a los bordes y
+  centros de los demás bloques, dibujando una guía magenta a lo ancho de la
+  página mientras dura el arrastre (nunca se captura).
+- Los criterios de aceptación que hablan de «píxel-idéntico» para logo y mensaje
+  quedan reemplazados por lo anterior.
+

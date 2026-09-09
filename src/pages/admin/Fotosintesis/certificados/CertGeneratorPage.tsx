@@ -63,8 +63,10 @@ import CertPreview from './CertPreview';
 import {
   CERT_TEMPLATES,
   CERT_TYPE_ORDER,
+  clampFieldOffset,
   clampPhotoTransform,
   DEFAULT_PHOTO_TRANSFORM,
+  hasFieldOffset,
   EMPTY_CARNET,
   EMPTY_EMBAJADOR,
   EMPTY_ORIGEN,
@@ -75,6 +77,7 @@ import {
   type CertTypeId,
   type CustomDetail,
   type EmbajadorDraft,
+  type FieldOffset,
   type OrigenDraft,
   type PhotoTransform,
 } from './certTemplates';
@@ -83,6 +86,47 @@ import { computePhotoAutoFit } from './photoAutoFit';
 import { isCertificadoApproved, persistCertToProduct } from './persistCert';
 
 const foto = getFoto('light');
+
+/**
+ * Shared look for every text input in the panel. The panel is hard-wired to the
+ * light Fotosíntesis tokens, but MUI's TextField still takes its text colour
+ * from the app theme — under the dark theme that meant white text on a white
+ * input. Every colour is set explicitly here so the field reads the same in
+ * either theme: inset surface, primary ink, muted placeholder, emerald focus.
+ */
+const inputSx = {
+  fontSize: 13,
+  color: foto.ink.primary,
+  background: foto.surfaces.inset,
+  borderRadius: '9px',
+  transition: 'border-color 120ms ease, box-shadow 120ms ease',
+  '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: foto.surfaces.rule,
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: foto.surfaces.edgeStrong,
+  },
+  '&.Mui-focused': {
+    background: foto.surfaces.canvas,
+    boxShadow: `0 0 0 3px ${foto.accent.glow}`,
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: foto.accent.primary,
+    borderWidth: 1,
+  },
+  '& .MuiInputBase-input': {
+    color: foto.ink.primary,
+    caretColor: foto.accent.primary,
+  },
+  '& .MuiInputBase-input::placeholder': {
+    color: foto.ink.mute,
+    opacity: 1,
+  },
+  '& .MuiAutocomplete-endAdornment .MuiSvgIcon-root': {
+    color: foto.ink.tertiary,
+  },
+} as const;
 
 const TAB_ICON: Record<CertTypeId, React.ReactNode> = {
   origen: <Award size={15} strokeWidth={2} />,
@@ -172,14 +216,18 @@ export default function CertGeneratorPage() {
   const [fitScale, setFitScale] = useState(0.4);
   const [zoom, setZoom] = useState(1); // multiplier on top of fit
   const [guides, setGuides] = useState(false); // coordinate QA overlay
-  // Photo adjust: a toggleable edit mode + a per-type image transform (zoom/pan
-  // BEHIND the fixed circular frame). Stored per type so adjusting the Origen gem
-  // doesn't affect the Embajador portrait. Applied to the <img> inside the
-  // captured node by CertPreview (so exports reflect it). The image is clipped to
-  // the circle and never spills outside it.
-  const [photoEdit, setPhotoEdit] = useState(false);
+  // Layout mode: one toggle that exposes both the photo adjust ring (zoom/pan
+  // BEHIND the fixed circular frame) and the drag handles of the movable text
+  // blocks. Both adjustments are stored per type so tuning the Origen gem never
+  // touches the Embajador portrait, and both are applied INSIDE the captured
+  // node by CertPreview, so exports reflect them. The image is clipped to the
+  // circle and never spills outside it; a text block is clamped to the page.
+  const [layoutEdit, setLayoutEdit] = useState(false);
   const [photoTransforms, setPhotoTransforms] = useState<
     Partial<Record<CertTypeId, PhotoTransform>>
+  >({});
+  const [fieldOffsets, setFieldOffsets] = useState<
+    Partial<Record<CertTypeId, Record<string, FieldOffset>>>
   >({});
   const tabRefs = useRef<Array<HTMLDivElement | null>>([]);
 
@@ -216,6 +264,45 @@ export default function CertGeneratorPage() {
       }),
     [type],
   );
+
+  // Movable text blocks (name, details, the fixed message on Origen).
+  const templateHasMovable = useMemo(
+    () => CERT_TEMPLATES[type].fields.some((f) => f.movable),
+    [type],
+  );
+  const typeFieldOffsets = fieldOffsets[type];
+  const textAdjusted = Object.values(typeFieldOffsets ?? {}).some(
+    hasFieldOffset,
+  );
+  const setFieldOffset = useCallback(
+    (key: string, offset: FieldOffset) => {
+      const tpl = CERT_TEMPLATES[type];
+      const field = tpl.fields.find((f) => f.key === key);
+      if (!field) return;
+      const clamped = clampFieldOffset(offset, field, tpl.page);
+      setFieldOffsets((prev) => ({
+        ...prev,
+        [type]: { ...(prev[type] ?? {}), [key]: clamped },
+      }));
+    },
+    [type],
+  );
+  const resetFieldOffsets = useCallback(
+    () =>
+      setFieldOffsets((prev) => {
+        if (!(type in prev)) return prev;
+        const next = { ...prev };
+        delete next[type];
+        return next;
+      }),
+    [type],
+  );
+  const layoutAdjusted = photoAdjusted || textAdjusted;
+  const resetLayout = useCallback(() => {
+    resetPhotoTransform();
+    resetFieldOffsets();
+  }, [resetPhotoTransform, resetFieldOffsets]);
+  const canEditLayout = templateHasPhoto || templateHasMovable;
 
   // Auto-frame: detect the gem against its flat catalog background and zoom/center
   // it to fill the circle (kills the "tiny gem + blank space" look). We remember
@@ -324,7 +411,7 @@ export default function CertGeneratorPage() {
 
   useEffect(() => {
     setZoom(1);
-    setPhotoEdit(false); // leave edit mode when switching certificates
+    setLayoutEdit(false); // leave layout mode when switching certificates
   }, [type]);
 
   const scale = fitScale * zoom;
@@ -698,24 +785,24 @@ export default function CertGeneratorPage() {
                 <Crop size={15} />
               </IconBtn>
             )}
-            {templateHasPhoto && (
+            {canEditLayout && (
               <IconBtn
                 label={
-                  photoEdit
-                    ? 'Salir del ajuste de la foto'
-                    : 'Ajustar la foto (zoom y posición dentro del círculo)'
+                  layoutEdit
+                    ? 'Salir del modo de ajuste'
+                    : 'Ajustar el diseño (encuadre de la foto y posición de los textos)'
                 }
-                active={photoEdit}
+                active={layoutEdit}
                 toggle
-                onClick={() => setPhotoEdit((v) => !v)}
+                onClick={() => setLayoutEdit((v) => !v)}
               >
                 <Move size={15} />
               </IconBtn>
             )}
-            {templateHasPhoto && photoAdjusted && (
+            {canEditLayout && layoutAdjusted && (
               <IconBtn
-                label="Restablecer el encuadre de la foto"
-                onClick={resetPhotoTransform}
+                label="Restablecer el encuadre de la foto y la posición de los textos"
+                onClick={resetLayout}
               >
                 <RotateCcw size={15} />
               </IconBtn>
@@ -794,8 +881,10 @@ export default function CertGeneratorPage() {
                 type === 'origen' ? origen.customDetails : undefined
               }
               photoTransform={photoTransform}
-              photoEdit={photoEdit}
+              fieldOffsets={typeFieldOffsets}
+              layoutEdit={layoutEdit}
               onPhotoTransformChange={setPhotoTransform}
+              onFieldOffsetChange={setFieldOffset}
             />
             {isEmptyDraft && (
               <Box
@@ -825,7 +914,7 @@ export default function CertGeneratorPage() {
                 certificado, o escribí los campos a mano.
               </Box>
             )}
-            {photoEdit && !isEmptyDraft && (
+            {layoutEdit && !isEmptyDraft && (
               <Box
                 role="status"
                 sx={{
@@ -849,9 +938,11 @@ export default function CertGeneratorPage() {
                 }}
               >
                 <Move size={15} strokeWidth={2} style={{ flexShrink: 0 }} />
-                Arrastrá la foto para reposicionarla dentro del círculo; usá la
-                rueda o «Zoom de la foto» para acercarla. La imagen queda
-                recortada al círculo y el aro no aparece en la exportación.
+                {templateHasPhoto && templateHasMovable
+                  ? 'Arrastrá la foto dentro del círculo o cualquier bloque de texto para reubicarlo (flechas para afinar). Los aros y marcos no salen en la exportación.'
+                  : templateHasPhoto
+                    ? 'Arrastrá la foto para reposicionarla dentro del círculo; usá la rueda o «Zoom de la foto» para acercarla. La imagen queda recortada al círculo y el aro no aparece en la exportación.'
+                    : 'Arrastrá cualquier bloque de texto para reubicarlo (flechas para afinar). Los marcos no salen en la exportación.'}
               </Box>
             )}
           </Box>
@@ -1014,7 +1105,7 @@ function Field({
         placeholder={placeholder}
         size="small"
         fullWidth
-        InputProps={{ sx: { fontSize: 13, background: foto.surfaces.canvas } }}
+        InputProps={{ sx: inputSx }}
       />
     </Box>
   );
@@ -1105,7 +1196,7 @@ function PhotoInput({
           startAdornment: (
             <ImageIcon size={14} style={{ marginRight: 6, opacity: 0.5 }} />
           ),
-          sx: { fontSize: 13, background: foto.surfaces.canvas },
+          sx: inputSx,
         }}
       />
       {adjust && value && (
@@ -1274,7 +1365,7 @@ function CustomDetailsEditor({
         <Box
           key={item.id}
           sx={{
-            border: `1px solid ${foto.surfaces.edge}`,
+            border: `1px solid ${foto.surfaces.rule}`,
             borderRadius: '9px',
             p: 1.25,
             mb: 1,
@@ -1329,9 +1420,7 @@ function CustomDetailsEditor({
             size="small"
             fullWidth
             sx={{ mb: 0.75 }}
-            InputProps={{
-              sx: { fontSize: 13, background: foto.surfaces.canvas },
-            }}
+            InputProps={{ sx: inputSx }}
           />
           <TextField
             value={item.value}
@@ -1340,9 +1429,7 @@ function CustomDetailsEditor({
             aria-label={`Contenido del campo ${i + 1}`}
             size="small"
             fullWidth
-            InputProps={{
-              sx: { fontSize: 13, background: foto.surfaces.canvas },
-            }}
+            InputProps={{ sx: inputSx }}
           />
         </Box>
       ))}
@@ -1451,7 +1538,7 @@ function OrigenForm({
               ...params.inputProps,
               'aria-label': 'Buscar pieza del catálogo',
             }}
-            InputProps={{ ...params.InputProps, sx: { fontSize: 13 } }}
+            InputProps={{ ...params.InputProps, sx: inputSx }}
           />
         )}
         sx={{ mb: 2 }}
@@ -1486,7 +1573,7 @@ function OrigenForm({
         onUpload={onUploadPhoto}
         adjust={photoAdjust}
       />
-      <LockNote text="El mensaje, el sello, el logo y la marca de agua se conservan exactos de la plantilla del equipo de diseño." />
+      <LockNote text="El mensaje, el sello, el logo y la marca de agua se conservan de la plantilla del equipo de diseño. El nombre, los detalles y el mensaje se pueden reubicar desde el modo de ajuste de la vista previa." />
     </>
   );
 }
@@ -1526,7 +1613,7 @@ function EmbajadorForm({
               ...params.inputProps,
               'aria-label': 'Buscar usuario',
             }}
-            InputProps={{ ...params.InputProps, sx: { fontSize: 13 } }}
+            InputProps={{ ...params.InputProps, sx: inputSx }}
           />
         )}
         sx={{ mb: 2 }}
@@ -1580,7 +1667,7 @@ function CarnetForm({
               ...params.inputProps,
               'aria-label': 'Buscar usuario',
             }}
-            InputProps={{ ...params.InputProps, sx: { fontSize: 13 } }}
+            InputProps={{ ...params.InputProps, sx: inputSx }}
           />
         )}
         sx={{ mb: 2 }}

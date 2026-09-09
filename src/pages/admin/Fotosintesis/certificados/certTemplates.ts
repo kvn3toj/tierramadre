@@ -52,6 +52,66 @@ export interface TemplateField {
   vignette?: boolean;
   /** details only — color of the "Tipo:" etc. labels */
   labelColor?: string;
+  /** text only — fixed copy baked into the template (not a draft key). Blank
+   *  lines ("\n\n") separate paragraphs. */
+  text?: string;
+  /** text only — extra vertical space between paragraphs of `text` (px) */
+  paragraphGap?: number;
+  /** when true the operator may drag this block in layout mode; the offset is
+   *  captured in exports. The `cover` swatch also stays painted at the ORIGINAL
+   *  box so the baked sample text underneath never resurfaces. */
+  movable?: boolean;
+  /** human name for the block (drag handle a11y label + hint copy) */
+  label?: string;
+}
+
+/**
+ * Operator displacement of a movable text block, native px relative to the
+ * template position. (0,0) = as designed.
+ */
+export interface FieldOffset {
+  dx: number;
+  dy: number;
+}
+
+export const DEFAULT_FIELD_OFFSET: FieldOffset = { dx: 0, dy: 0 };
+
+export function hasFieldOffset(o: FieldOffset | undefined): boolean {
+  return !!o && (o.dx !== 0 || o.dy !== 0);
+}
+
+/** Top-left of a field's box in page px (resolves `center` / `centerX`). */
+export function fieldTopLeft(f: TemplateField): { left: number; top: number } {
+  const w = f.w ?? 0;
+  const h = f.h ?? 0;
+  return {
+    left: f.center || f.centerX ? f.x - w / 2 : f.x,
+    top: f.center ? f.y - h / 2 : f.y,
+  };
+}
+
+/**
+ * Clamp an offset so the block's box stays fully inside the page (the artwork
+ * clips anything outside, so an off-page block would silently vanish from the
+ * export). Values are rounded to whole px: the export rasterizes at integer
+ * device pixels and fractional offsets only blur the text edges.
+ */
+export function clampFieldOffset(
+  o: FieldOffset,
+  f: TemplateField,
+  page: { w: number; h: number },
+): FieldOffset {
+  const { left, top } = fieldTopLeft(f);
+  const w = f.w ?? 0;
+  const h = f.h ?? 0;
+  const minDx = -left;
+  const maxDx = page.w - w - left;
+  const minDy = -top;
+  const maxDy = page.h - h - top;
+  return {
+    dx: Math.round(Math.min(Math.max(o.dx, minDx), maxDx)),
+    dy: Math.round(Math.min(Math.max(o.dy, minDy), maxDy)),
+  };
 }
 
 export interface DetailLine {
@@ -147,6 +207,11 @@ export const ORIGEN_DETAIL_LINES: DetailLine[] = [
 
 const CORMORANT = "'Cormorant Garamond', Cormorant, Georgia, serif";
 
+/** Fixed message on the Origen certificate (SPEC §Origen, "quote"). */
+export const ORIGEN_QUOTE =
+  '"Tu elección hoy siembra semillas de abundancia que el universo convierte en paz verdadera.\n\n' +
+  'Esta esmeralda es más que una gema: es un pacto entre la tierra y el alma."';
+
 export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
   // ── Certificación de Origen — gem/treasure certificate. Portrait. ──
   origen: {
@@ -183,6 +248,8 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
       {
         key: "name",
         kind: "text",
+        label: "Nombre de la pieza",
+        movable: true,
         x: 434,
         y: 940,
         w: 560,
@@ -201,6 +268,8 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
       {
         key: "details",
         kind: "details",
+        label: "Detalles",
+        movable: true,
         x: 434,
         y: 1082,
         w: 540,
@@ -217,6 +286,36 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
           weight: 400,
           size: 30,
           lineHeight: 37,
+          color: "#2c2c2c",
+        },
+      },
+      {
+        // The design team's fixed message. It is ALSO baked into bg_origen.jpg
+        // (dark text bbox 867–1840 × 2619–2966 on the 2160×3840 artwork, line
+        // pitch 64 px, paragraph gap 96 px); this overlay re-renders the same
+        // copy in the same typeface at the same spot so the operator can move
+        // it, while the cover masks the baked original. Copy is not a draft
+        // key on purpose — the legal message (SPEC Q-6) stays fixed.
+        key: "quote",
+        kind: "text",
+        label: "Mensaje",
+        movable: true,
+        text: ORIGEN_QUOTE,
+        paragraphGap: 16,
+        x: 434,
+        y: 1308,
+        w: 500,
+        h: 190,
+        align: "left",
+        cover: "#FCF7EC",
+        // Measured against the baked text in the harness: weight 400 / 37px
+        // reproduces the baked line widths (486 px) and wraps identically.
+        font: {
+          family: CORMORANT,
+          style: "italic",
+          weight: 400,
+          size: 37,
+          lineHeight: 32,
           color: "#2c2c2c",
         },
       },
@@ -250,6 +349,8 @@ export const CERT_TEMPLATES: Record<CertTypeId, CertTemplate> = {
       {
         key: "name",
         kind: "text",
+        label: "Nombre del embajador",
+        movable: true,
         x: 529,
         y: 279,
         w: 380,
