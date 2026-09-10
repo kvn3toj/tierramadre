@@ -235,3 +235,24 @@ Costó una investigación entera el 2026-08-23. El método, por si sirve:
    tiene, las ramas que no lo declaran habrían fallado la validación.
 4. `function-spec` trae entradas **sin `identifier`** (las HttpActions de `/sync/foto`). Contar
    entradas da 316 y contar identificadores únicos da 315. No es un deploy intermedio, es método.
+
+## 2026-09-10 · 15:30 — SOT-v6-Usuarios creado (padrón de acceso en un libro nuevo)
+
+- **Qué:** libro `SOT-v6-Usuarios` (`1N5UEIx1vsjkknysAWAhGe0NBazeeHe53LUZ0PVBYwmo`, en Mi unidad
+  junto al SOT v3) con `Léeme`, `Usuarios` (36 filas migradas de Asesores + Proveedores-con-email +
+  new-users, sin inventar valores, 0 roles sin mapear), `Perfiles`, `Estados`, `Accesos`, `Revisiones`.
+  Validación estricta por dropdown, protecciones con aviso, rangos con nombre, vistas de filtro,
+  formato condicional (clientes gris, no activos rojo, emails duplicados naranja). Compartido con la
+  service account (writer). Spec: `docs/specs/2026-09-10-sot-v6-usuarios.md`; script
+  `scripts/crear-sot-v6-usuarios.mjs` (dry-run → `--apply`; `--continue` retoma formato).
+- **La app NO lo lee todavía** (medido: los seis lectores siguen en SOT v3). Repunte = Stage 1
+  con `USUARIOS_SPREADSHEET_ID` + `ROSTER_UNIFICADO`. Hasta entonces, altas en SOT v3.
+- **Hallazgos del día, sin corregir:** (1) el cliente registrado en `new-users` el 2026-09-10T01:0x
+  UTC no está en Convex `clients` — el espejo se desplegó dos horas después (f7110a8) y nada lo
+  rellena; (2) `ultimoAcceso`/`accesos` de `new-users` nunca cambian tras el primer registro:
+  sólo `register-client` escribe, `mint-session` y el GET sólo leen; (3) `idioma` queda vacío
+  porque el ID token de Google ya no trae `locale`; (4) el comentario de `api/validate.ts:507`
+  dice que el espejo empuja a la hoja `Clientes` y no lo hace. Fix propuesto: que `mint-session`
+  también haga `upsertClient` + espejo cuando resuelve una fila de cliente.
+- **Tropiezo:** el libro se crea con locale `es_CO`, así que las fórmulas de formato condicional
+  van con `;` — la primera corrida falló en el batch (atómico) y se retomó con `--continue`.
