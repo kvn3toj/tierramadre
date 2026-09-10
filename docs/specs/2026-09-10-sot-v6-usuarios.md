@@ -1,4 +1,4 @@
-# SOT-v6-Usuarios · padrón de acceso en un solo libro
+# TM-Padrón-Usuarios (nacido como SOT-v6-Usuarios) · padrón de acceso en un solo libro
 
 **Fecha:** 2026-09-10 · **Libro:** `1N5UEIx1vsjkknysAWAhGe0NBazeeHe53LUZ0PVBYwmo`
 (https://docs.google.com/spreadsheets/d/1N5UEIx1vsjkknysAWAhGe0NBazeeHe53LUZ0PVBYwmo/edit)

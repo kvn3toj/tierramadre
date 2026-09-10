@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /**
- * Crea el libro «SOT-v6-Usuarios»: el padrón de acceso de la app en UNA tabla
+ * Crea el libro «TM-Padrón-Usuarios» (nacido como «SOT-v6-Usuarios» el
+ * 2026-09-10 y renombrado el mismo día: los libros SOT-* son el linaje del
+ * inventario; los satélites de la app van como TM-*): el padrón de acceso de la app en UNA tabla
  * (`Usuarios`) con catálogos de validación (`Perfiles`, `Estados`), una
  * bitácora (`Accesos`), una hoja de revisiones de acceso (`Revisiones`) y un
  * `Léeme` con el diccionario de columnas y el reparto de quién escribe qué.
@@ -20,9 +22,7 @@
  */
 import fs from 'node:fs';
 import dotenv from 'dotenv';
-import { OAuth2Client } from 'google-auth-library';
-import { sheets_v4 } from '@googleapis/sheets';
-import { drive_v3 } from '@googleapis/drive';
+import { BRAND, FONT, banding, bodyFormat, condFormula, headerFormat, leemeStyle, limpiar, listValidation, oauth, protect, range, rangeValidation, tabColor, widths } from './_lib/sheets-estilo.mjs';
 
 dotenv.config({ path: '.env.local', quiet: true });
 
@@ -30,16 +30,9 @@ const APPLY = process.argv.includes('--apply');
 const FORCE = process.argv.includes('--force');
 const CONTINUE = process.argv.includes('--continue'); // retoma formato+compartir sobre el libro del ID_FILE
 const ID_FILE = 'docs/specs/2026-09-10-sot-v6-usuarios-id.txt';
-const TITLE = 'SOT-v6-Usuarios';
+const TITLE = 'TM-Padrón-Usuarios'; // antes SOT-v6-Usuarios (renombrado 2026-09-10)
 const SOURCE_ID = process.env.SPREADSHEET_ID; // SOT v3
 const HOY = '2026-09-10';
-
-const clean = (v) =>
-  (v || '')
-    .replace(/^["']|["']$/g, '')
-    .replace(/\\n/g, '')
-    .replace(/[\r\n]/g, '')
-    .trim();
 
 // ─────────────────────────────────────────────────────────────────
 // Esquema
@@ -219,6 +212,7 @@ const LEEME_HEADERS = ['seccion', 'clave', 'valor'];
 const LEEME_ROWS = [
   ['Propósito', 'qué es', 'Padrón de acceso de la app Tierra Mädre: quién entra, con qué perfil y en qué estado. Una persona = una fila en `Usuarios`.'],
   ['Propósito', 'qué NO es', 'No es el CRM (Clientes vive en SOT v3 / Convex) ni el inventario. Aquí sólo vive el acceso.'],
+  ['Propósito', 'familia de libros', 'SOT-* es el linaje del inventario (SOT-v3 legado, SOT-v6-Inventario espejo de Convex). TM-* son los satélites de la app: TM-Padrón-Usuarios (este), TM-App-Data. Nombre = familia + dominio; la versión sólo cuando conviven generaciones.'],
   ['Propósito', 'creado', `${HOY} por scripts/crear-sot-v6-usuarios.mjs, migrando Asesores + Proveedores(con email) + new-users de SOT v3.`],
   ['Reglas', 'una tabla por pestaña', 'Fila 1 = encabezados (contrato con el código: se buscan por NOMBRE, no por posición). Sin celdas combinadas, sin filas de título, sin fórmulas dentro de las tablas.'],
   ['Reglas', 'quién escribe qué', 'Admin: columnas A–J de Usuarios (email, perfil, estado, nombre, codigo, whatsapp, especialidad, codigoBoveda, fechaAlta, notas). App: columnas K–P (origen, foto, idioma, primerRegistro, ultimoAcceso, accesos).'],
@@ -239,125 +233,6 @@ const LEEME_ROWS = [
 ];
 
 // ─────────────────────────────────────────────────────────────────
-// batchUpdate helpers
-// ─────────────────────────────────────────────────────────────────
-
-const colIdx = (letter) => letter.charCodeAt(0) - 65;
-const range = (sheetId, a1) => {
-  // a1 like "A2:P1000" | "A1:P1" | "K2:P" (open rows)
-  const m = a1.match(/^([A-Z]+)(\d*):([A-Z]+)(\d*)$/);
-  const r = { sheetId, startColumnIndex: colIdx(m[1]), endColumnIndex: colIdx(m[3]) + 1 };
-  if (m[2]) r.startRowIndex = Number(m[2]) - 1;
-  if (m[4]) r.endRowIndex = Number(m[4]);
-  return r;
-};
-// Paleta Quiet Emerald (src/design-system/tokens/quiet-emerald.ts). Una sola
-// tinta saturada — la esmeralda — y una escala de grises verdosos.
-const hex = (h) => ({ red: parseInt(h.slice(1, 3), 16) / 255, green: parseInt(h.slice(3, 5), 16) / 255, blue: parseInt(h.slice(5, 7), 16) / 255 });
-const BRAND = {
-  deepGreen: hex('#024C2E'), // cabeceras
-  strong: hex('#006F52'), // cabeceras de catálogos
-  primary: hex('#00C992'), // color de pestaña Usuarios
-  accent: hex('#00785C'),
-  brown: hex('#5B0F00'), // avisos (duplicados)
-  brownTint: { red: 0.965, green: 0.93, blue: 0.92 }, // fondo no activos
-  emeraldTint: { red: 0.9, green: 0.97, blue: 0.94 }, // banda alterna / sección Léeme
-  white: hex('#FFFFFF'),
-  g50: hex('#F7F8F8'),
-  g100: hex('#F1F2F2'),
-  g150: hex('#EBEDEC'),
-  g300: hex('#C9CECB'),
-  g400: hex('#9AA09D'),
-  g600: hex('#5C6360'),
-  g700: hex('#3A403E'),
-  g900: hex('#14181A'),
-};
-const FONT = 'Montserrat'; // brand.ts → typography.sans.clean
-
-function headerFormat(sheetId, nCols, bg = BRAND.deepGreen) {
-  return [
-    {
-      repeatCell: {
-        range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: nCols },
-        cell: { userEnteredFormat: { backgroundColor: bg, textFormat: { bold: true, fontFamily: FONT, fontSize: 10, foregroundColor: BRAND.white }, wrapStrategy: 'WRAP', verticalAlignment: 'MIDDLE', padding: { top: 6, bottom: 6, left: 8, right: 8 } } },
-        fields: 'userEnteredFormat(backgroundColor,textFormat,wrapStrategy,verticalAlignment,padding)',
-      },
-    },
-    { updateDimensionProperties: { range: { sheetId, dimension: 'ROWS', startIndex: 0, endIndex: 1 }, properties: { pixelSize: 40 }, fields: 'pixelSize' } },
-  ];
-}
-function bodyFormat(sheetId, nCols, nRows) {
-  return {
-    repeatCell: {
-      range: { sheetId, startRowIndex: 1, endRowIndex: nRows, startColumnIndex: 0, endColumnIndex: nCols },
-      cell: { userEnteredFormat: { textFormat: { fontFamily: FONT, fontSize: 10, foregroundColor: BRAND.g900 }, verticalAlignment: 'MIDDLE' } },
-      fields: 'userEnteredFormat(textFormat,verticalAlignment)',
-    },
-  };
-}
-function banding(sheetId, a1, header = BRAND.deepGreen) {
-  // headerColor: la banda arranca en la fila 1; sin esto pinta la cabecera de
-  // blanco encima del formato y el texto blanco desaparece.
-  return { addBanding: { bandedRange: { range: range(sheetId, a1), rowProperties: { headerColor: header, firstBandColor: BRAND.white, secondBandColor: BRAND.g50 } } } };
-}
-function tabColor(sheetId, color) {
-  return { updateSheetProperties: { properties: { sheetId, tabColor: color }, fields: 'tabColor' } };
-}
-/** Borra toda decoración previa para que --continue sea idempotente. */
-async function limpiar(sheets, ssId) {
-  const m = await sheets.spreadsheets.get({ spreadsheetId: ssId, fields: 'namedRanges(namedRangeId),sheets(properties(sheetId),protectedRanges(protectedRangeId),conditionalFormats,filterViews(filterViewId),bandedRanges(bandedRangeId),basicFilter(range))' });
-  const req = [];
-  for (const n of m.data.namedRanges ?? []) req.push({ deleteNamedRange: { namedRangeId: n.namedRangeId } });
-  for (const sh of m.data.sheets ?? []) {
-    const id = sh.properties.sheetId;
-    for (const p of sh.protectedRanges ?? []) req.push({ deleteProtectedRange: { protectedRangeId: p.protectedRangeId } });
-    for (let i = (sh.conditionalFormats ?? []).length - 1; i >= 0; i--) req.push({ deleteConditionalFormatRule: { sheetId: id, index: i } });
-    for (const f of sh.filterViews ?? []) req.push({ deleteFilterView: { filterId: f.filterViewId } });
-    for (const b of sh.bandedRanges ?? []) req.push({ deleteBanding: { bandedRangeId: b.bandedRangeId } });
-    if (sh.basicFilter) req.push({ clearBasicFilter: { sheetId: id } });
-  }
-  if (req.length) await sheets.spreadsheets.batchUpdate({ spreadsheetId: ssId, requestBody: { requests: req } });
-  return req.length;
-}
-function widths(sheetId, list) {
-  return list.map((px, i) => ({
-    updateDimensionProperties: {
-      range: { sheetId, dimension: 'COLUMNS', startIndex: i, endIndex: i + 1 },
-      properties: { pixelSize: px },
-      fields: 'pixelSize',
-    },
-  }));
-}
-function listValidation(sheetId, a1, values, strict = true) {
-  return {
-    setDataValidation: {
-      range: range(sheetId, a1),
-      rule: { condition: { type: 'ONE_OF_LIST', values: values.map((v) => ({ userEnteredValue: v })) }, strict, showCustomUi: true },
-    },
-  };
-}
-function rangeValidation(sheetId, a1, sourceA1) {
-  return {
-    setDataValidation: {
-      range: range(sheetId, a1),
-      rule: { condition: { type: 'ONE_OF_RANGE', values: [{ userEnteredValue: `=${sourceA1}` }] }, strict: true, showCustomUi: true },
-    },
-  };
-}
-function protect(sheetId, a1OrNull, description) {
-  const pr = { description, warningOnly: true, range: a1OrNull ? range(sheetId, a1OrNull) : { sheetId } };
-  return { addProtectedRange: { protectedRange: pr } };
-}
-function condFormula(sheetId, a1, formula, format, index) {
-  return {
-    addConditionalFormatRule: {
-      rule: { ranges: [range(sheetId, a1)], booleanRule: { condition: { type: 'CUSTOM_FORMULA', values: [{ userEnteredValue: formula }] }, format } },
-      index,
-    },
-  };
-}
-
-// ─────────────────────────────────────────────────────────────────
 // main
 // ─────────────────────────────────────────────────────────────────
 
@@ -367,10 +242,7 @@ async function main() {
     console.error(`❌ Ya existe ${ID_FILE} (${fs.readFileSync(ID_FILE, 'utf8').split('\n')[0]}). Volver a correr crearía un libro duplicado. Usa --force si de verdad quieres otro.`);
     process.exit(1);
   }
-  const oauth = new OAuth2Client(clean(process.env.GOOGLE_OAUTH_CLIENT_ID), clean(process.env.GOOGLE_OAUTH_CLIENT_SECRET));
-  oauth.setCredentials({ refresh_token: clean(process.env.GOOGLE_OAUTH_REFRESH_TOKEN) });
-  const sheets = new sheets_v4.Sheets({ auth: oauth });
-  const drive = new drive_v3.Drive({ auth: oauth });
+  const { sheets, drive } = oauth();
 
   // Lectura de origen (SOT v3)
   const read = async (tab) => (await sheets.spreadsheets.values.get({ spreadsheetId: SOURCE_ID, range: `'${tab}'!A1:Z` })).data.values ?? [];
@@ -402,6 +274,11 @@ async function main() {
     url = meta.data.spreadsheetUrl;
     ids = Object.fromEntries(meta.data.sheets.map((s) => [s.properties.title, s.properties.sheetId]));
     console.log(`\n↩️  Retomando ${url}`);
+    const actual = (await drive.files.get({ fileId: ssId, fields: 'name' })).data.name;
+    if (actual !== TITLE) {
+      await drive.files.update({ fileId: ssId, requestBody: { name: TITLE } });
+      console.log(`✏️  Renombrado: «${actual}» → «${TITLE}»`);
+    }
     const leeme = [LEEME_HEADERS, ...LEEME_ROWS];
     await sheets.spreadsheets.values.clear({ spreadsheetId: ssId, range: `'Léeme'!A${leeme.length + 1}:C60` });
     await sheets.spreadsheets.values.update({ spreadsheetId: ssId, range: `'Léeme'!A1:C${leeme.length}`, valueInputOption: 'RAW', requestBody: { values: leeme } });
@@ -459,29 +336,24 @@ async function main() {
   const requests = [
     // Cabeceras: esmeralda profunda con texto blanco; catálogos en esmeralda fuerte.
     ...headerFormat(U, USUARIOS_HEADERS.length), ...headerFormat(P, PERFILES_HEADERS.length, BRAND.strong), ...headerFormat(E, ESTADOS_HEADERS.length, BRAND.strong),
-    ...headerFormat(A, ACCESOS_HEADERS.length, BRAND.g700), ...headerFormat(R, REVISIONES_HEADERS.length, BRAND.g700), ...headerFormat(L, LEEME_HEADERS.length),
+    ...headerFormat(A, ACCESOS_HEADERS.length, BRAND.g700), ...headerFormat(R, REVISIONES_HEADERS.length, BRAND.g700), ...leemeStyle(L, 60),
     bodyFormat(U, USUARIOS_HEADERS.length, 1000), bodyFormat(P, PERFILES_HEADERS.length, 20), bodyFormat(E, ESTADOS_HEADERS.length, 20),
-    bodyFormat(A, ACCESOS_HEADERS.length, 5000), bodyFormat(R, REVISIONES_HEADERS.length, 500), bodyFormat(L, LEEME_HEADERS.length, 60),
-    tabColor(L, BRAND.deepGreen), tabColor(U, BRAND.primary), tabColor(P, BRAND.accent), tabColor(E, BRAND.accent), tabColor(A, BRAND.g600), tabColor(R, BRAND.g400),
+    bodyFormat(A, ACCESOS_HEADERS.length, 5000), bodyFormat(R, REVISIONES_HEADERS.length, 500),
+    tabColor(U, BRAND.primary), tabColor(P, BRAND.accent), tabColor(E, BRAND.accent), tabColor(A, BRAND.g600), tabColor(R, BRAND.g400),
     ...widths(U, [260, 150, 100, 230, 90, 120, 150, 110, 105, 260, 150, 120, 70, 170, 170, 80]),
     ...widths(P, [140, 60, 150, 460, 90, 130, 130, 130]),
     ...widths(E, [110, 110, 460]),
     ...widths(A, [170, 260, 140, 110, 400]),
     ...widths(R, [110, 260, 200, 110, 400, 90]),
-    ...widths(L, [130, 190, 900]),
     // Bandas alternas suaves en las tablas grandes.
     banding(U, `A1:${LAST_COL}1000`), banding(A, 'A1:E5000', BRAND.g700), banding(R, 'A1:F500', BRAND.g700),
     // Bloque de la app: texto gris (color como señal, no como dato) y columna
     // `perfil`/`estado` en negrita para que el ojo caiga en lo que decide el acceso.
     { repeatCell: { range: range(U, `${APP_BLOCK_START}2:${LAST_COL}1000`), cell: { userEnteredFormat: { textFormat: { foregroundColor: BRAND.g600, fontFamily: FONT, fontSize: 9 } } }, fields: 'userEnteredFormat.textFormat' } },
     { repeatCell: { range: range(U, 'B2:C1000'), cell: { userEnteredFormat: { textFormat: { bold: true, fontFamily: FONT, fontSize: 10, foregroundColor: BRAND.deepGreen } } }, fields: 'userEnteredFormat.textFormat' } },
-    // Perfiles: columna perfil en negrita; Léeme: columna sección tintada.
+    // Perfiles/Estados: columna clave en negrita.
     { repeatCell: { range: range(P, `A2:A${nPerf}`), cell: { userEnteredFormat: { textFormat: { bold: true, fontFamily: FONT, fontSize: 10, foregroundColor: BRAND.deepGreen } } }, fields: 'userEnteredFormat.textFormat' } },
     { repeatCell: { range: range(E, `A2:A${nEst}`), cell: { userEnteredFormat: { textFormat: { bold: true, fontFamily: FONT, fontSize: 10, foregroundColor: BRAND.deepGreen } } }, fields: 'userEnteredFormat.textFormat' } },
-    { repeatCell: { range: range(L, 'A2:A60'), cell: { userEnteredFormat: { backgroundColor: BRAND.emeraldTint, textFormat: { bold: true, fontFamily: FONT, fontSize: 10, foregroundColor: BRAND.deepGreen } } }, fields: 'userEnteredFormat(backgroundColor,textFormat)' } },
-    { repeatCell: { range: range(L, 'B2:B60'), cell: { userEnteredFormat: { textFormat: { bold: true, fontFamily: FONT, fontSize: 10, foregroundColor: BRAND.g700 } } }, fields: 'userEnteredFormat.textFormat' } },
-    { repeatCell: { range: range(L, 'A2:C60'), cell: { userEnteredFormat: { wrapStrategy: 'WRAP', verticalAlignment: 'TOP', padding: { top: 6, bottom: 6, left: 8, right: 8 } } }, fields: 'userEnteredFormat(wrapStrategy,verticalAlignment,padding)' } },
-    { updateSheetProperties: { properties: { sheetId: L, gridProperties: { hideGridlines: true } }, fields: 'gridProperties.hideGridlines' } },
     // Validación estricta: email válido; perfil/estado desde los catálogos.
     { setDataValidation: { range: range(U, 'A2:A1000'), rule: { condition: { type: 'TEXT_IS_EMAIL' }, strict: true, inputMessage: 'Email en minúsculas' } } },
     rangeValidation(U, 'B2:B1000', `Perfiles!$A$2:$A$${nPerf}`),

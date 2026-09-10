@@ -1,3 +1,4 @@
 1N5UEIx1vsjkknysAWAhGe0NBazeeHe53LUZ0PVBYwmo
 https://docs.google.com/spreadsheets/d/1N5UEIx1vsjkknysAWAhGe0NBazeeHe53LUZ0PVBYwmo/edit
 creado 2026-09-10 por scripts/crear-sot-v6-usuarios.mjs
+renombrado 2026-09-10 → TM-Padrón-Usuarios (mismo ID; SOT-* queda para el linaje del inventario)

@@ -236,6 +236,30 @@ Costó una investigación entera el 2026-08-23. El método, por si sirve:
 4. `function-spec` trae entradas **sin `identifier`** (las HttpActions de `/sync/foto`). Contar
    entradas da 316 y contar identificadores únicos da 315. No es un deploy intermedio, es método.
 
+## 2026-09-10 · 18:20 — SOT-v6-Inventario creado (espejo de Convex en libro propio); el padrón pasa a llamarse TM-Padrón-Usuarios
+
+- **Qué:** libro `SOT-v6-Inventario` (`1iYFuW0nhixIlXE9yXQNhbFr3BIYRQZMRNPtx1QO9mig`) con
+  `Léeme`, `Inventario` (59 col = `FOTO_INVENTARIO_HEADERS`), `Lotes`/`Sublotes`/`Ventas`/
+  `Proveedores`/`Clientes`/`MovimientosAsesor` (cabeceras y orden = `TABLE_CONFIGS`, porque
+  `admin-table-update` escribe POSICIONAL), `Listas` y `Calidades`. Semilla copiada de SOT v3
+  por nombre de cabecera: 577 + 112 + 9 + 7 + 6 + 33 filas, **0 celdas distintas** en
+  Inventario (verificado por lectura). Validación con aviso desde `Listas`, formato
+  condicional, vistas, protecciones con aviso, rangos con nombre, Quiet Emerald. Compartido
+  con la service account; humanos: decisión de Kevin. Spec:
+  `docs/specs/2026-09-10-sot-v6-inventario.md`; script `scripts/crear-sot-v6-inventario.ts`.
+- **Decisión (Kevin):** inventario y usuarios en libros distintos. `SOT-*` = linaje del
+  inventario; `TM-*` = satélites de la app. El padrón se renombró a `TM-Padrón-Usuarios`
+  (mismo ID `1N5UEIx1…`). Estilo compartido extraído a `scripts/_lib/sheets-estilo.mjs`.
+- **La app NO lo lee ni lo escribe** (medido: `SPREADSHEET_ID` y `FOTOSINTESIS_SPREADSHEET_ID`
+  apuntan ambos a SOT v3). Repunte propuesto en la spec: primero `FOTOSINTESIS_SPREADSHEET_ID`
+  (escrituras), `SPREADSHEET_ID` sólo tras el Stage 1 del padrón.
+- **Observado, no hecho por esta sesión:** `TM-Padrón-Usuarios` apareció compartido con cinco
+  humanos (tech, cvocmnty, vikinga, direccion, angelagarces) a las 18:05; a las 16:45 sólo
+  tenía dueño + service account y los scripts sólo agregan la service account.
+- **Tropiezos:** el formato condicional no acepta `Listas!G2:G100` de otra pestaña (→
+  `INDIRECT`); el batch atómico falló después de escribir valores y se retomó con `--continue`.
+- Vercel: no. Convex: no. Commit local, **sin push** (regla del 2026-09-10).
+
 ## 2026-09-10 · 15:30 — SOT-v6-Usuarios creado (padrón de acceso en un libro nuevo)
 
 - **Qué:** libro `SOT-v6-Usuarios` (`1N5UEIx1vsjkknysAWAhGe0NBazeeHe53LUZ0PVBYwmo`, en Mi unidad
