@@ -83,6 +83,7 @@ const CLAVES_CHECKOUT = [
   'msgOrigenInvalido',
   'pedidoConfirmingTitle',
   'pedidoConfirmingBody',
+  'pedidoLoadingBody',
   'pedidoConfirmedTitle',
   'pedidoConfirmedBody',
   'pedidoLabel',

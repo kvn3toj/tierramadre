@@ -895,6 +895,7 @@ export const en = {
     pedidoConfirmingTitle: 'We are confirming your payment',
     pedidoConfirmingBody:
       'We already received your order {saleId}. Payment confirmation can take a few seconds — this page updates on its own, no need to reload.',
+    pedidoLoadingBody: 'This only takes a moment.',
     pedidoConfirmedTitle: 'Payment confirmed!',
     pedidoConfirmedBody:
       'Thank you for your purchase. Keep your order number; we will write to you on WhatsApp with the next steps.',

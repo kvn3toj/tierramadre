@@ -20,7 +20,6 @@ import { isPurchasable, type ResaleOffer } from '../../utils/productOffer';
 import ResaleBadge from '../../components/treasure/ResaleBadge';
 import {
   Box,
-  Button,
   IconButton,
   Paper,
   Stack,
@@ -28,7 +27,6 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import {
   ArrowLeft,
   CreditCard,
@@ -50,7 +48,7 @@ import {
 import PrecioEspecialBadge from '../../components/treasure/PrecioEspecialBadge';
 import { convertToProxyUrl } from '../../utils/driveUrl';
 import { useThemeMode } from '../../contexts/ThemeContext';
-import { getQuietEmerald, qeFont } from '../../design-system';
+import { Button, getQuietEmerald, qeFont, zIndex } from '../../design-system';
 import { formatWeightLabel } from '../../utils/formatting';
 import { useTRM } from '../../hooks/useTRM';
 import { VitrinaPricing, formatVitrinaPrice } from '../../utils/vitrinaPrice';
@@ -58,7 +56,7 @@ import CheckoutSheet, {
   CheckoutPieza,
 } from '../../components/checkout/CheckoutSheet';
 import { translations } from '../../locales';
-import type { Translations } from '../../locales';
+import type { Language, Translations } from '../../locales';
 
 function cleanName(nombre: string): string {
   return nombre
@@ -126,6 +124,16 @@ interface PublicProductViewProps {
    * cliente en inglés verá botones en inglés y especificaciones en español.
    */
   tv?: Translations['vitrina'];
+  /**
+   * El mismo idioma que `tv`, pero como código — lo que `CheckoutSheet`
+   * necesita para traducir SUS propios textos. `tv` es la tabla del marco de
+   * esta vista y no le sirve a la hoja; el código sí, y así el checkout habla
+   * el idioma del cliente sin que esta vista tenga que conocer sus cadenas.
+   *
+   * Opcional y con el español por defecto, por la misma razón que `tv`: el
+   * catálogo público monta esta vista sin idioma elegido.
+   */
+  lang?: Language;
 }
 
 export function PublicProductView({
@@ -139,6 +147,7 @@ export function PublicProductView({
   onAddToCart,
   isInCart,
   tv = translations.es.vitrina,
+  lang = 'es',
 }: PublicProductViewProps) {
   const { mode } = useThemeMode();
   const qe = getQuietEmerald(mode);
@@ -425,28 +434,15 @@ export function PublicProductView({
     </>
   );
 
+  // El ÚNICO relleno `accent-strong` de la pantalla (DS3 §6.3): WhatsApp es
+  // el camino que siempre funciona — sin tarjeta, sin cuenta, sin vitrina.
   const consultButton = (
     <Button
+      variant="primary"
+      size="lg"
       fullWidth
-      variant="contained"
       startIcon={<MessageCircle size={20} />}
       onClick={handleConsult}
-      sx={{
-        bgcolor: qe.accent,
-        color: qe.onAccent,
-        textTransform: 'none',
-        py: 1.35,
-        fontWeight: 700,
-        fontSize: '1rem',
-        borderRadius: '10px',
-        // Emerald-tinted lift (the previous value fed a full shadow string in
-        // as a color and silently produced no shadow at all).
-        boxShadow: '0 6px 20px -6px rgba(0,175,132,0.45)',
-        '&:hover': {
-          bgcolor: qe.accentStrong,
-          boxShadow: '0 8px 24px -6px rgba(0,175,132,0.55)',
-        },
-      }}
     >
       {tv.consultWhatsApp}
     </Button>
@@ -454,25 +450,11 @@ export function PublicProductView({
 
   const pagarButton = canPagar ? (
     <Button
-      fullWidth
       variant="outlined"
+      size="lg"
+      fullWidth
       startIcon={<CreditCard size={20} />}
       onClick={() => setCheckoutOpen(true)}
-      sx={{
-        borderColor: qe.accent,
-        borderWidth: '1.5px',
-        color: qe.accent,
-        textTransform: 'none',
-        py: 1.35,
-        fontWeight: 700,
-        fontSize: '1rem',
-        borderRadius: '10px',
-        '&:hover': {
-          borderWidth: '1.5px',
-          borderColor: qe.accentStrong,
-          bgcolor: alpha(qe.accent, 0.08),
-        },
-      }}
     >
       {tv.pay}
     </Button>
@@ -490,25 +472,12 @@ export function PublicProductView({
 
   const agregarButton = puedeAgregarse ? (
     <Button
+      variant={isInCart ? 'plain' : 'outlined'}
+      size="md"
       fullWidth
-      variant={isInCart ? 'text' : 'outlined'}
       disabled={isInCart}
       startIcon={isInCart ? <Check size={18} /> : <Plus size={18} />}
       onClick={() => onAddToCart?.(product)}
-      sx={{
-        borderColor: alpha(qe.accent, 0.45),
-        color: isInCart ? qe.subtle : qe.accent,
-        textTransform: 'none',
-        py: 1.1,
-        fontWeight: 600,
-        fontSize: '0.9rem',
-        borderRadius: '10px',
-        '&.Mui-disabled': { color: qe.subtle },
-        '&:hover': {
-          borderColor: qe.accentStrong,
-          bgcolor: alpha(qe.accent, 0.06),
-        },
-      }}
     >
       {isInCart ? tv.inSelection : tv.addToSelection}
     </Button>
@@ -535,7 +504,10 @@ export function PublicProductView({
   //    quien llegó por una vitrina puede cerrar esa pieza sin pasar por el
   //    carrito, que es el flujo que ya existía y funciona.
   //  · sin vitrina → [Agregar | Consultar]: acá el carrito ES el camino al
-  //    pago, así que "Agregar" sube a primario.
+  //    pago, así que "Agregar" sube a la fila principal.
+  // «Sube» es POSICIÓN, no relleno: el único botón lleno de la pantalla sigue
+  // siendo Consultar (DS3 §6.3, un solo `accent-strong` por vista). "Agregar"
+  // gana jerarquía apareciendo en la fila de arriba, no pintándose de verde.
   const ctaButtons = pagarButton ? (
     <>
       <Box sx={{ display: 'flex', gap: 1.25 }}>
@@ -559,6 +531,7 @@ export function PublicProductView({
       piezas={piezas}
       multiplicador={pricing.multiplier}
       origen={{ tipo: 'vitrina', token: vitrinaToken }}
+      lang={lang}
       onClose={() => setCheckoutOpen(false)}
     />
   ) : null;
@@ -642,7 +615,7 @@ export function PublicProductView({
           bottom: 0,
           left: 0,
           right: 0,
-          zIndex: 10,
+          zIndex: zIndex.sticky,
           px: 2,
           pt: 1.5,
           pb: 'max(env(safe-area-inset-bottom, 16px), 16px)',

@@ -50,18 +50,16 @@ export interface MensajeCheckout {
   /**
    * Qué pasó, independiente del idioma. Ver `CodigoCheckout`.
    *
-   * `mensajeDeRespuesta` lo pone SIEMPRE, en todas sus ramas — trátalo como
-   * obligatorio al leerlo. Es opcional en el tipo por una sola razón, y
-   * temporal: `CheckoutSheet.tsx` todavía arma a mano un `MensajeCheckout`
-   * para la red caída (su `catch`, hoy línea ~176), y ese literal no lleva
-   * `codigo`. Ese texto es justamente el que reemplaza
-   * `t.checkout.networkError`, así que el performer que migre CheckoutSheet
-   * borra el literal y, en el mismo cambio, **vuelve este campo requerido**
-   * (`codigo: CodigoCheckout`) para que el compilador exija clasificar todo
-   * mensaje nuevo. Mientras siga opcional, un productor puede olvidarlo y
-   * `traducirMensaje` caerá a `texto` en español sin que nadie se entere.
+   * **Obligatorio** (2026-09-09). Estuvo opcional exactamente el tiempo que
+   * `CheckoutSheet.tsx` armó a mano un `MensajeCheckout` sin clasificar para
+   * la red caída; ese literal ya no existe (su texto es
+   * `t.checkout.networkError` y su código `GENERICO`), así que el compilador
+   * vuelve a exigir clasificar todo mensaje nuevo. Con el campo opcional, un
+   * productor podía olvidarlo y `traducirMensaje` caía a `texto` en español
+   * sin que nadie se enterara — el bug se veía sólo en el idioma que nadie
+   * prueba.
    */
-  codigo?: CodigoCheckout;
+  codigo: CodigoCheckout;
   /**
    * La pieza que el servidor nombró, cuando la nombró. Sólo el SKU real —
    * nunca un relleno como «la pieza», porque el relleno también estaría en

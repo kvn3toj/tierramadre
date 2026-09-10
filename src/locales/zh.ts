@@ -856,6 +856,7 @@ export const zh = {
     pedidoConfirmingTitle: '正在确认你的付款',
     pedidoConfirmingBody:
       '我们已收到你的订单 {saleId}。付款确认可能需要几秒钟 —— 本页会自动更新，无需重新加载。',
+    pedidoLoadingBody: '只需稍等片刻。',
     pedidoConfirmedTitle: '付款已确认！',
     pedidoConfirmedBody:
       '感谢你的购买。请保存订单编号，我们会通过 WhatsApp 告知你后续步骤。',

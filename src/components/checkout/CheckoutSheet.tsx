@@ -24,34 +24,51 @@
  * tampered with client-side, the customer would see a figure that differs
  * from the real charge — it could never make the server charge LESS than it
  * would have anyway.
+ *
+ * ── DS3 + idioma + reserva (2026-09-09) ───────────────────────────────────
+ *
+ * Tres cosas cambiaron a la vez porque las tres se veían en la misma
+ * pantalla, la última antes de que se mueva dinero real:
+ *
+ * 1. **`Sheet` de DS3** en vez de un `Dialog` de MUI. Gana el bottom-sheet en
+ *    móvil (donde ocurre la compra), el focus-trap y el Escape reales, y
+ *    `disableClose` mientras el POST está en vuelo. Cero literales de color:
+ *    todo es `--tm-*`.
+ * 2. **`lang` es un PROP, no el contexto.** El idioma de esta hoja es el del
+ *    ENLACE por el que llegó el cliente (la vitrina se comparte en uno de
+ *    seis idiomas), no el del visitante — `LanguageContext` guarda lo
+ *    segundo, y una vitrina en inglés se abre con el contexto en español. Por
+ *    eso aquí NO se llama a `useLanguage()`: quien monta esta hoja ya sabe en
+ *    qué idioma está el enlace y lo baja. Default `'es'`.
+ * 3. **La nota de reserva.** El servidor aparta la piedra `RESERVA_TTL_MS`
+ *    (`convex/_lib/reservas.ts`, puro y sin imports — igual que
+ *    `precioVitrina`, seguro en el navegador). Los minutos se derivan de esa
+ *    constante, nunca se escriben a mano: si el TTL cambia y la frase no, la
+ *    hoja miente sobre cuánto tiempo tiene el cliente para pagar.
+ *
+ * Y el fix que no se ve: `redirigiendo`. El `finally` apagaba `enviando`
+ * DESPUÉS de asignar `window.location.href`, y la asignación no detiene el
+ * mundo — la pestaña sigue viva unos cuantos frames mientras el navegador
+ * negocia con Wompi. En ese hueco el botón volvía a estar habilitado y un
+ * segundo clic mandaba una SEGUNDA orden (con su segunda reserva). Ahora el
+ * `finally` sólo re-habilita cuando NO nos estamos yendo.
  */
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Box,
-  Typography,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  Alert,
-  alpha,
-} from '@mui/material';
-import { X, CreditCard } from 'lucide-react';
-import { useThemeMode } from '../../contexts/ThemeContext';
-import {
-  emeraldCore,
-  surfacesLight,
-  surfacesDark,
-  Button,
-  TextField,
-} from '../../design-system';
+import { Box, Typography, IconButton } from '@mui/material';
+import { X, CreditCard, AlertTriangle, Clock } from 'lucide-react';
+import { Sheet, Button, TextField } from '../../design-system';
 import { formatCurrency } from '../../utils/formatting';
 import { precioConMarkup } from '../../../convex/_lib/precioVitrina';
-import { mensajeDeRespuesta } from './mensajesCheckout';
+import { RESERVA_TTL_MS } from '../../../convex/_lib/reservas';
+import { translations, type Language } from '../../locales';
+import { guardarLangPedido } from '../../utils/langPedido';
+import {
+  mensajeDeRespuesta,
+  traducirMensaje,
+  type MensajeCheckout,
+} from './mensajesCheckout';
 import { hayPiezaSinPrecio } from './checkoutGuards';
+import NoticeBox from './NoticeBox';
 
 export interface CheckoutPieza {
   sku: string;
@@ -88,26 +105,35 @@ interface CheckoutSheetProps {
    * antes de mandarlo — eso convertiría un error en un descuento.
    */
   origen?: CheckoutOrigen;
+  /**
+   * El idioma del ENLACE por el que llegó el cliente, no el del visitante —
+   * ver el punto 2 del header. Default `'es'` para que las vistas que aún no
+   * lo bajan (catálogo público) sigan funcionando igual que antes.
+   */
+  lang?: Language;
   onClose: () => void;
 }
+
+const TITLE_ID = 'checkout-sheet-title';
+
+/** Los minutos de la nota salen del TTL real del servidor, nunca a mano. */
+const MINUTOS_RESERVA = String(Math.round(RESERVA_TTL_MS / 60000));
 
 export default function CheckoutSheet({
   open,
   piezas,
   multiplicador = 1,
   origen,
+  lang = 'es',
   onClose,
 }: CheckoutSheetProps) {
-  const { mode } = useThemeMode();
-  const isLight = mode === 'light';
+  const tc = translations[lang].checkout;
 
   const [celular, setCelular] = useState('');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [enviando, setEnviando] = useState(false);
-  const [resultado, setResultado] = useState<ReturnType<
-    typeof mensajeDeRespuesta
-  > | null>(null);
+  const [resultado, setResultado] = useState<MensajeCheckout | null>(null);
 
   // Por pieza y luego sumado — no sumado y luego multiplicado — porque así
   // redondea el servidor (`convex/ghl.ts`: `precioConMarkup(base, mult) * qty`
@@ -140,6 +166,10 @@ export default function CheckoutSheet({
     setEnviando(true);
     setResultado(null);
 
+    // Se queda `false` salvo que de verdad nos estemos yendo a Wompi — ver el
+    // último párrafo del header. El `finally` lo consulta.
+    let redirigiendo = false;
+
     try {
       const contact: Record<string, string> = { celular: celularLimpio };
       // Nunca mandar null — el servidor rechaza un opcional que no sea
@@ -169,210 +199,300 @@ export default function CheckoutSheet({
       setResultado(mensaje);
 
       if (mensaje.tono === 'exito' && mensaje.url) {
+        redirigiendo = true;
+        // El idioma no viaja en la redirección de Wompi: se deja en
+        // sessionStorage para que `/pedido-confirmado` lo lea al volver (ver
+        // `utils/langPedido.ts`).
+        guardarLangPedido(lang);
         window.location.href = mensaje.url;
         return;
       }
     } catch {
       setResultado({
         tono: 'error',
-        texto: 'No pudimos conectar. Revisa tu conexión e intenta de nuevo.',
+        codigo: 'GENERICO',
+        texto: tc.networkError,
       });
     } finally {
-      setEnviando(false);
+      // Nos vamos: dejar el botón en `loading` (y por lo tanto deshabilitado)
+      // hasta que el navegador de verdad abandone la página.
+      if (!redirigiendo) setEnviando(false);
     }
   };
 
   return (
-    <Dialog
+    <Sheet
       open={open}
       onClose={handleClose}
-      maxWidth="xs"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          bgcolor: isLight
-            ? surfacesLight.background.primary
-            : surfacesDark.background.primary,
-        },
-      }}
+      ariaLabelledBy={TITLE_ID}
+      maxWidth={440}
+      disableClose={enviando}
     >
-      <DialogTitle
+      <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid',
-          borderColor: isLight
-            ? surfacesLight.border.light
-            : surfacesDark.border.default,
-          pb: 2,
+          gap: '12px',
+          padding: '16px 20px 12px',
+          borderBottom: '1px solid var(--tm-hairline)',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <CreditCard size={24} color={emeraldCore.primary} />
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            Pagar
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <CreditCard size={20} color="var(--tm-accent)" aria-hidden />
+          <Typography
+            id={TITLE_ID}
+            component="h2"
+            sx={{
+              fontFamily: 'var(--tm-font-ui)',
+              fontWeight: 600,
+              fontSize: '1.0625rem',
+              color: 'var(--tm-text)',
+            }}
+          >
+            {tc.title}
           </Typography>
         </Box>
         <IconButton
           onClick={handleClose}
-          aria-label="Cerrar"
+          aria-label={tc.close}
           size="small"
           disabled={enviando}
+          sx={{ color: 'var(--tm-muted)' }}
         >
-          <X size={20} />
+          <X size={18} />
         </IconButton>
-      </DialogTitle>
+      </Box>
 
-      <DialogContent sx={{ p: 0 }}>
-        {piezas.length === 0 ? (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography color="text.secondary">
-              No hay piezas seleccionadas.
-            </Typography>
-          </Box>
-        ) : (
-          <>
-            <List sx={{ pt: 1 }}>
-              {piezas.map((pieza) => (
-                <ListItem key={pieza.sku} sx={{ py: 1, px: 3 }}>
-                  <ListItemText
-                    primary={pieza.nombre}
-                    secondary={pieza.sku}
-                    primaryTypographyProps={{ fontWeight: 600 }}
-                    secondaryTypographyProps={{
-                      color: 'text.disabled',
-                      fontSize: '0.75rem',
-                    }}
-                  />
-                  <Box sx={{ textAlign: 'right', ml: 2 }}>
-                    <Typography sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
-                      {formatCurrency(
-                        precioConMarkup(pieza.precioCOP, multiplicador),
-                        'COP',
-                      )}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: 'text.disabled', whiteSpace: 'nowrap' }}
-                    >
-                      {pieza.precioMostrado}
-                    </Typography>
-                  </Box>
-                </ListItem>
-              ))}
-            </List>
-
-            {piezaSinPrecio ? (
-              // Bloquea la hoja entera — ver la nota junto a `piezaSinPrecio`
-              // arriba. Ni total, ni formulario, ni botón de pago: no hay
-              // nada seguro que cobrar mientras una pieza no tenga precio.
-              <Box sx={{ px: 3, pb: 3 }}>
-                <Alert severity="error">
-                  Una o más piezas de tu selección no tienen precio asignado
-                  todavía y no podemos cobrarlas aquí. Escríbenos por WhatsApp y
-                  te ayudamos a completar la compra.
-                </Alert>
-              </Box>
-            ) : (
-              <>
-                <Box
-                  sx={{
-                    mx: 3,
-                    mb: 2,
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: alpha(emeraldCore.primary, 0.08),
-                  }}
-                >
-                  <Box
+      {piezas.length === 0 ? (
+        <Box sx={{ padding: '24px 20px', textAlign: 'center' }}>
+          <Typography
+            sx={{
+              fontFamily: 'var(--tm-font-ui)',
+              fontSize: '0.9375rem',
+              color: 'var(--tm-muted)',
+            }}
+          >
+            {tc.empty}
+          </Typography>
+        </Box>
+      ) : (
+        <>
+          <Box>
+            {piezas.map((pieza, i) => (
+              <Box
+                key={pieza.sku}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  padding: '12px 20px',
+                  ...(i > 0
+                    ? { borderTop: '1px solid var(--tm-hairline)' }
+                    : {}),
+                }}
+              >
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography
                     sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'baseline',
+                      fontFamily: 'var(--tm-font-serif)',
+                      fontSize: '1rem',
+                      color: 'var(--tm-text)',
                     }}
                   >
-                    <Typography
-                      variant="body2"
-                      sx={{ color: 'text.secondary' }}
-                    >
-                      Total a pagar (COP)
-                    </Typography>
-                    <Typography
-                      variant="h6"
-                      sx={{ fontWeight: 700, color: emeraldCore.dark }}
-                    >
-                      {formatCurrency(totalCOP, 'COP')}
-                    </Typography>
-                  </Box>
+                    {pieza.nombre}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontFamily: 'var(--tm-font-mono)',
+                      fontSize: '0.75rem',
+                      color: 'var(--tm-subtle)',
+                    }}
+                  >
+                    {pieza.sku}
+                  </Typography>
                 </Box>
+                <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
+                  <Typography
+                    sx={{
+                      fontFamily: 'var(--tm-font-mono)',
+                      fontFeatureSettings: '"tnum"',
+                      fontSize: '0.9375rem',
+                      color: 'var(--tm-text)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {formatCurrency(
+                      precioConMarkup(pieza.precioCOP, multiplicador),
+                      'COP',
+                    )}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontFamily: 'var(--tm-font-ui)',
+                      fontSize: '0.75rem',
+                      color: 'var(--tm-muted)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {pieza.precioMostrado}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+          </Box>
 
-                <Box
+          {piezaSinPrecio ? (
+            // Bloquea la hoja entera — ver la nota junto a `piezaSinPrecio`
+            // arriba. Ni total, ni formulario, ni botón de pago: no hay
+            // nada seguro que cobrar mientras una pieza no tenga precio.
+            <Box sx={{ padding: '16px 20px 20px' }}>
+              <NoticeBox
+                tone="danger"
+                icon={<AlertTriangle size={18} color="var(--tm-danger)" />}
+              >
+                {tc.blockedUnpriced}
+              </NoticeBox>
+            </Box>
+          ) : (
+            <>
+              <Box
+                sx={{
+                  margin: '16px 20px 10px',
+                  padding: '14px 16px',
+                  borderRadius: 'var(--tm-radius-card)',
+                  backgroundColor: 'var(--tm-accent-wash)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'baseline',
+                  gap: '12px',
+                }}
+              >
+                <Typography
                   sx={{
-                    px: 3,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 2,
+                    fontFamily: 'var(--tm-font-ui)',
+                    fontSize: '0.8125rem',
+                    color: 'var(--tm-muted)',
                   }}
                 >
-                  <TextField
-                    fullWidth
-                    label="Celular / WhatsApp"
-                    type="tel"
-                    value={celular}
-                    onChange={(e) => setCelular(e.target.value)}
-                    size="sm"
-                    placeholder="+57 300 123 4567"
-                    inputProps={{ autoComplete: 'tel' }}
-                    disabled={enviando}
-                  />
-                  <TextField
-                    fullWidth
-                    label="Nombre completo (opcional)"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    size="sm"
-                    inputProps={{ autoComplete: 'name' }}
-                    disabled={enviando}
-                  />
-                  <TextField
-                    fullWidth
-                    label="Email (opcional)"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    size="sm"
-                    inputProps={{ autoComplete: 'email' }}
-                    disabled={enviando}
-                  />
+                  {tc.totalLabel}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontFamily: 'var(--tm-font-mono)',
+                    fontFeatureSettings: '"tnum"',
+                    fontWeight: 600,
+                    fontSize: '1.125rem',
+                    color: 'var(--tm-accent)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {formatCurrency(totalCOP, 'COP')}
+                </Typography>
+              </Box>
 
-                  {resultado && resultado.tono !== 'exito' && (
-                    <Alert
-                      severity={
-                        resultado.tono === 'aviso' ? 'warning' : 'error'
-                      }
-                    >
-                      {resultado.texto}
-                    </Alert>
-                  )}
-
-                  <Button
-                    variant="primary"
-                    fullWidth
-                    loading={enviando}
-                    disabled={!celular.trim() || piezas.length === 0}
-                    onClick={handleSubmit}
-                    sx={{ mb: 3 }}
-                  >
-                    {`Pagar ${formatCurrency(totalCOP, 'COP')}`}
-                  </Button>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '8px',
+                  padding: '0 20px 16px',
+                }}
+              >
+                <Box
+                  aria-hidden
+                  sx={{ display: 'flex', flexShrink: 0, marginTop: '2px' }}
+                >
+                  <Clock size={14} color="var(--tm-muted)" />
                 </Box>
-              </>
-            )}
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+                <Typography
+                  sx={{
+                    fontFamily: 'var(--tm-font-ui)',
+                    fontSize: '0.8125rem',
+                    lineHeight: 1.45,
+                    color: 'var(--tm-muted)',
+                  }}
+                >
+                  {tc.reservationNote.replace('{minutes}', MINUTOS_RESERVA)}
+                </Typography>
+              </Box>
+
+              <Box
+                sx={{
+                  padding: '0 20px 20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '14px',
+                }}
+              >
+                <TextField
+                  fullWidth
+                  label={tc.phoneLabel}
+                  type="tel"
+                  value={celular}
+                  onChange={(e) => setCelular(e.target.value)}
+                  size="sm"
+                  placeholder={tc.phonePlaceholder}
+                  inputProps={{ autoComplete: 'tel' }}
+                  disabled={enviando}
+                />
+                <TextField
+                  fullWidth
+                  label={tc.nameLabel}
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  size="sm"
+                  inputProps={{ autoComplete: 'name' }}
+                  disabled={enviando}
+                />
+                <TextField
+                  fullWidth
+                  label={tc.emailLabel}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  size="sm"
+                  inputProps={{ autoComplete: 'email' }}
+                  disabled={enviando}
+                />
+
+                {resultado && resultado.tono !== 'exito' && (
+                  <NoticeBox
+                    tone={resultado.tono === 'aviso' ? 'warn' : 'danger'}
+                    icon={
+                      <AlertTriangle
+                        size={18}
+                        color={
+                          resultado.tono === 'aviso'
+                            ? 'var(--tm-warning)'
+                            : 'var(--tm-danger)'
+                        }
+                      />
+                    }
+                  >
+                    {traducirMensaje(resultado, tc)}
+                  </NoticeBox>
+                )}
+
+                <Button
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  loading={enviando}
+                  disabled={!celular.trim() || piezas.length === 0}
+                  onClick={handleSubmit}
+                >
+                  {tc.payButton.replace(
+                    '{total}',
+                    formatCurrency(totalCOP, 'COP'),
+                  )}
+                </Button>
+              </Box>
+            </>
+          )}
+        </>
+      )}
+    </Sheet>
   );
 }

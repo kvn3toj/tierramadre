@@ -900,6 +900,7 @@ export const fr = {
     pedidoConfirmingTitle: 'Nous confirmons votre paiement',
     pedidoConfirmingBody:
       'Nous avons bien reçu votre commande {saleId}. La confirmation du paiement peut prendre quelques secondes — cette page se met à jour toute seule, inutile de recharger.',
+    pedidoLoadingBody: 'Cela ne prend qu’un instant.',
     pedidoConfirmedTitle: 'Paiement confirmé !',
     pedidoConfirmedBody:
       'Merci pour votre achat. Conservez votre numéro de commande, nous vous écrirons sur WhatsApp avec les prochaines étapes.',

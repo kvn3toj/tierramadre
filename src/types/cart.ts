@@ -26,6 +26,13 @@ export interface CartItem {
   talla?: string;
   isJewelry?: boolean;
   metalType?: string;
+  /**
+   * Enlace al certificado, cuando la pieza lo tiene. Aditivo a propósito: el
+   * carrito vive en `sessionStorage`, así que una sesión abierta desde antes
+   * de este campo devuelve ítems sin él — `undefined` simplemente esconde el
+   * sello «Certificada», nunca lo afirma en falso.
+   */
+  certificateUrl?: string;
 }
 
 /**
@@ -61,5 +68,6 @@ export function treasureToCartItem(treasure: TreasureItem): CartItem {
     talla: treasure.talla,
     isJewelry: treasure.isJewelry,
     metalType: treasure.metalType,
+    certificateUrl: treasure.certificateUrl,
   };
 }
