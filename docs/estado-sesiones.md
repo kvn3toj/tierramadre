@@ -38,6 +38,37 @@ cuenta — y su ausencia ya costó caro: ver la entrada del 2026-08-23 16:10.
 ```
 
 ## Historial
+### 2026-09-09 23:30 — `feat/nuevos-clientes-google` → `main` (tercer push) — cierre de la revisión: el token de cliente ya no pasa por staff
+- Qué encontró la revisión (8 lentes en paralelo + refutadores, todos confirmaron): el diseño de la
+  mañana asumía que "un tms1 válido prueba roster", y esa premisa está escrita en `isStaffSession`
+  (Convex) y en varios `api/*` (`cotizacion-reports`, `cotizacion-save`, `product-views`,
+  `create-product-folders`, `vitrina`, `ambassador-handle`, `fotosintesis-ai`). Con el token
+  sellado de un cliente, todos esos gates abrían. **P0, estuvo vivo en prod entre el primer push
+  (~17:45) y este.**
+- Fix central: `verifySessionToken` (Node y espejo Convex) ahora devuelve null para cualquier token
+  con `lvl`; `verifyAnySessionToken` es el que acepta clientes y sólo lo usan el grant del catálogo,
+  el refresh de mint-session y el lookup del creador de invitaciones. Test que lo fija:
+  `tests/clienteGrant.test.ts` («el verificador de STAFF rechaza el token sellado…»).
+- También: un roster **inactivo** ya no entra como cliente (tri-estado en validate); la escritura
+  a `new-users` es `values.update` en rango cerrado (no `append` abierto); la lectura por email no
+  crea la pestaña; duplicados fallan cerrado; `/grupo/` y la ficha de reventa en `CLIENTE_PATHS`;
+  `bearerWasRejected` ya no dobla el fetch del catálogo para clientes; multiplicador x1 forzado en
+  servidor para quien no puede fijarlo; el fallback al WhatsApp de la casa sólo cuando el directorio
+  respondió y el creador no figura (match por email, no por subcadena de nombre); el cliente no
+  hereda un multiplicador de staff del localStorage; cambio de nivel en la re-validación re-acuña
+  el token; el espejo a Convex `clients` ya NO empuja a la hoja `Clientes` (upsert por nombre podía
+  pisar un cliente real) — la fila de hoja del cliente es `new-users`; el Directorio muestra
+  `tipo: 'cliente'` como cliente final; el pull de asesores sólo matchea contra embajadores.
+- Vercel: sí, push directo a `main`. Convex: vía el build de Vercel (cambia `verifySessionToken`,
+  `isStaffSession`, `clients.upsertAppClientFromServer`; sin cambio de esquema).
+- Verificación: lint limpio, vitest en verde (41 en las 4 suites tocadas, total en verde), build OK.
+  Sigue **sin probar** el alta real con un Gmail (el botón de Google no responde a clics
+  automatizados); pendiente manual.
+- Pendiente / riesgo: un cliente puede crear invitaciones pero no tiene pantalla para listarlas o
+  vencerlas (`/mi-perfil` es de asesor); el GET sin auth de validate devuelve el nombre de Google de
+  un cliente registrado (P3, decisión de producto); la sección del menú se llama "Herramientas de
+  venta" para un cliente (P3).
+
 ### 2026-09-09 18:30 — `feat/nuevos-clientes-google` → `main` (segundo push) — clientes invitan, y quedan también en Convex
 - Tocó: `convex/clients.ts` (**función nueva** `upsertAppClientFromServer`, secreto compartido,
   upsert por `by_email`, `tipo: 'cliente'`, agenda `_pushToSheet` → hoja `Clientes`),

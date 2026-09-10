@@ -10,7 +10,7 @@ import { TreasureItem } from '../types';
 import { LEGACY_KEYS } from '../constants/storage-keys';
 import { fetchWithRetry } from '../utils/fetchWithRetry';
 import { catalogRequestInit, catalogUrl } from '../utils/catalogAuthHeaders';
-import { ensureAppSession } from '../utils/sessionToken';
+import { ensureAppSession, sessionTokenLevel } from '../utils/sessionToken';
 import { useSyncCacheState } from './useSyncCache';
 import { treasureCacheKey } from './treasureCacheKey';
 
@@ -174,8 +174,10 @@ async function fetchFromSheets(
   // write). Staff hit the catalog constantly, so the auto-sync keeps running
   // in practice. `catalogRequestInit()` returns undefined when there is no
   // session, keeping the anonymous request byte-identical to before.
+  // Clientes autorregistrados hold a session token too (2026-09-09) but the
+  // endpoint rejects their stamped token; don't even fire the request.
   const syncInit = catalogRequestInit();
-  if (syncInit) {
+  if (syncInit && sessionTokenLevel() !== 'cliente') {
     fetch('/api/create-product-folders?sync=auto', syncInit).catch(() => {});
   }
 

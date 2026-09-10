@@ -94,11 +94,30 @@ export function mintSessionToken(
 }
 
 /**
- * Verifies signature + expiry and returns the payload, or null on ANY problem
- * (malformed, tampered, expired, secret missing) — never throws. Callers
- * should treat null exactly like an invalid Google ID token (401).
+ * STAFF-ONLY verify: signature + expiry, and the token must carry NO `lvl`
+ * stamp. Returns null on ANY problem (malformed, tampered, expired, secret
+ * missing, or a cliente token) — never throws. Callers should treat null
+ * exactly like an invalid Google ID token (401). Every gate that was written
+ * on the premise "only roster members can mint a tms1" keeps that premise by
+ * using this function; a cliente's stamped token is invisible to it.
  */
 export function verifySessionToken(token: string): SessionTokenPayload | null {
+  const payload = verifyAnySessionToken(token);
+  return payload && payload.lvl === undefined ? payload : null;
+}
+
+/**
+ * Verifies signature + expiry and returns the payload INCLUDING a possible
+ * `lvl` stamp. Only for the three places where a cliente token is legitimate:
+ * the catalog grant (api/_lib/catalogGrant.ts), the rolling refresh in
+ * mint-session, and the invitation creator lookup. Everywhere else use
+ * `verifySessionToken`, which rejects stamped tokens — that is what keeps
+ * every "a valid tms1 proves staff" gate in api/ and convex/ true after
+ * clientes started receiving tokens (2026-09-09).
+ */
+export function verifyAnySessionToken(
+  token: string,
+): SessionTokenPayload | null {
   const secret = process.env.ADMIN_SYNC_TOKEN;
   if (!secret) return null;
 

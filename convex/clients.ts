@@ -108,8 +108,7 @@ export const create = action({
  * la verificó `/api/validate?action=register-client` con el ID token; este
  * secreto compartido (ADMIN_SYNC_TOKEN, mismo patrón que
  * invitations.createFromServer) prueba que quien llama es ese backend y no un
- * navegador. Upsert por email: la primera vez inserta `tipo: 'cliente'` y
- * agenda el espejo a la hoja `Clientes` (el mismo riel que `create`); las
+ * navegador. Upsert por email: la primera vez inserta `tipo: 'cliente'`; las
  * siguientes sólo devuelven el id, sin tocar nada que un admin haya editado.
  */
 export const upsertAppClientFromServer = mutation({
@@ -134,6 +133,12 @@ export const upsertAppClientFromServer = mutation({
     const now = new Date().toISOString();
     const all = await ctx.db.query('clients').collect();
     const maxRow = all.reduce((m, c) => Math.max(m, c.rowIndex), 1);
+    // Sin espejo a la hoja `Clientes`: ese riel upserta por NOMBRE (columna
+    // A), y el nombre de Google de un cliente puede coincidir con el de un
+    // cliente real del CRM y pisarle la fila. La fila de hoja de un cliente
+    // autorregistrado es la de `new-users`, que register-client ya escribió
+    // antes de llamar acá. `syncStatus: 'synced'` = no hay nada pendiente de
+    // empujar, no "aterrizó en Clientes".
     const id = await ctx.db.insert('clients', {
       nombre: nombre.trim() || normalized.split('@')[0],
       email: normalized,
@@ -142,11 +147,8 @@ export const upsertAppClientFromServer = mutation({
       canalOrigen: 'app-google',
       rowIndex: maxRow + 1,
       lastPulledAt: now,
-      syncStatus: 'pending' as const,
-    });
-    await ctx.scheduler.runAfter(0, api.clients._pushToSheet, {
-      id,
-      mode: 'append',
+      lastPushedAt: now,
+      syncStatus: 'synced' as const,
     });
     return { id, created: true };
   },
@@ -379,9 +381,11 @@ export const _upsertManyAsesores = internalMutation({
   },
   handler: async (ctx, { rows }) => {
     const existing = await ctx.db.query('clients').collect();
+    // Sólo los embajadores participan del match por nombre: un cliente
+    // autorregistrado que se llame como un asesor no debe absorber su email.
     const plan = planAsesorUpsert(
       rows,
-      existing.map((c) => ({
+      existing.filter((c) => c.tipo === 'embajador').map((c) => ({
         _id: c._id,
         nombre: c.nombre,
         email: c.email,

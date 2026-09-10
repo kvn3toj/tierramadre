@@ -19,7 +19,7 @@ import {
 import { isRosterRowActive } from './_lib/rosterStatus.js';
 import {
   mintSessionToken,
-  verifySessionToken,
+  verifyAnySessionToken,
   SESSION_TTL_SECONDS,
 } from './_lib/sessionToken.js';
 import { findClientRow, upsertClient } from './_lib/newUsers.js';
@@ -95,10 +95,21 @@ interface ProviderRow {
 /**
  * Validate user against Asesores sheet
  */
+/**
+ * Out-param for the roster lookups: set when the email IS on a roster but
+ * the row is not active. A deactivated asesor/proveedor must stay out — the
+ * cliente fallback (register-client, mint-session, the GET) checks this flag
+ * so "present but inactive" never degrades into "absent, welcome as cliente".
+ */
+interface RosterHit {
+  inactive: boolean;
+}
+
 async function validateUser(
   sheets: Sheets,
   normalizedEmail: string,
   sheetNames: string[],
+  hit?: RosterHit,
 ): Promise<ValidatedUser | null> {
   // Pattern-based lookup only — robust against sheet reordering. A positional
   // fallback (sheetNames[2]/[0]) can silently point at the WRONG sheet, which
@@ -148,14 +159,17 @@ async function validateUser(
     // contra 'inactivo'/'inactive' sin `.trim()`, así que "Inactivo " con un
     // espacio —o "Suspendido", o la celda vacía— dejaba entrar a la persona.
     // Ver api/_lib/rosterStatus.ts.
-    if (!isRosterRowActive(row[estadoIndex], estadoIndex !== -1)) continue;
-
     const userEmail =
       emailIndex !== -1
         ? String(row[emailIndex] || '')
             .toLowerCase()
             .trim()
         : '';
+
+    if (!isRosterRowActive(row[estadoIndex], estadoIndex !== -1)) {
+      if (hit && userEmail === normalizedEmail) hit.inactive = true;
+      continue;
+    }
 
     if (userEmail === normalizedEmail) {
       const name = nameColumnIndex !== -1 ? row[nameColumnIndex] : '';
@@ -263,6 +277,7 @@ async function validateProvider(
   sheets: Sheets,
   normalizedEmail: string,
   sheetNames: string[],
+  hit?: RosterHit,
 ): Promise<ProviderRow | null> {
   // Resolve by pattern only. If the Proveedores sheet can't be found by name we
   // can't produce a definitive negative — throw (→ HTTP 500) so the client
@@ -316,7 +331,10 @@ async function validateProvider(
     if (providerEmail === normalizedEmail) {
       if (estadoIndex !== -1) {
         const estado = String(row[estadoIndex] || '').toUpperCase();
-        if (estado === 'INACTIVO' || estado === 'INACTIVE') return null;
+        if (estado === 'INACTIVO' || estado === 'INACTIVE') {
+          if (hit) hit.inactive = true;
+          return null;
+        }
       }
 
       return {
@@ -376,27 +394,39 @@ export default withApiHandler(
       if (typeof body.idToken === 'string' && body.idToken) {
         verifiedEmail = await verifyGoogleIdTokenEmail(body.idToken);
       } else if (typeof body.sessionToken === 'string' && body.sessionToken) {
-        verifiedEmail = verifySessionToken(body.sessionToken)?.email ?? null;
+        // verifyANY: a cliente refreshes its own stamped token here; the
+        // roster re-check below decides the stamp again on every mint.
+        verifiedEmail = verifyAnySessionToken(body.sessionToken)?.email ?? null;
       }
       if (!verifiedEmail) {
         return sendError(res, 401, 'Token inválido o expirado');
       }
 
       const sheetNames = await getSheetNames(sheets);
-      const rosterUser = await validateUser(sheets, verifiedEmail, sheetNames);
+      const hit: RosterHit = { inactive: false };
+      const rosterUser = await validateUser(
+        sheets,
+        verifiedEmail,
+        sheetNames,
+        hit,
+      );
       let lvl: 'cliente' | undefined;
       if (!rosterUser) {
         const provider = await validateProvider(
           sheets,
           verifiedEmail,
           sheetNames,
+          hit,
         );
         if (!provider) {
           // Cliente autorregistrado (hoja new-users): recibe token, pero
           // SELLADO. El sello es lo que baja su grant de catálogo a la
           // proyección de vitrina (api/_lib/catalogGrant.ts); sin él, el
-          // token sería indistinguible del de un asesor.
-          const client = await findClientRow(sheets, verifiedEmail);
+          // token sería indistinguible del de un asesor. Un roster inactivo
+          // NO es un cliente: dar de baja a alguien lo deja afuera.
+          const client = hit.inactive
+            ? null
+            : await findClientRow(sheets, verifiedEmail, sheetNames);
           if (!client) {
             return sendError(res, 403, 'No autorizado');
           }
@@ -434,7 +464,13 @@ export default withApiHandler(
       }
 
       const sheetNames = await getSheetNames(sheets);
-      const rosterUser = await validateUser(sheets, profile.email, sheetNames);
+      const hit: RosterHit = { inactive: false };
+      const rosterUser = await validateUser(
+        sheets,
+        profile.email,
+        sheetNames,
+        hit,
+      );
       if (rosterUser) {
         return sendSuccess(res, {
           isAuthorized: true,
@@ -442,7 +478,12 @@ export default withApiHandler(
           accountType: 'user',
         });
       }
-      const provider = await validateProvider(sheets, profile.email, sheetNames);
+      const provider = await validateProvider(
+        sheets,
+        profile.email,
+        sheetNames,
+        hit,
+      );
       if (provider) {
         return sendSuccess(res, {
           isProvider: true,
@@ -451,7 +492,9 @@ export default withApiHandler(
         });
       }
 
-      const client = await upsertClient(sheets, profile);
+      // Presente en un roster pero dado de baja: no se le abre la puerta de
+      // atrás como cliente. Mismo estado que una fila bloqueada en new-users.
+      const client = hit.inactive ? null : await upsertClient(sheets, profile);
       if (!client) {
         return sendSuccess(res, {
           isAuthorized: false,
@@ -515,7 +558,8 @@ export default withApiHandler(
       });
     }
 
-    const user = await validateUser(sheets, normalizedEmail, sheetNames);
+    const hit: RosterHit = { inactive: false };
+    const user = await validateUser(sheets, normalizedEmail, sheetNames, hit);
     if (user) {
       return sendSuccess(res, {
         isAuthorized: true,
@@ -528,6 +572,7 @@ export default withApiHandler(
       sheets,
       normalizedEmail,
       sheetNames,
+      hit,
     );
     if (provider) {
       return sendSuccess(res, {
@@ -539,7 +584,11 @@ export default withApiHandler(
 
     // Clientes autorregistrados. Lectura solamente: registrar desde acá sería
     // registrar a partir de un email sin verificar (ver register-client).
-    const client = await findClientRow(sheets, normalizedEmail);
+    // Un roster inactivo no cae en clientes (dar de baja debe seguir sacando
+    // a la persona); y la lectura no crea la pestaña — sólo register-client.
+    const client = hit.inactive
+      ? null
+      : await findClientRow(sheets, normalizedEmail, sheetNames);
     if (client) {
       return sendSuccess(res, {
         isAuthorized: true,

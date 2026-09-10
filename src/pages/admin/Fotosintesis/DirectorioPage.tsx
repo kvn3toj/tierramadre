@@ -74,7 +74,9 @@ export default function FotosintesisDirectorioPage() {
     [clients],
   );
   const finales = useMemo(
-    () => (clients ?? []).filter((c) => c.tipo === 'final'),
+    // 'final' y 'cliente' (autorregistrado con Google): todo lo que no es
+    // embajador es un cliente final para el directorio.
+    () => (clients ?? []).filter((c) => c.tipo !== 'embajador'),
     [clients],
   );
 

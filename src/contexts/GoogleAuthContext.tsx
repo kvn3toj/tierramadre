@@ -174,11 +174,22 @@ export function GoogleAuthProvider({
               validateData.user
             ) {
               // User found in Asesores - update role/accessLevel in case it changed
+              const levelChanged =
+                parsedUser.accessLevel !== validateData.user.accessLevel;
               parsedUser.role = validateData.user.role;
               parsedUser.accessLevel = validateData.user.accessLevel;
               setUser(parsedUser);
               setIsAuthorized(true);
               localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(parsedUser));
+              // The app session token carries the level it was minted with
+              // (a cliente's is stamped). If the roster says the level moved
+              // — cliente promoted to asesor, or the reverse — drop the old
+              // token and mint one that matches, so the catalog grant and the
+              // UI agree instead of drifting for up to 10 days.
+              if (levelChanged) {
+                clearAppSession();
+                void ensureAppSession();
+              }
               log.debug('User re-validated successfully:', {
                 email: parsedUser.email,
                 role: parsedUser.role,

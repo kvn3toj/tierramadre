@@ -18,6 +18,10 @@
  * is staff — no separate roster lookup is needed, and none would be
  * possible from a query anyway.
  *
+ * Since 2026-09-09 self-registered clientes ALSO receive a tms1, stamped
+ * `lvl: 'cliente'`. `verifySessionToken` (./sessionToken.ts) returns null for
+ * a stamped token, so this gate keeps its premise: a cliente is not staff.
+ *
  * Fails closed: missing, malformed, tampered, expired, or unverifiable
  * (e.g. ADMIN_SYNC_TOKEN unset) all resolve to `false`. This function must
  * NEVER throw — callers use it as a plain boolean gate, and a query that

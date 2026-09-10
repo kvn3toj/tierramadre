@@ -53,8 +53,34 @@ describe('findClientRow', () => {
   });
 });
 
+describe('findClientRow con la lista de pestañas', () => {
+  it('sin pestaña new-users no lee nada y devuelve null', async () => {
+    const { sheets } = fakeSheets([HEADER, ['ana@gmail.com', 'Ana', '', '', '', '1', 'es', 'activo']]);
+    const r = await findClientRow(sheets as never, 'ana@gmail.com', ['Inventario', 'Asesores']);
+    expect(r).toBeNull();
+    expect(sheets.spreadsheets.values.get).not.toHaveBeenCalled();
+    expect(sheets.spreadsheets.batchUpdate).not.toHaveBeenCalled();
+  });
+
+  it('la lectura nunca crea la pestaña (ensureSheet sólo en la escritura)', async () => {
+    const { sheets } = fakeSheets([HEADER]);
+    await findClientRow(sheets as never, 'x@gmail.com');
+    expect(sheets.spreadsheets.batchUpdate).not.toHaveBeenCalled();
+    expect(sheets.spreadsheets.values.update).not.toHaveBeenCalled();
+  });
+
+  it('duplicados: si CUALQUIER copia está bloqueada, no entra', async () => {
+    const { sheets } = fakeSheets([
+      HEADER,
+      ['ana@gmail.com', 'Ana', '', '', '', '1', 'es', 'activo'],
+      ['ana@gmail.com', 'Ana', '', '', '', '1', 'es', 'bloqueado'],
+    ]);
+    expect(await findClientRow(sheets as never, 'ana@gmail.com')).toBeNull();
+  });
+});
+
 describe('upsertClient', () => {
-  it('agrega una fila nueva con estado activo', async () => {
+  it('agrega una fila nueva con estado activo, por rango CERRADO (nunca append abierto)', async () => {
     const { sheets, state } = fakeSheets([HEADER]);
     const user = await upsertClient(sheets as never, {
       email: 'ana@gmail.com',
@@ -62,12 +88,21 @@ describe('upsertClient', () => {
       picture: 'https://p/x.jpg',
       locale: 'es',
     });
-    expect(user.accessLevel).toBe('cliente');
+    expect(user?.accessLevel).toBe('cliente');
     expect(state.rows).toHaveLength(2);
     expect(state.rows[1][0]).toBe('ana@gmail.com');
     expect(state.rows[1][5]).toBe('1');
     expect(state.rows[1][7]).toBe('activo');
-    expect(sheets.spreadsheets.values.append).toHaveBeenCalledTimes(1);
+    expect(sheets.spreadsheets.values.append).not.toHaveBeenCalled();
+    const call = sheets.spreadsheets.values.update.mock.calls[0][0] as { range: string };
+    expect(call.range).toBe("'new-users'!A2:H2");
+  });
+
+  it('pestaña vaciada a mano: repone la cabecera en A1:H1 antes de escribir', async () => {
+    const { sheets, state } = fakeSheets([]);
+    await upsertClient(sheets as never, { email: 'ana@gmail.com', name: 'Ana', picture: '', locale: 'es' });
+    expect(state.rows[0]).toEqual([...NEW_USERS_HEADERS]);
+    expect(state.rows[1][0]).toBe('ana@gmail.com');
   });
 
   it('en una fila existente actualiza último acceso y cuenta, sin tocar el estado', async () => {

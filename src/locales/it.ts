@@ -362,7 +362,7 @@ export const it = {
     colombianEmeralds: 'Colombian Emeralds',
     invitationOnly: 'Accesso solo su invito',
     invitationOnlyMessage:
-      "L'accesso ospite richiede un link di invito. Richiedine uno a un ambasciatore Tierra Madre.",
+      '«Continua con Google» ti porta direttamente al catalogo con i prezzi. Il link di invito è l’altra porta: lo condivide un ambasciatore Tierra Madre.',
     inAppBrowserTitle: 'Per una migliore esperienza',
     inAppBrowserMessage:
       'Apri nel tuo browser preferito (Chrome, Safari, ecc.) per accedere con Google.',

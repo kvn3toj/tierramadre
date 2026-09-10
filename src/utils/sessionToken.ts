@@ -70,6 +70,26 @@ function readStoredSession(): StoredSession | null {
 }
 
 /** The stored app session token, iff it hasn't expired. */
+/**
+ * The level stamped into the stored app session token ('cliente'), or
+ * undefined for a staff token / no token. Decodes the public payload only —
+ * no secret involved, and NOT an authorization decision: the server verifies
+ * the signature on every request. Lets the client skip staff-only calls it
+ * would only receive a 401 from.
+ */
+export function sessionTokenLevel(): 'cliente' | undefined {
+  const token = readFreshSessionToken();
+  if (!token) return undefined;
+  try {
+    const b64 = token.split('.')[1] || '';
+    const json = atob(b64.replace(/-/g, '+').replace(/_/g, '/'));
+    const payload = JSON.parse(json) as { lvl?: string };
+    return payload.lvl === 'cliente' ? 'cliente' : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function readFreshSessionToken(): string | null {
   return readStoredSession()?.token ?? null;
 }

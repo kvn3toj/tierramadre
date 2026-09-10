@@ -354,7 +354,14 @@ function RoleBasedRedirect() {
  * Guards by PATH rather than by wrapping each route so a new staff route can
  * never leak to clients by omission.
  */
-const CLIENTE_PATHS = [/^\/treasure(\/|$)/, /^\/product\//, /^\/p\//, /^\/cart$/];
+const CLIENTE_PATHS = [
+  /^\/treasure(\/|$)/,
+  /^\/product\//,
+  /^\/p\//,
+  /^\/grupo\//, // lote/sublote bundle cards navigate here (same detail page)
+  /^\/ambassadors\/[^/]+\/product\//, // resale pieces redirect here from the detail page
+  /^\/cart$/,
+];
 
 function ClienteGate({ children }: { children: React.ReactNode }) {
   const isCliente = useIsCliente();

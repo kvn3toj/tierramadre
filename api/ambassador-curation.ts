@@ -169,7 +169,7 @@ export async function handleAmbassadorCuration(
 
     const grant = await resolveGrant(req, { lookupVitrina });
     const priceAllowed = (itemId: string): boolean => {
-      if (grant.kind === 'staff') return true;
+      if (grant.kind === 'staff' || grant.kind === 'cliente') return true;
       if (grant.kind === 'vitrina') {
         return grant.itemIds.includes(parseInt(itemId, 10));
       }
