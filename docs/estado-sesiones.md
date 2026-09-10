@@ -241,9 +241,9 @@ Costó una investigación entera el 2026-08-23. El método, por si sirve:
 - **Qué:** libro `SOT-v6-Inventario` (`1iYFuW0nhixIlXE9yXQNhbFr3BIYRQZMRNPtx1QO9mig`) con
   `Léeme`, `Inventario` (59 col = `FOTO_INVENTARIO_HEADERS`), `Lotes`/`Sublotes`/`Ventas`/
   `Proveedores`/`Clientes`/`MovimientosAsesor` (cabeceras y orden = `TABLE_CONFIGS`, porque
-  `admin-table-update` escribe POSICIONAL), `Listas` y `Calidades`. Semilla copiada de SOT v3
-  por nombre de cabecera: 577 + 112 + 9 + 7 + 6 + 33 filas, **0 celdas distintas** en
-  Inventario (verificado por lectura). Validación con aviso desde `Listas`, formato
+  `admin-table-update` escribe POSICIONAL), `Listas` y `Calidades`. **Nace limpio** (Kevin,
+  18:35): sólo cabeceras + catálogos. La primera corrida copió 577 filas de SOT v3 (0 celdas
+  distintas) y se vació con `--vaciar`; `--semilla-v3` queda como opción. Validación con aviso desde `Listas`, formato
   condicional, vistas, protecciones con aviso, rangos con nombre, Quiet Emerald. Compartido
   con la service account; humanos: decisión de Kevin. Spec:
   `docs/specs/2026-09-10-sot-v6-inventario.md`; script `scripts/crear-sot-v6-inventario.ts`.
@@ -257,7 +257,9 @@ Costó una investigación entera el 2026-08-23. El método, por si sirve:
   humanos (tech, cvocmnty, vikinga, direccion, angelagarces) a las 18:05; a las 16:45 sólo
   tenía dueño + service account y los scripts sólo agregan la service account.
 - **Tropiezos:** el formato condicional no acepta `Listas!G2:G100` de otra pestaña (→
-  `INDIRECT`); el batch atómico falló después de escribir valores y se retomó con `--continue`.
+  `INDIRECT`); el batch atómico falló después de escribir valores y se retomó con `--continue`;
+  el primer `--vaciar` también borró Listas/Calidades (filtro mal puesto) → `--catalogos` los
+  recopió y el filtro ya excluye catálogos.
 - Vercel: no. Convex: no. Commit local, **sin push** (regla del 2026-09-10).
 
 ## 2026-09-10 · 15:30 — SOT-v6-Usuarios creado (padrón de acceso en un libro nuevo)

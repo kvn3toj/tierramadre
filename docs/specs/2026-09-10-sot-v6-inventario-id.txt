@@ -1,3 +1,3 @@
 1iYFuW0nhixIlXE9yXQNhbFr3BIYRQZMRNPtx1QO9mig
 https://docs.google.com/spreadsheets/d/1iYFuW0nhixIlXE9yXQNhbFr3BIYRQZMRNPtx1QO9mig/edit
-creado 2026-09-10 por scripts/crear-sot-v6-inventario.ts (semilla: SOT v3 1oRw1KSh8L1CyjUnD_D1S8a3J3ewJ_V8lN1BFR-7Bv9U)
+creado 2026-09-10 por scripts/crear-sot-v6-inventario.ts (limpio: sólo cabeceras + catálogos; la semilla del 18:05 se vació a las 18:40)

@@ -1,8 +1,8 @@
 # SOT-v6-Inventario — espejo en Sheets del inventario que vive en Convex
 
-**Estado:** libro creado y verificado el 2026-09-10. **La app no lo lee ni lo escribe todavía.**
+**Estado:** libro creado y verificado el 2026-09-10, **limpio**: sólo cabeceras y los catálogos `Listas`/`Calidades`. **La app no lo lee ni lo escribe todavía.**
 **ID:** `1iYFuW0nhixIlXE9yXQNhbFr3BIYRQZMRNPtx1QO9mig` (ver `2026-09-10-sot-v6-inventario-id.txt`).
-**Script:** `scripts/crear-sot-v6-inventario.ts` (tsx). Dry-run por defecto; `--apply`; `--apply --continue` idempotente.
+**Script:** `scripts/crear-sot-v6-inventario.ts` (tsx). Dry-run por defecto; `--apply` (nace limpio); `--apply --semilla-v3` (copia filas de SOT v3, no es la ruta normal); `--apply --continue` idempotente; `--vaciar`; `--catalogos`.
 
 ## Por qué existe
 
@@ -30,23 +30,25 @@ familia + dominio (+ rol si no es obvio); la versión sólo cuando conviven gene
 Fila 1 es el contrato con el código. **No se inventó ninguna cabecera**: el script las importa
 de los módulos que usan los escritores.
 
-| Pestaña | Cabeceras (fuente) | Escritor en prod | Semilla |
+| Pestaña | Cabeceras (fuente) | Escritor en prod | Filas al nacer |
 |---|---|---|---|
-| `Inventario` | `FOTO_INVENTARIO_HEADERS` (`api/_lib/fotosintesis-inventory-columns.js`, 59 col) | `convex/products.ts:1424` → `/api/admin-product-update` (localiza por **nombre**) | 577 filas |
-| `Lotes` | `TABLE_CONFIGS.lots` (`api/_lib/admin-table-config.ts`, 21) | `lots._pushToSheet` → `/api/admin-table-update` (**posicional**) | 112 |
-| `Sublotes` | `TABLE_CONFIGS.subLotes` (11) | ídem | 9 (alias `itemIds`→`itemIdsJoined`) |
-| `Ventas` | `TABLE_CONFIGS.sales` (15) | ídem | 7 |
-| `Proveedores` | `TABLE_CONFIGS.providers` (8) | ídem | 6 |
-| `Clientes` | `TABLE_CONFIGS.clients` (8) | ídem | 33 |
-| `MovimientosAsesor` | `TABLE_CONFIGS.movimientosAsesor` (15) | `asesorMovements._pushToSheet` | 0 (v3 no tiene la pestaña) |
+| `Inventario` | `FOTO_INVENTARIO_HEADERS` (`api/_lib/fotosintesis-inventory-columns.js`, 59 col) | `convex/products.ts:1424` → `/api/admin-product-update` (localiza por **nombre**) | 0 |
+| `Lotes` | `TABLE_CONFIGS.lots` (`api/_lib/admin-table-config.ts`, 21) | `lots._pushToSheet` → `/api/admin-table-update` (**posicional**) | 0 |
+| `Sublotes` | `TABLE_CONFIGS.subLotes` (11) | ídem | 0 |
+| `Ventas` | `TABLE_CONFIGS.sales` (15) | ídem | 0 |
+| `Proveedores` | `TABLE_CONFIGS.providers` (8) | ídem | 0 |
+| `Clientes` | `TABLE_CONFIGS.clients` (8) | ídem | 0 |
+| `MovimientosAsesor` | `TABLE_CONFIGS.movimientosAsesor` (15) | `asesorMovements._pushToSheet` | 0 |
 | `Listas` | copia de SOT v3 (29 col) | humanos, por acuerdo | 35 |
 | `Calidades` | copia de SOT v3 (2) | humanos, por acuerdo | 19 |
 | `Léeme` | diccionario, reglas, cableado | humanos | 22 filas |
 
-Semilla copiada de SOT v3 **por nombre de cabecera** con `UNFORMATTED_VALUE` → `RAW` (los
-números siguen siendo números, los booleanos booleanos, las fechas-texto siguen siendo texto).
-Verificado por lectura: 577/577 filas, cabeceras idénticas, **0 celdas distintas**. Ninguna
-columna del contrato quedó sin origen; ninguna columna de origen se descartó con datos.
+**El libro nace vacío a propósito** (decisión de Kevin, 2026-09-10 18:35): las tablas del
+espejo las llena Convex cuando la app apunte aquí; copiar SOT v3 habría hecho pasar por «vista
+de Convex» filas que tal vez nunca llegaron a Convex. La primera corrida sí copió las 577 filas
+(verificadas con 0 celdas distintas) y se vació a los 35 minutos con `--vaciar`; queda
+`--semilla-v3` como ruta opcional para una vista inmediata, con alias `itemIds`→`itemIdsJoined`
+en Sublotes (v3 tiene la cabecera vieja y otro orden respecto al escritor posicional).
 
 Lo que **no** se mudó, a propósito: `Modelo-Precios` (323 filas de fórmulas humanas),
 `Asesores` y `new-users` (padrón → `TM-Padrón-Usuarios`), `_Sync` y `_SyncQueue` (colas del

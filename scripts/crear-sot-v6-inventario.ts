@@ -10,10 +10,13 @@
  * NOMBRE) y `TABLE_CONFIGS` (api/admin-table-update.ts, POSICIONAL)— así que
  * el libro es escribible por la app cambiando sólo un ID de entorno.
  *
- * Semilla: se copian las filas de SOT v3 (Inventario, Lotes, Sublotes, Ventas,
- * Proveedores, Clientes, Listas, Calidades) casando columnas POR NOMBRE de
- * cabecera, sin transformar valores. Una columna del contrato sin equivalente
- * queda vacía; una columna de origen sin destino se reporta como descartada.
+ * El libro nace LIMPIO: sólo cabeceras, más los catálogos `Listas` y `Calidades`
+ * copiados de SOT v3 (alimentan los dropdowns). Las tablas del espejo las llena
+ * Convex cuando la app apunte a este libro. Con `--semilla-v3` se copian además
+ * las filas de SOT v3 casando columnas POR NOMBRE de cabecera, sin transformar
+ * valores (útil para una vista inmediata; no es la ruta normal). `--vaciar`
+ * borra las filas de datos de las tablas del espejo (no las cabeceras ni los
+ * catálogos) sobre el libro existente.
  *
  * Por defecto es DRY-RUN. `--apply` crea el libro y guarda el ID en
  * docs/specs/2026-09-10-sot-v6-inventario-id.txt (se niega si ya existe,
@@ -24,6 +27,9 @@
  *   tsx scripts/crear-sot-v6-inventario.ts
  *   tsx scripts/crear-sot-v6-inventario.ts --apply
  *   tsx scripts/crear-sot-v6-inventario.ts --apply --continue
+ *   tsx scripts/crear-sot-v6-inventario.ts --apply --semilla-v3   # con datos de SOT v3
+ *   tsx scripts/crear-sot-v6-inventario.ts --vaciar               # deja sólo cabeceras + catálogos
+ *   tsx scripts/crear-sot-v6-inventario.ts --catalogos            # recopia Listas/Calidades desde SOT v3
  */
 import fs from 'node:fs';
 import dotenv from 'dotenv';
@@ -54,6 +60,10 @@ dotenv.config({ path: '.env.local', quiet: true });
 const APPLY = process.argv.includes('--apply');
 const FORCE = process.argv.includes('--force');
 const CONTINUE = process.argv.includes('--continue');
+const SEMILLA = process.argv.includes('--semilla-v3'); // por defecto el libro nace sin filas
+const VACIAR = process.argv.includes('--vaciar');
+const CATALOGOS = process.argv.includes('--catalogos'); // recopia Listas/Calidades desde SOT v3 sobre el libro existente
+const ES_CATALOGO = (title: string) => title === 'Listas' || title === 'Calidades';
 const ID_FILE = 'docs/specs/2026-09-10-sot-v6-inventario-id.txt';
 const TITLE = 'SOT-v6-Inventario';
 const SOURCE_ID = process.env.SPREADSHEET_ID; // SOT v3
@@ -123,7 +133,7 @@ const LEEME_ROWS: Row[] = [
   ['Propósito', 'qué es', 'ESPEJO en Sheets del inventario de Tierra Mädre. La fuente de verdad es Convex; este libro es la vista para humanos y la copia barata que no gasta el tope de Database I/O del free tier de Convex.'],
   ['Propósito', 'qué NO es', 'No es donde se corrige un dato. Editar una celda aquí no cambia nada en la app: el próximo push de Convex la pisa. Para corregir una pieza, un lote o una venta se usa la app (Fotosíntesis).'],
   ['Propósito', 'familia de libros', 'SOT-* es el linaje del inventario: SOT-v3 (legado, aún leído por la app) → SOT-v6-Inventario (este). TM-* son los satélites de la app: TM-Padrón-Usuarios (acceso), TM-App-Data (invitaciones, vistas, cotizaciones). Cada libro = un dominio y una audiencia; usuarios e inventario nunca comparten archivo.'],
-  ['Propósito', 'creado', `${HOY} por scripts/crear-sot-v6-inventario.ts. Semilla copiada de SOT v3 casando columnas por NOMBRE de cabecera, sin transformar valores. Desde entonces sólo escribe Convex.`],
+  ['Propósito', 'creado', `${HOY} por scripts/crear-sot-v6-inventario.ts. Nació LIMPIO: sólo cabeceras y los catálogos Listas/Calidades. Las tablas las llena Convex cuando la app apunte aquí; ninguna fila se copió de SOT v3.`],
   ['Reglas', 'una tabla por pestaña', 'Fila 1 = cabeceras. Sin celdas combinadas, sin filas de título, sin fórmulas dentro de las tablas, sin columnas insertadas en medio.'],
   ['Reglas', 'el contrato es el código', 'Inventario: cabeceras = FOTO_INVENTARIO_COLUMNS (api/_lib/fotosintesis-inventory-columns.js); el escritor localiza cada columna por NOMBRE. Lotes/Sublotes/Ventas/Proveedores/Clientes/MovimientosAsesor: cabeceras y ORDEN = TABLE_CONFIGS (api/_lib/admin-table-config.ts); ese escritor es POSICIONAL — mover una columna corrompe la tabla.'],
   ['Reglas', 'quién escribe qué', 'Convex escribe todas las tablas (vía /api/admin-product-update y /api/admin-table-update, upsert por la clave de la columna A, rango cerrado, nunca append abierto). Humanos: sólo Listas y Calidades, y sólo por acuerdo, porque alimentan los dropdowns. Nada más.'],
@@ -141,7 +151,7 @@ const LEEME_ROWS: Row[] = [
   ['Cableado', 'free tier', 'La app pública sirve el catálogo desde el caché de Vercel (api/_lib/catalogCache.ts), no desde este libro. Leer este libro desde la app es una decisión aparte: la API de Sheets tiene sus propias cuotas por minuto.'],
   ['Procedimientos', 'ver una pieza', 'Vista "Disponibles" o filtro por Item en la columna A. Nunca ordenar in-place sin volver a ordenar por Item: el escritor localiza por clave, no por posición, así que no se rompe, pero la lectura humana sí.'],
   ['Procedimientos', 'corregir un dato', 'En la app. Si la app no tiene el campo, se anota en Notas / conflictos de SOT v3 o se pide el campo; no se escribe aquí.'],
-  ['Procedimientos', 'reconstruir el espejo', 'tsx scripts/crear-sot-v6-inventario.ts --apply --continue vuelve a aplicar formato y validaciones sin tocar valores. Para repoblar desde Convex se usan los pushes de la app, no una copia de SOT v3.'],
+  ['Procedimientos', 'reconstruir el espejo', 'tsx scripts/crear-sot-v6-inventario.ts --apply --continue vuelve a aplicar formato y validaciones sin tocar valores; --vaciar deja sólo cabeceras y catálogos. Para poblar se usan los pushes de la app desde Convex, no una copia de SOT v3.'],
 ];
 
 // ─────────────────────────────────────────────────────────────────
@@ -182,6 +192,8 @@ async function main() {
   const seeds = new Map<string, Seed>();
   for (const t of TABS) {
     if (!t.source) continue;
+    const catalogo = t.headers.length === 0;
+    if (!catalogo && !SEMILLA) { seeds.set(t.title, { rows: [], mapeadas: [...t.headers], vacias: [], descartadas: {} }); continue; }
     const srcRows = await read(t.source);
     if (t.headers.length === 0) { // Listas / Calidades: se copian tal cual, cabecera incluida
       const hdr = (srcRows[0] ?? []).map(String);
@@ -191,15 +203,30 @@ async function main() {
       seeds.set(t.title, seedByHeader(t.headers, srcRows, t.alias));
     }
   }
-  console.log('📖 Semilla desde SOT v3 (por nombre de cabecera):');
+  console.log(SEMILLA ? '📖 Semilla desde SOT v3 (por nombre de cabecera):' : '📖 Libro limpio: sólo cabeceras; catálogos Listas/Calidades desde SOT v3:');
   for (const t of TABS) {
     const s = seeds.get(t.title); if (!s) continue;
     console.log(`  ${t.title.padEnd(18)} ${String(s.rows.length).padStart(4)} filas · ${t.headers.length} col` + (s.vacias.length ? ` · sin origen: ${s.vacias.join(', ')}` : '') + (Object.keys(s.descartadas).length ? ` · descartadas: ${JSON.stringify(s.descartadas)}` : ''));
   }
-  const inv = seeds.get('Inventario')!;
-  const items = inv.rows.map((r) => String(r[0]));
-  const dup = items.filter((v, i) => items.indexOf(v) !== i);
-  console.log(`  Inventario: Items duplicados = ${dup.length}${dup.length ? ' ' + JSON.stringify(dup.slice(0, 5)) : ''}`);
+  if (SEMILLA) {
+    const items = seeds.get('Inventario')!.rows.map((r) => String(r[0]));
+    const dup = items.filter((v, i) => items.indexOf(v) !== i);
+    console.log(`  Inventario: Items duplicados = ${dup.length}${dup.length ? ' ' + JSON.stringify(dup.slice(0, 5)) : ''}`);
+  }
+  if (VACIAR) {
+    const ssId = fs.readFileSync(ID_FILE, 'utf8').split('\n')[0].trim();
+    const ranges = TABS.filter((t) => t.source && !ES_CATALOGO(t.title)).map((t) => `'${t.title}'!A2:${colLetter(t.headers.length - 1)}${t.rows}`);
+    await sheets.spreadsheets.values.batchClear({ spreadsheetId: ssId, requestBody: { ranges } });
+    console.log('🧺 Vaciadas (sólo filas de datos): ' + ranges.join(' · '));
+    return;
+  }
+  if (CATALOGOS) {
+    const ssId = fs.readFileSync(ID_FILE, 'utf8').split('\n')[0].trim();
+    const data = TABS.filter((t) => ES_CATALOGO(t.title)).map((t) => { const body = [[...t.headers] as Row, ...seeds.get(t.title)!.rows]; return { range: `'${t.title}'!A1:${colLetter(t.headers.length - 1)}${body.length}`, values: body }; });
+    await sheets.spreadsheets.values.batchUpdate({ spreadsheetId: ssId, requestBody: { valueInputOption: 'RAW', data } });
+    console.log('📚 Catálogos recopiados desde SOT v3: ' + data.map((d) => d.range).join(' · '));
+    return;
+  }
   if (!APPLY) { console.log('\nNada creado. Corre con --apply para crear el libro.'); return; }
 
   // Service account de la app (la misma que edita SOT v3).
@@ -228,7 +255,7 @@ async function main() {
     ssId = created.data.spreadsheetId!; url = created.data.spreadsheetUrl!;
     ids = Object.fromEntries(created.data.sheets!.map((s) => [s.properties!.title!, s.properties!.sheetId!]));
     console.log(`\n✅ Libro creado: ${url}`);
-    fs.writeFileSync(ID_FILE, `${ssId}\n${url}\ncreado ${HOY} por scripts/crear-sot-v6-inventario.ts (semilla: SOT v3 ${SOURCE_ID})\n`);
+    fs.writeFileSync(ID_FILE, `${ssId}\n${url}\ncreado ${HOY} por scripts/crear-sot-v6-inventario.ts${SEMILLA ? ` (semilla: SOT v3 ${SOURCE_ID})` : ' (limpio: sólo cabeceras + catálogos)'}\n`);
     // Valores, siempre en rango cerrado.
     const data = TABS.map((t) => {
       const body = t.title === 'Léeme' ? leeme : [[...t.headers] as Row, ...(seeds.get(t.title)?.rows ?? [])];
