@@ -256,3 +256,10 @@ Costó una investigación entera el 2026-08-23. El método, por si sirve:
   también haga `upsertClient` + espejo cuando resuelve una fila de cliente.
 - **Tropiezo:** el libro se crea con locale `es_CO`, así que las fórmulas de formato condicional
   van con `;` — la primera corrida falló en el batch (atómico) y se retomó con `--continue`.
+- **16:40 — restyle con la paleta Quiet Emerald** (cabeceras deepGreen + Montserrat, bandas,
+  pestañas coloreadas, avisos en marrón tierra) y `--continue` hecho idempotente (borra la
+  decoración previa y reescribe el Léeme). Verificado en Chrome pestaña por pestaña y por
+  lectura API (36/36 emails, validaciones estrictas, 3 vistas, 5 protecciones, 3 rangos).
+  Defecto encontrado y corregido: la banda alterna tapaba la cabecera (`headerColor`).
+- **Commit local sin push** (el push anterior 3be8ee8 fue un error de proceso: sólo docs+script,
+  sin código de app; en adelante se empuja sólo cuando el usuario lo pida).

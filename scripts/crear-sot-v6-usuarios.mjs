@@ -230,7 +230,7 @@ const LEEME_ROWS = [
   ['Procedimientos', 'promover un cliente', 'Cambiar perfil de cliente a asesor/embajador en SU fila. No copiar la fila. La app renueva el token en la siguiente revalidación.'],
   ['Procedimientos', 'bloquear', 'estado=bloqueado (o inactivo). No borrar la fila: se pierde la trazabilidad y podría volver a autorregistrarse.'],
   ['Procedimientos', 'revisión de accesos', 'Trimestral: filtrar vista "Staff" y anotar en Revisiones quién confirma/degrada/retira cada acceso y por qué; marcar aplicado cuando el cambio esté en Usuarios.'],
-  ['Pestañas', 'Usuarios', 'La tabla. Vistas de filtro: "Solo staff", "Solo clientes", "No activos". Duplicados de email se pintan naranja; clientes en gris; no activos con fondo rojo.'],
+  ['Pestañas', 'Usuarios', 'La tabla. Vistas de filtro: "Solo staff", "Solo clientes", "No activos". Emails duplicados en marrón tierra y negrita; clientes en gris cursiva; no activos con fondo tierra. Colores Quiet Emerald del design system.'],
   ['Pestañas', 'Perfiles / Estados', 'Catálogos que alimentan los dropdowns (validación estricta: un valor fuera de la lista se rechaza). Cambiar aquí = cambiar el contrato con el código.'],
   ['Pestañas', 'Accesos', 'Bitácora que escribirá la app: una fila por inicio de sesión (fecha, email, perfil, resultado, detalle). Sólo lectura para humanos.'],
   ['Pestañas', 'Revisiones', 'Registro humano de las revisiones periódicas de acceso.'],
@@ -251,22 +251,73 @@ const range = (sheetId, a1) => {
   if (m[4]) r.endRowIndex = Number(m[4]);
   return r;
 };
-const HEADER_BG = { red: 0.85, green: 0.93, blue: 0.87 };
-const GREY = { red: 0.45, green: 0.45, blue: 0.45 };
-const RED_BG = { red: 0.99, green: 0.9, blue: 0.9 };
-const ORANGE_BG = { red: 1, green: 0.9, blue: 0.75 };
-const APP_BG = { red: 0.96, green: 0.96, blue: 0.96 };
+// Paleta Quiet Emerald (src/design-system/tokens/quiet-emerald.ts). Una sola
+// tinta saturada — la esmeralda — y una escala de grises verdosos.
+const hex = (h) => ({ red: parseInt(h.slice(1, 3), 16) / 255, green: parseInt(h.slice(3, 5), 16) / 255, blue: parseInt(h.slice(5, 7), 16) / 255 });
+const BRAND = {
+  deepGreen: hex('#024C2E'), // cabeceras
+  strong: hex('#006F52'), // cabeceras de catálogos
+  primary: hex('#00C992'), // color de pestaña Usuarios
+  accent: hex('#00785C'),
+  brown: hex('#5B0F00'), // avisos (duplicados)
+  brownTint: { red: 0.965, green: 0.93, blue: 0.92 }, // fondo no activos
+  emeraldTint: { red: 0.9, green: 0.97, blue: 0.94 }, // banda alterna / sección Léeme
+  white: hex('#FFFFFF'),
+  g50: hex('#F7F8F8'),
+  g100: hex('#F1F2F2'),
+  g150: hex('#EBEDEC'),
+  g300: hex('#C9CECB'),
+  g400: hex('#9AA09D'),
+  g600: hex('#5C6360'),
+  g700: hex('#3A403E'),
+  g900: hex('#14181A'),
+};
+const FONT = 'Montserrat'; // brand.ts → typography.sans.clean
 
-function headerFormat(sheetId, nCols) {
+function headerFormat(sheetId, nCols, bg = BRAND.deepGreen) {
   return [
     {
       repeatCell: {
         range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: nCols },
-        cell: { userEnteredFormat: { backgroundColor: HEADER_BG, textFormat: { bold: true }, wrapStrategy: 'WRAP', verticalAlignment: 'MIDDLE' } },
-        fields: 'userEnteredFormat(backgroundColor,textFormat,wrapStrategy,verticalAlignment)',
+        cell: { userEnteredFormat: { backgroundColor: bg, textFormat: { bold: true, fontFamily: FONT, fontSize: 10, foregroundColor: BRAND.white }, wrapStrategy: 'WRAP', verticalAlignment: 'MIDDLE', padding: { top: 6, bottom: 6, left: 8, right: 8 } } },
+        fields: 'userEnteredFormat(backgroundColor,textFormat,wrapStrategy,verticalAlignment,padding)',
       },
     },
+    { updateDimensionProperties: { range: { sheetId, dimension: 'ROWS', startIndex: 0, endIndex: 1 }, properties: { pixelSize: 40 }, fields: 'pixelSize' } },
   ];
+}
+function bodyFormat(sheetId, nCols, nRows) {
+  return {
+    repeatCell: {
+      range: { sheetId, startRowIndex: 1, endRowIndex: nRows, startColumnIndex: 0, endColumnIndex: nCols },
+      cell: { userEnteredFormat: { textFormat: { fontFamily: FONT, fontSize: 10, foregroundColor: BRAND.g900 }, verticalAlignment: 'MIDDLE' } },
+      fields: 'userEnteredFormat(textFormat,verticalAlignment)',
+    },
+  };
+}
+function banding(sheetId, a1, header = BRAND.deepGreen) {
+  // headerColor: la banda arranca en la fila 1; sin esto pinta la cabecera de
+  // blanco encima del formato y el texto blanco desaparece.
+  return { addBanding: { bandedRange: { range: range(sheetId, a1), rowProperties: { headerColor: header, firstBandColor: BRAND.white, secondBandColor: BRAND.g50 } } } };
+}
+function tabColor(sheetId, color) {
+  return { updateSheetProperties: { properties: { sheetId, tabColor: color }, fields: 'tabColor' } };
+}
+/** Borra toda decoración previa para que --continue sea idempotente. */
+async function limpiar(sheets, ssId) {
+  const m = await sheets.spreadsheets.get({ spreadsheetId: ssId, fields: 'namedRanges(namedRangeId),sheets(properties(sheetId),protectedRanges(protectedRangeId),conditionalFormats,filterViews(filterViewId),bandedRanges(bandedRangeId),basicFilter(range))' });
+  const req = [];
+  for (const n of m.data.namedRanges ?? []) req.push({ deleteNamedRange: { namedRangeId: n.namedRangeId } });
+  for (const sh of m.data.sheets ?? []) {
+    const id = sh.properties.sheetId;
+    for (const p of sh.protectedRanges ?? []) req.push({ deleteProtectedRange: { protectedRangeId: p.protectedRangeId } });
+    for (let i = (sh.conditionalFormats ?? []).length - 1; i >= 0; i--) req.push({ deleteConditionalFormatRule: { sheetId: id, index: i } });
+    for (const f of sh.filterViews ?? []) req.push({ deleteFilterView: { filterId: f.filterViewId } });
+    for (const b of sh.bandedRanges ?? []) req.push({ deleteBanding: { bandedRangeId: b.bandedRangeId } });
+    if (sh.basicFilter) req.push({ clearBasicFilter: { sheetId: id } });
+  }
+  if (req.length) await sheets.spreadsheets.batchUpdate({ spreadsheetId: ssId, requestBody: { requests: req } });
+  return req.length;
 }
 function widths(sheetId, list) {
   return list.map((px, i) => ({
@@ -351,6 +402,10 @@ async function main() {
     url = meta.data.spreadsheetUrl;
     ids = Object.fromEntries(meta.data.sheets.map((s) => [s.properties.title, s.properties.sheetId]));
     console.log(`\n↩️  Retomando ${url}`);
+    const leeme = [LEEME_HEADERS, ...LEEME_ROWS];
+    await sheets.spreadsheets.values.clear({ spreadsheetId: ssId, range: `'Léeme'!A${leeme.length + 1}:C60` });
+    await sheets.spreadsheets.values.update({ spreadsheetId: ssId, range: `'Léeme'!A1:C${leeme.length}`, valueInputOption: 'RAW', requestBody: { values: leeme } });
+    console.log(`📝 Léeme actualizado (${LEEME_ROWS.length} filas)`);
   } else {
     // 1. Crear libro con pestañas y dimensiones exactas (sin columnas sobrantes:
     //    evita que un append abierto ancle donde quiera).
@@ -395,20 +450,38 @@ async function main() {
     console.log(`✅ Valores escritos (Usuarios: ${filas.length} filas)`);
   }
 
-  // 3. Formato, validación, protección, nombres, vistas.
+  // 3. Formato, validación, protección, nombres, vistas. Idempotente: primero
+  //    se borra la decoración previa (no los valores).
+  const borrados = await limpiar(sheets, ssId);
+  if (borrados) console.log(`🧹 Decoración previa retirada (${borrados} objetos)`);
   const U = ids.Usuarios, P = ids.Perfiles, E = ids.Estados, A = ids.Accesos, R = ids.Revisiones, L = ids['Léeme'];
   const nPerf = PERFILES_ROWS.length + 1, nEst = ESTADOS_ROWS.length + 1;
   const requests = [
-    ...headerFormat(U, USUARIOS_HEADERS.length), ...headerFormat(P, PERFILES_HEADERS.length), ...headerFormat(E, ESTADOS_HEADERS.length),
-    ...headerFormat(A, ACCESOS_HEADERS.length), ...headerFormat(R, REVISIONES_HEADERS.length), ...headerFormat(L, LEEME_HEADERS.length),
+    // Cabeceras: esmeralda profunda con texto blanco; catálogos en esmeralda fuerte.
+    ...headerFormat(U, USUARIOS_HEADERS.length), ...headerFormat(P, PERFILES_HEADERS.length, BRAND.strong), ...headerFormat(E, ESTADOS_HEADERS.length, BRAND.strong),
+    ...headerFormat(A, ACCESOS_HEADERS.length, BRAND.g700), ...headerFormat(R, REVISIONES_HEADERS.length, BRAND.g700), ...headerFormat(L, LEEME_HEADERS.length),
+    bodyFormat(U, USUARIOS_HEADERS.length, 1000), bodyFormat(P, PERFILES_HEADERS.length, 20), bodyFormat(E, ESTADOS_HEADERS.length, 20),
+    bodyFormat(A, ACCESOS_HEADERS.length, 5000), bodyFormat(R, REVISIONES_HEADERS.length, 500), bodyFormat(L, LEEME_HEADERS.length, 60),
+    tabColor(L, BRAND.deepGreen), tabColor(U, BRAND.primary), tabColor(P, BRAND.accent), tabColor(E, BRAND.accent), tabColor(A, BRAND.g600), tabColor(R, BRAND.g400),
     ...widths(U, [260, 150, 100, 230, 90, 120, 150, 110, 105, 260, 150, 120, 70, 170, 170, 80]),
     ...widths(P, [140, 60, 150, 460, 90, 130, 130, 130]),
     ...widths(E, [110, 110, 460]),
     ...widths(A, [170, 260, 140, 110, 400]),
     ...widths(R, [110, 260, 200, 110, 400, 90]),
     ...widths(L, [130, 190, 900]),
-    // Bloque de la app en gris suave (color como señal, no como dato).
-    { repeatCell: { range: range(U, `${APP_BLOCK_START}2:${LAST_COL}1000`), cell: { userEnteredFormat: { backgroundColor: APP_BG } }, fields: 'userEnteredFormat.backgroundColor' } },
+    // Bandas alternas suaves en las tablas grandes.
+    banding(U, `A1:${LAST_COL}1000`), banding(A, 'A1:E5000', BRAND.g700), banding(R, 'A1:F500', BRAND.g700),
+    // Bloque de la app: texto gris (color como señal, no como dato) y columna
+    // `perfil`/`estado` en negrita para que el ojo caiga en lo que decide el acceso.
+    { repeatCell: { range: range(U, `${APP_BLOCK_START}2:${LAST_COL}1000`), cell: { userEnteredFormat: { textFormat: { foregroundColor: BRAND.g600, fontFamily: FONT, fontSize: 9 } } }, fields: 'userEnteredFormat.textFormat' } },
+    { repeatCell: { range: range(U, 'B2:C1000'), cell: { userEnteredFormat: { textFormat: { bold: true, fontFamily: FONT, fontSize: 10, foregroundColor: BRAND.deepGreen } } }, fields: 'userEnteredFormat.textFormat' } },
+    // Perfiles: columna perfil en negrita; Léeme: columna sección tintada.
+    { repeatCell: { range: range(P, `A2:A${nPerf}`), cell: { userEnteredFormat: { textFormat: { bold: true, fontFamily: FONT, fontSize: 10, foregroundColor: BRAND.deepGreen } } }, fields: 'userEnteredFormat.textFormat' } },
+    { repeatCell: { range: range(E, `A2:A${nEst}`), cell: { userEnteredFormat: { textFormat: { bold: true, fontFamily: FONT, fontSize: 10, foregroundColor: BRAND.deepGreen } } }, fields: 'userEnteredFormat.textFormat' } },
+    { repeatCell: { range: range(L, 'A2:A60'), cell: { userEnteredFormat: { backgroundColor: BRAND.emeraldTint, textFormat: { bold: true, fontFamily: FONT, fontSize: 10, foregroundColor: BRAND.deepGreen } } }, fields: 'userEnteredFormat(backgroundColor,textFormat)' } },
+    { repeatCell: { range: range(L, 'B2:B60'), cell: { userEnteredFormat: { textFormat: { bold: true, fontFamily: FONT, fontSize: 10, foregroundColor: BRAND.g700 } } }, fields: 'userEnteredFormat.textFormat' } },
+    { repeatCell: { range: range(L, 'A2:C60'), cell: { userEnteredFormat: { wrapStrategy: 'WRAP', verticalAlignment: 'TOP', padding: { top: 6, bottom: 6, left: 8, right: 8 } } }, fields: 'userEnteredFormat(wrapStrategy,verticalAlignment,padding)' } },
+    { updateSheetProperties: { properties: { sheetId: L, gridProperties: { hideGridlines: true } }, fields: 'gridProperties.hideGridlines' } },
     // Validación estricta: email válido; perfil/estado desde los catálogos.
     { setDataValidation: { range: range(U, 'A2:A1000'), rule: { condition: { type: 'TEXT_IS_EMAIL' }, strict: true, inputMessage: 'Email en minúsculas' } } },
     rangeValidation(U, 'B2:B1000', `Perfiles!$A$2:$A$${nPerf}`),
@@ -418,10 +491,11 @@ async function main() {
     listValidation(A, 'D2:D5000', ACCESOS_RESULTADOS),
     listValidation(R, 'D2:D500', REVISIONES_DECISIONES),
     { setDataValidation: { range: range(R, 'F2:F500'), rule: { condition: { type: 'BOOLEAN' }, strict: true } } },
-    // Formato condicional en Usuarios.
-    condFormula(U, 'A2:A1000', '=AND($A2<>"";COUNTIF($A$2:$A$1000;$A2)>1)', { backgroundColor: ORANGE_BG }, 0),
-    condFormula(U, `A2:${LAST_COL}1000`, '=AND($A2<>"";$C2<>"activo")', { backgroundColor: RED_BG }, 1),
-    condFormula(U, `A2:${LAST_COL}1000`, '=$B2="cliente"', { textFormat: { foregroundColor: GREY, italic: true } }, 2),
+    // Formato condicional en Usuarios: duplicado (marrón, negrita), no activo
+    // (fondo tierra), cliente (gris cursiva).
+    condFormula(U, 'A2:A1000', '=AND($A2<>"";COUNTIF($A$2:$A$1000;$A2)>1)', { backgroundColor: BRAND.brownTint, textFormat: { foregroundColor: BRAND.brown, bold: true } }, 0),
+    condFormula(U, `A2:${LAST_COL}1000`, '=AND($A2<>"";$C2<>"activo")', { backgroundColor: BRAND.brownTint, textFormat: { foregroundColor: BRAND.brown } }, 1),
+    condFormula(U, `A2:${LAST_COL}1000`, '=$B2="cliente"', { textFormat: { foregroundColor: BRAND.g600, italic: true } }, 2),
     // Protecciones (aviso, no candado: el dueño decide a quién bloquear).
     protect(U, `A1:${LAST_COL}1`, 'Encabezados de Usuarios — el código los busca por nombre'),
     protect(U, `${APP_BLOCK_START}2:${LAST_COL}1000`, 'Bloque de la app (origen…accesos) — lo escribe la app en cada registro/acceso'),
@@ -437,8 +511,6 @@ async function main() {
     { addFilterView: { filter: { title: 'Solo staff', range: range(U, `A1:${LAST_COL}1000`), filterSpecs: [{ columnIndex: 1, filterCriteria: { hiddenValues: ['cliente', ''] } }] } } },
     { addFilterView: { filter: { title: 'Solo clientes', range: range(U, `A1:${LAST_COL}1000`), filterSpecs: [{ columnIndex: 1, filterCriteria: { condition: { type: 'TEXT_EQ', values: [{ userEnteredValue: 'cliente' }] } } }] } } },
     { addFilterView: { filter: { title: 'No activos', range: range(U, `A1:${LAST_COL}1000`), filterSpecs: [{ columnIndex: 2, filterCriteria: { hiddenValues: ['activo', ''] } }] } } },
-    // Léeme: texto envuelto.
-    { repeatCell: { range: range(L, 'A2:C60'), cell: { userEnteredFormat: { wrapStrategy: 'WRAP', verticalAlignment: 'TOP' } }, fields: 'userEnteredFormat(wrapStrategy,verticalAlignment)' } },
   ];
   await sheets.spreadsheets.batchUpdate({ spreadsheetId: ssId, requestBody: { requests } });
   console.log(`✅ Formato, validaciones, protecciones, rangos y vistas aplicados (${requests.length} requests)`);

@@ -56,8 +56,21 @@ cliente, `K{n}:P{n}` en cada acceso —, nunca `values.append` (incidente de la 
 2026-08-03). Nunca cambia B/C de una fila existente, nunca crea una fila con perfil ≠ cliente.
 
 Rangos con nombre: `USUARIOS` (`Usuarios!A1:P1000`), `PERFILES`, `ESTADOS`.
-Formato condicional: cliente → gris cursiva; `estado ≠ activo` → fondo rojo; email duplicado → naranja.
+Formato condicional: cliente → gris cursiva; `estado ≠ activo` → fondo tierra con texto marrón; email duplicado → marrón negrita.
 Protecciones (aviso, no candado): cabecera de Usuarios, bloque K:P, Perfiles, Estados, Accesos.
+
+## Identidad visual (Quiet Emerald, `src/design-system/tokens/quiet-emerald.ts`)
+
+Una sola tinta saturada, la esmeralda, y la escala de grises verdosos del design system:
+cabeceras `#024C2E` (deepGreen) con texto blanco en Montserrat; catálogos en `#006F52`;
+bitácora y revisiones en gris `#3A403E`; pestañas coloreadas (Usuarios `#00C992`, catálogos
+`#00785C`, Léeme `#024C2E`); bandas alternas blanco / `#F7F8F8`; bloque de la app en gris
+`#5C6360` a 9 pt; `perfil`/`estado` en negrita esmeralda; avisos (no activos, duplicados) con
+el marrón tierra del manual (`#5B0F00`) sobre un tinte claro. El estilo se aplica con
+`--apply --continue`, que primero retira la decoración previa (idempotente).
+
+Tropiezo corregido: una banda alterna que arranca en la fila 1 pinta la cabecera de blanco
+encima del formato; `headerColor` en la banda lo evita.
 
 ## Semilla (migración desde SOT v3, sin inventar valores)
 
