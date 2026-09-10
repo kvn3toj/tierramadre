@@ -38,6 +38,24 @@ cuenta — y su ausencia ya costó caro: ver la entrada del 2026-08-23 16:10.
 ```
 
 ## Historial
+### 2026-09-09 18:30 — `feat/nuevos-clientes-google` → `main` (segundo push) — clientes invitan, y quedan también en Convex
+- Tocó: `convex/clients.ts` (**función nueva** `upsertAppClientFromServer`, secreto compartido,
+  upsert por `by_email`, `tipo: 'cliente'`, agenda `_pushToSheet` → hoja `Clientes`),
+  `convex/invitations.ts` (`INVITE_LEVELS` + `cliente`), `api/validate.ts` (register-client
+  espeja en Convex, best-effort), `useCanCreateInvitations` (clientes sí), `InvitationPage`
+  (sin asesor en el directorio → WhatsApp de la casa), `InvitationGenerator` (cliente: sin
+  moneda ni multiplicador, x1).
+- Vercel: sí, push directo a `main`.
+- Convex: **sí, vía el build de Vercel desde `main`** (+1 función `clients:upsertAppClientFromServer`,
+  sin cambio de esquema: `by_email` ya existía). Verificado en el primer push de hoy que ese
+  build despliega Convex y queda `Ready`.
+- Verificación: lint limpio, vitest en verde, build OK. **Sin probar todavía** el alta real:
+  el botón de Google no responde a clics automatizados (Chrome MCP); queda para prueba manual.
+- Pendiente / riesgo: el registro ahora escribe en TRES lugares (`new-users` = padrón de acceso,
+  Convex `clients` = CRM, `Clientes` = espejo). El de acceso es `new-users`; si Convex falla el
+  cliente entra igual y queda sin fila en el CRM (se loguea en Vercel como
+  `[validate] Convex client mirror failed`).
+
 ### 2026-09-09 17:45 — `feat/nuevos-clientes-google` (worktree `.claude/worktrees/new-clients`) → `main` — clientes autorregistrados con Google
 - Tocó: `api/validate.ts` (acción `register-client`, lectura de `new-users`, mint-session sellado),
   `api/_lib/newUsers.ts` (nuevo), `api/_lib/catalogGrant.ts` + `catalogProjection.ts` (grant

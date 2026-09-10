@@ -23,6 +23,8 @@ import {
   SESSION_TTL_SECONDS,
 } from './_lib/sessionToken.js';
 import { findClientRow, upsertClient } from './_lib/newUsers.js';
+import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
+import { api } from '../convex/_generated/api.js';
 
 type Sheets = sheets_v4.Sheets;
 
@@ -457,6 +459,25 @@ export default withApiHandler(
           reason: 'blocked',
           error: 'Cuenta de cliente bloqueada',
         });
+      }
+
+      // Espejo en Convex (`clients`, tipo 'cliente'), que a su vez empuja la
+      // fila a la hoja `Clientes` por el riel de siempre. Best-effort: el
+      // padrón de acceso es `new-users` y ya quedó escrito; un tropiezo acá
+      // no debe negarle la entrada a quien acaba de registrarse.
+      if (isConvexEnabled && convexClient) {
+        try {
+          await convexClient.mutation(api.clients.upsertAppClientFromServer, {
+            secret: process.env.ADMIN_SYNC_TOKEN ?? '',
+            email: client.email,
+            nombre: client.name,
+          });
+        } catch (err) {
+          console.error(
+            '[validate] Convex client mirror failed:',
+            err instanceof Error ? err.message : err,
+          );
+        }
       }
       return sendSuccess(res, {
         isAuthorized: true,

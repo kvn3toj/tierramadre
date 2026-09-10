@@ -70,8 +70,9 @@ export const useCanSeeComunidadPrice = () => {
  */
 export const useCanCreateInvitations = () => {
   const { accessLevel } = useAuthContext();
-  // Clientes are not sheet entries either — they are the audience.
-  return accessLevel !== 'guest' && accessLevel !== 'cliente';
+  // Self-registered clientes may invite too (2026-09-09): their guests reach
+  // the house line, since a cliente has no roster WhatsApp.
+  return accessLevel !== 'guest';
 };
 
 /**

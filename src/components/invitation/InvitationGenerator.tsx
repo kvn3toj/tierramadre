@@ -49,6 +49,7 @@ import {
   CredentialResponse,
 } from '@react-oauth/google';
 import { useInvitation } from '../../hooks/useInvitation';
+import { useIsCliente } from '../../hooks/useAuth';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
@@ -110,6 +111,9 @@ export default function InvitationGenerator({
   const [guestCurrency, setGuestCurrency] = useState<GuestCurrencyMode>('COP');
   const [guestMultiplier, setGuestMultiplier] = useState<GuestMultiplier>(4);
   const [formError, setFormError] = useState('');
+  // Un cliente autorregistrado invita a precio de lista: sin moneda ni
+  // multiplicador (ver puedeFijarMultiplicador — no está en el allowlist).
+  const isCliente = useIsCliente();
 
   const isFormValid =
     guestName.trim().length > 0 &&
@@ -151,8 +155,10 @@ export default function InvitationGenerator({
       guestName: guestName.trim(),
       guestContact: contactInfo,
       contactType,
-      ...(showPrices && { guestCurrencyMode: guestCurrency }),
-      ...(showPrices && { guestMultiplier }),
+      ...(showPrices && !isCliente && { guestCurrencyMode: guestCurrency }),
+      ...(showPrices && {
+        guestMultiplier: isCliente ? (1 as GuestMultiplier) : guestMultiplier,
+      }),
     });
   };
 
@@ -574,7 +580,7 @@ export default function InvitationGenerator({
               </Box>
 
               {/* Currency + Multiplier — indented sub-settings */}
-              {showPrices && (
+              {showPrices && !isCliente && (
                 <Box
                   sx={{
                     pl: 2.5,

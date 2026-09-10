@@ -14,6 +14,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle, Explore } from '@mui/icons-material';
 import { useInvitation } from '../hooks/useInvitation';
 import { useAuth } from '../hooks/useAuth';
+import { HOUSE_WHATSAPP } from '../constants/contact';
 import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 import { alpha } from '@mui/material/styles';
 import {
@@ -335,6 +336,12 @@ export default function InvitationPage() {
             }
           } catch (error) {
             console.warn('Could not fetch inviter WhatsApp:', error);
+          }
+          // Un cliente autorregistrado también invita (2026-09-09) y no está
+          // en el directorio de asesores: su invitado escribe a la línea de
+          // la casa en vez de quedarse sin botón de contacto.
+          if (!resolvedInviterWhatsApp) {
+            resolvedInviterWhatsApp = HOUSE_WHATSAPP;
           }
         }
 

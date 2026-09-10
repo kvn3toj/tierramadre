@@ -1,6 +1,7 @@
 import {
   query,
   action,
+  mutation,
   internalMutation,
   internalQuery,
 } from './_generated/server';
@@ -10,6 +11,7 @@ import { pushTableRowToVercel } from './_lib/sheetSync';
 import { marshalRow } from './_lib/columnMaps';
 import { planAsesorUpsert } from './_lib/asesorSync';
 import { requireAccessLevel } from './_lib/authz';
+import { ConvexError } from 'convex/values';
 import { isStaffSession } from './_lib/requireStaffSession';
 import type { Id } from './_generated/dataModel';
 
@@ -98,6 +100,55 @@ export const create = action({
   ): Promise<{ id: Id<'clients'> }> => {
     await requireAccessLevel(idToken, ['admin']);
     return await ctx.runMutation(internal.clients._create, args);
+  },
+});
+
+/**
+ * Alta de un cliente autorregistrado con Google (2026-09-09). La identidad ya
+ * la verificó `/api/validate?action=register-client` con el ID token; este
+ * secreto compartido (ADMIN_SYNC_TOKEN, mismo patrón que
+ * invitations.createFromServer) prueba que quien llama es ese backend y no un
+ * navegador. Upsert por email: la primera vez inserta `tipo: 'cliente'` y
+ * agenda el espejo a la hoja `Clientes` (el mismo riel que `create`); las
+ * siguientes sólo devuelven el id, sin tocar nada que un admin haya editado.
+ */
+export const upsertAppClientFromServer = mutation({
+  args: {
+    secret: v.string(),
+    email: v.string(),
+    nombre: v.string(),
+    telefono: v.optional(v.string()),
+  },
+  handler: async (ctx, { secret, email, nombre, telefono }) => {
+    const expected = process.env.ADMIN_SYNC_TOKEN;
+    if (!expected || secret !== expected) {
+      throw new ConvexError('No autorizado.');
+    }
+    const normalized = email.toLowerCase().trim();
+    const existing = await ctx.db
+      .query('clients')
+      .withIndex('by_email', (q) => q.eq('email', normalized))
+      .first();
+    if (existing) return { id: existing._id, created: false };
+
+    const now = new Date().toISOString();
+    const all = await ctx.db.query('clients').collect();
+    const maxRow = all.reduce((m, c) => Math.max(m, c.rowIndex), 1);
+    const id = await ctx.db.insert('clients', {
+      nombre: nombre.trim() || normalized.split('@')[0],
+      email: normalized,
+      telefono,
+      tipo: 'cliente',
+      canalOrigen: 'app-google',
+      rowIndex: maxRow + 1,
+      lastPulledAt: now,
+      syncStatus: 'pending' as const,
+    });
+    await ctx.scheduler.runAfter(0, api.clients._pushToSheet, {
+      id,
+      mode: 'append',
+    });
+    return { id, created: true };
   },
 });
 
