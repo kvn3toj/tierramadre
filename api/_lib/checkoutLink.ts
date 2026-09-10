@@ -11,7 +11,7 @@
  * otro— y el resultado sería un reembolso manual sobre plata ya cobrada.
  */
 
-import { buildCheckoutUrl } from './wompi.js';
+import { buildCheckoutUrl, buildReference } from './wompi.js';
 import { resolveWompiEnv } from './wompiEnv.js';
 import { buildPreference, createPreference } from './mp-preference.js';
 import { RESERVA_TTL_MS } from '../../convex/_lib/reservas.js';
@@ -64,6 +64,14 @@ export interface LinkInput {
   appUrl: string;
   contact: { celular?: string; full_name?: string; email?: string };
   now: number;
+  /**
+   * Número de intento de pago de esta venta (1 = primer link). Sólo Wompi lo
+   * usa (`reference` única por transacción, ver `wompi.ts`); MercadoPago
+   * sigue con `external_reference = saleId`. Opcional para que un Vercel nuevo
+   * contra un Convex viejo (que aún no devuelve `attempt`) siga armando el
+   * link de siempre.
+   */
+  attempt?: number;
 }
 
 /**
@@ -103,7 +111,7 @@ export async function buildPaymentLink(
       return {
         checkoutUrl: buildCheckoutUrl(
           {
-            reference: input.saleId,
+            reference: buildReference(input.saleId, input.attempt),
             amountCOP: input.totalCOP,
             redirectUrl,
             expirationTime,

@@ -181,3 +181,30 @@ describe('fetchTransaction', () => {
     expect(WOMPI_APPROVED).toBe('APPROVED');
   });
 });
+
+describe('reference por intento — Wompi rechaza una referencia repetida (422)', () => {
+  it('sin intento la referencia es el saleId a secas (links previos al 2026-09-09)', async () => {
+    const { buildReference, saleIdFromReference } = await import('../api/_lib/wompi');
+    expect(buildReference('VO-0004')).toBe('VO-0004');
+    expect(saleIdFromReference('VO-0004')).toBe('VO-0004');
+  });
+
+  it('con intento la referencia lleva el sufijo y el webhook lo quita', async () => {
+    const { buildReference, saleIdFromReference } = await import('../api/_lib/wompi');
+    expect(buildReference('VO-0004', 1)).toBe('VO-0004_1');
+    expect(buildReference('VO-0004', 2)).toBe('VO-0004_2');
+    expect(saleIdFromReference('VO-0004_2')).toBe('VO-0004');
+    expect(saleIdFromReference('VO-0004_12')).toBe('VO-0004');
+  });
+
+  it('sólo usa caracteres del charset de Wompi (alfanumérico, - y _)', async () => {
+    const { buildReference } = await import('../api/_lib/wompi');
+    expect(buildReference('VO-0004', 3)).toMatch(/^[A-Za-z0-9_-]+$/);
+  });
+
+  it('un intento no entero o menor a 1 falla ruidosamente', async () => {
+    const { buildReference } = await import('../api/_lib/wompi');
+    expect(() => buildReference('VO-0004', 0)).toThrow();
+    expect(() => buildReference('VO-0004', 1.5)).toThrow();
+  });
+});

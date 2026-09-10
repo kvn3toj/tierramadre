@@ -199,27 +199,28 @@ exponer ningún valor**: es la verificación de cada paso de abajo.
 7. Anotar la entrada en `docs/estado-sesiones.md` (versión servida, deploy id,
    hora, y el resultado del pago de prueba).
 
-## 7 · Pregunta abierta — unicidad de `reference`
+## 7 · Unicidad de `reference` — CERRADA el 2026-09-09
 
-La documentación de Wompi no especifica si una transacción con `reference`
-repetido (nuestro `reference` es el `saleId` de Convex) es aceptada en un
-reintento o rechazada. Nuestro webhook es idempotente de cualquier forma —
-`markOrderPaid` solo cambia el estado una vez — así que un reintento con la
-misma `reference` es inofensivo en el peor de los casos.
+Wompi **exige una `reference` única por transacción** y rechaza una repetida con
+422 `INPUT_VALIDATION_ERROR: "La referencia ya ha sido usada"` (docs
+`transacciones/`, `errores/`, `widget-checkout-web/`; detalle y fuentes en
+`docs/audits/2026-09-09-wompi-legal-y-trazabilidad.md`, fila A4). Con
+`reference = saleId` y `findReusableSale` devolviendo la misma venta a un segundo
+clic, un cliente cuyo primer intento salía `DECLINED` no podía reintentar su
+propio pedido.
 
-**Si** la corrida en sandbox (sección 5) muestra que Wompi **rechaza** una
-`reference` duplicada, el plan B ya está documentado y listo para implementar:
+Implementado el plan B, con `_` como separador (el charset de Wompi es
+alfanumérico + `-` + `_`; `formatSaleId` nunca produce `_`):
 
-- `reference` pasa a ser `${saleId}~${n}`, con `n` persistido en la venta.
-- `api/wompi-webhook.ts` recupera el `saleId` real con
-  `transaction.reference.split('~')[0]` antes de llamar a `markOrderPaid`
-  (los `saleId` contienen `-` pero nunca `~`, así que el corte es seguro).
+- `sales.paymentAttempts` cuenta los links emitidos (1 en el insert; +1 por cada
+  reutilización en `createOrder`).
+- `reference = ${saleId}_${n}` (`api/_lib/wompi.ts` → `buildReference`).
+- `api/wompi-webhook.ts` recupera el `saleId` con `saleIdFromReference` (corte en
+  el primer `_`; una referencia sin sufijo — links emitidos antes — vuelve intacta).
+- MercadoPago no cambia: `external_reference = saleId`.
 
-Esto queda **pendiente de la corrida en sandbox** — no se ha ejecutado
-todavía, así que esta sección no se puede cerrar desde este documento. El
-resultado real debe registrarse en
-`docs/superpowers/specs/2026-08-19-wompi-payment-rail-design.md`, reemplazando
-la frase "Esto se verifica en sandbox…" por lo que efectivamente ocurrió.
+Queda **NO VERIFICADO** si un intento `DECLINED` (no sólo `APPROVED`) consume la
+referencia; el diseño lo cubre en ambos casos.
 
 ## 8 · Bre-B: no existe para cobrar
 

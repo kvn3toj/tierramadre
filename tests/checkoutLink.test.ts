@@ -111,3 +111,41 @@ describe('buildPaymentLink — llaves de un ambiente contra la base del otro', (
     expect(link.error).toBe(WOMPI_ENV_MISMATCH);
   });
 });
+
+describe('buildPaymentLink — la reference lleva el intento', () => {
+  const originalEnv = { ...process.env };
+  beforeEach(() => {
+    process.env.WOMPI_PUBLIC_KEY = 'pub_test_x';
+    process.env.WOMPI_INTEGRITY_SECRET = 'test_integrity_x';
+  });
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  it('el segundo link de la misma venta viaja como saleId_2 y se firma con esa referencia', async () => {
+    const base = {
+      saleId: 'VO-0004',
+      totalCOP: 1_000_000,
+      appUrl: 'https://tierramadre.app',
+      contact: {},
+      now: NOW,
+    };
+    const primero = await buildPaymentLink({ ...base, attempt: 1 }, 'wompi');
+    const segundo = await buildPaymentLink({ ...base, attempt: 2 }, 'wompi');
+    const p1 = new URL(primero.checkoutUrl!).searchParams;
+    const p2 = new URL(segundo.checkoutUrl!).searchParams;
+    expect(p1.get('reference')).toBe('VO-0004_1');
+    expect(p2.get('reference')).toBe('VO-0004_2');
+    // Referencia distinta ⇒ firma distinta: si la firma no cambiara, Wompi
+    // rechazaría el segundo link por integridad, no por referencia.
+    expect(p1.get('signature:integrity')).not.toBe(p2.get('signature:integrity'));
+  });
+
+  it('sin attempt (Convex viejo) la referencia sigue siendo el saleId', async () => {
+    const link = await buildPaymentLink(
+      { saleId: 'VO-0004', totalCOP: 1_000_000, appUrl: 'https://tierramadre.app', contact: {}, now: NOW },
+      'wompi',
+    );
+    expect(new URL(link.checkoutUrl!).searchParams.get('reference')).toBe('VO-0004');
+  });
+});

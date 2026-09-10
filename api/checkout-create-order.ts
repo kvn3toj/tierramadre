@@ -97,6 +97,7 @@ export default withApiHandler(
       totalCOP: number;
       reused: boolean;
       reservedAt: number;
+      attempt?: number;
     };
     try {
       order = await convexClient.mutation(api.ghl.createOrder, {
@@ -221,6 +222,7 @@ export default withApiHandler(
           email: body.contact.email,
         },
         now: order.reservedAt,
+        attempt: order.attempt,
       },
       provider,
     );
