@@ -676,10 +676,37 @@ export const it = {
 
   // Cart
   cart: {
+    title: 'La Mia Selezione',
+    piecesSelected: '{n} pezzi selezionati',
+    pieceSelectedOne: '1 pezzo selezionato',
     clear: 'Cancella',
+    itemNumber: 'Pezzo #{n}',
+    certified: 'Certificata',
+    remove: 'Rimuovi',
+    withPrice: '{n} con prezzo',
+    totalToCharge: 'Totale da incassare',
+    unpricedLabel: 'Prezzo non caricato',
+    unpricedAction: 'Chiedi',
+    unpricedNotice:
+      'I pezzi senza prezzo non entrano nel totale; te li quotiamo su WhatsApp.',
+    multiplierLabel: 'Prezzo mostrato ×{m}',
+    emptyTitle: 'La tua selezione è vuota',
+    emptyCta: 'Vai al catalogo',
     exploreCollection: 'Esplora la Collezione',
+    inquiryTo: 'La tua richiesta sarà inviata a {name} su WhatsApp',
     sending: 'Invio in corso...',
     sendWhatsApp: 'Invia richiesta via WhatsApp',
+    sendHint: 'Si aprirà WhatsApp con la tua lista di pezzi',
+    noInviter:
+      'Non abbiamo trovato il contatto di chi ti ha invitato. Scrivici e ti aiutiamo.',
+    sendFailed:
+      'Non è stato possibile inviare a {name}. Verifica che abbia WhatsApp configurato.',
+    emptyError: 'Non ci sono pezzi nella tua selezione',
+    pay: 'Paga',
+    payHint: 'Pagamento sicuro online · COP',
+    shareDivider: 'oppure condividi con un cliente',
+    shareTitle: 'Condividi con un cliente',
+    shareHint: 'Il cliente vedrà solo questi pezzi, senza accedere.',
   },
 
   // Contact
@@ -820,5 +847,71 @@ export const it = {
     addToSelection: 'Aggiungi alla selezione',
     inSelection: 'Nella tua selezione · Vedi',
     cartBanner: 'La tua richiesta sarà inviata a Tierra Madre su WhatsApp',
+  },
+
+  // La hoja de pago y la página post-pago, en los seis idiomas (2026-09-09).
+  // Todo lo que un cliente lee entre «Pagar» y «Pago confirmado» vive aquí,
+  // incluidos los mensajes de error: `mensajesCheckout.ts` ya no devuelve
+  // texto en español, devuelve un `codigo` que `traducirMensaje` resuelve
+  // contra este bloque. Los `msg*` son ese catálogo de códigos.
+  //
+  // Un cliente que llega por un enlace en inglés y encuentra «Celular /
+  // WhatsApp» en el único formulario donde entrega su plata es exactamente el
+  // agujero que este bloque cierra.
+  checkout: {
+    title: 'Paga',
+    close: 'Chiudi',
+    empty: 'Nessun pezzo selezionato.',
+    totalLabel: 'Totale da pagare (COP)',
+    reservationNote:
+      'Pagando, teniamo il pezzo da parte per {minutes} minuti. Se il pagamento non si completa entro quel tempo, torna disponibile.',
+    phoneLabel: 'Cellulare / WhatsApp',
+    phonePlaceholder: '+57 300 123 4567',
+    nameLabel: 'Nome completo (facoltativo)',
+    emailLabel: 'Email (facoltativa)',
+    payButton: 'Paga {total}',
+    blockedUnpriced:
+      'Uno o più pezzi della tua selezione non hanno ancora un prezzo e non possiamo incassarli qui. Scrivici su WhatsApp e ti aiutiamo a completare l’acquisto.',
+    networkError:
+      'Non siamo riusciti a connetterci. Controlla la connessione e riprova.',
+    msgGenerico:
+      'Non siamo riusciti a completare l’ordine. Riprova tra un momento.',
+    msgBloqueadoEdge:
+      'I pagamenti online non sono disponibili in questo momento. Scrivici su WhatsApp e completiamo il tuo acquisto.',
+    msgExito: 'Ti portiamo al pagamento…',
+    msgPedidoSinLink:
+      'Abbiamo salvato {pedido}, ma non siamo riusciti ad aprire il pagamento. Ti scriviamo su WhatsApp per completarlo.',
+    msgItemReserved:
+      'In questo momento qualcun altro sta pagando {sku}. Riprova tra qualche minuto.',
+    msgProductUnavailable: 'Questo pezzo è già stato venduto.',
+    msgPrecioNoDisponible:
+      'Non siamo riusciti a calcolare il prezzo di {sku}. Scrivici e ti aiutiamo a completare l’acquisto.',
+    msgPrecioNoDisponibleSinSku:
+      'Uno o più pezzi non hanno un prezzo assegnato. Scrivici e ti aiutiamo a completare l’acquisto.',
+    msgZeroTotal:
+      'Uno o più pezzi non hanno un prezzo assegnato. Scrivici e ti aiutiamo a completare l’acquisto.',
+    msgOrigenInvalido:
+      'Il link da cui sei arrivato non è più valido. Scrivici e ti aiutiamo.',
+    pedidoConfirmingTitle: 'Stiamo confermando il tuo pagamento',
+    pedidoConfirmingBody:
+      'Abbiamo già ricevuto il tuo ordine {saleId}. La conferma del pagamento può richiedere qualche secondo — questa pagina si aggiorna da sola, non serve ricaricare.',
+    pedidoConfirmedTitle: 'Pagamento confermato!',
+    pedidoConfirmedBody:
+      'Grazie per il tuo acquisto. Conserva il numero dell’ordine, ti scriveremo su WhatsApp con i prossimi passi.',
+    pedidoLabel: 'Ordine',
+    pedidoTotalLabel: 'Totale',
+    pedidoCancelledTitle: 'Questo ordine è stato annullato',
+    pedidoCancelledBody:
+      'L’ordine {saleId} non è più attivo. Se pensi che sia un errore o vuoi riprovare, scrivici e ti aiutiamo volentieri.',
+    pedidoNotFoundTitle: 'Non troviamo quell’ordine',
+    pedidoNotFoundBody:
+      'Controlla il link oppure scrivici e ti aiutiamo volentieri a rintracciarlo.',
+    pedidoWhatsApp: 'Scrivi su WhatsApp',
+    pedidoSlowLine:
+      'Sta impiegando più del solito. Se hai già pagato, scrivici su WhatsApp con il tuo ordine {saleId} e lo verifichiamo.',
+    pedidoWhatsAppCancelled: 'Ciao, il mio ordine {saleId} risulta annullato.',
+    pedidoWhatsAppNotFound: 'Ciao, non riesco a trovare il mio ordine.',
+    pedidoWhatsAppSlow:
+      'Ciao, ho già pagato l’ordine {saleId} ma è ancora in conferma.',
   },
 };
