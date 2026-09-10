@@ -24,6 +24,8 @@ import {
 } from './_lib/index.js';
 
 import { withApiHandler } from './_lib/with-api-handler.js';
+import { resolveWompiEnv } from './_lib/wompiEnv.js';
+import { resolveProvider } from './_lib/checkoutLink.js';
 
 // =============================================================================
 // VERSION INFO
@@ -112,6 +114,18 @@ export default withApiHandler(async (req, res) => {
     version: APP_VERSION,
     timestamp: new Date().toISOString(),
     environment: process.env.VERCEL_ENV || 'development',
+    // Sólo ambientes y nombres de variables — nunca un valor. Es lo que
+    // permite verificar un cutover de llaves sin abrir el dashboard.
+    payments: {
+      provider: resolveProvider(process.env.PAYMENT_PROVIDER),
+      wompi: resolveWompiEnv({
+        WOMPI_PUBLIC_KEY: process.env.WOMPI_PUBLIC_KEY,
+        WOMPI_PRIVATE_KEY: process.env.WOMPI_PRIVATE_KEY,
+        WOMPI_INTEGRITY_SECRET: process.env.WOMPI_INTEGRITY_SECRET,
+        WOMPI_EVENTS_SECRET: process.env.WOMPI_EVENTS_SECRET,
+        WOMPI_BASE_URL: process.env.WOMPI_BASE_URL,
+      }),
+    },
   };
 
   // Quick health check

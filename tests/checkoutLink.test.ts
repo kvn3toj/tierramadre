@@ -85,3 +85,29 @@ describe('buildPaymentLink — reused-order expiry anchors on the hold start, no
     );
   });
 });
+
+describe('buildPaymentLink — llaves de un ambiente contra la base del otro', () => {
+  const originalEnv = { ...process.env };
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  it('no arma el link: devuelve el sentinel WOMPI_ENV_MISMATCH en vez de mandar al cliente al ambiente equivocado', async () => {
+    process.env.WOMPI_PUBLIC_KEY = 'pub_test_x';
+    process.env.WOMPI_INTEGRITY_SECRET = 'prod_integrity_x';
+    process.env.WOMPI_BASE_URL = 'https://production.wompi.co/v1';
+    const { WOMPI_ENV_MISMATCH } = await import('../api/_lib/checkoutLink');
+    const link = await buildPaymentLink(
+      {
+        saleId: 'VB-0008',
+        totalCOP: 1_000_000,
+        appUrl: 'https://tierramadre.app',
+        contact: {},
+        now: NOW,
+      },
+      'wompi',
+    );
+    expect(link.checkoutUrl).toBeNull();
+    expect(link.error).toBe(WOMPI_ENV_MISMATCH);
+  });
+});

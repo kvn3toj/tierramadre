@@ -99,6 +99,9 @@
     },
     "api/mp-webhook.ts": {
       "maxDuration": 15
+    },
+    "api/wompi-webhook.ts": {
+      "maxDuration": 30
     }
   },
   "headers": [

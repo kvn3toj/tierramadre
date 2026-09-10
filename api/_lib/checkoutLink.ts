@@ -12,6 +12,7 @@
  */
 
 import { buildCheckoutUrl } from './wompi.js';
+import { resolveWompiEnv } from './wompiEnv.js';
 import { buildPreference, createPreference } from './mp-preference.js';
 import { RESERVA_TTL_MS } from '../../convex/_lib/reservas.js';
 
@@ -29,6 +30,13 @@ const CONOCIDOS: PaymentProviderName[] = ['mercadopago', 'wompi'];
  * cambiaría en silencio el código de estado que ve el bot en vivo.
  */
 export const WOMPI_NOT_CONFIGURED = 'WOMPI_NOT_CONFIGURED';
+/**
+ * Llaves de un ambiente contra la base (o secretos) del otro. Se trata igual
+ * que «no configurado» — la venta ya existe, no hay link — porque mandar al
+ * cliente al ambiente equivocado sería peor que no mandarlo: Wompi rechaza
+ * la firma y el cliente ve un error ajeno con una piedra ya reservada.
+ */
+export const WOMPI_ENV_MISMATCH = 'WOMPI_ENV_MISMATCH';
 export const MP_NOT_CONFIGURED = 'MP_NOT_CONFIGURED';
 
 /**
@@ -80,6 +88,17 @@ export async function buildPaymentLink(
       const integritySecret = process.env.WOMPI_INTEGRITY_SECRET;
       if (!publicKey || !integritySecret) {
         return { checkoutUrl: null, error: WOMPI_NOT_CONFIGURED };
+      }
+      const ambiente = resolveWompiEnv({
+        WOMPI_PUBLIC_KEY: publicKey,
+        WOMPI_PRIVATE_KEY: process.env.WOMPI_PRIVATE_KEY,
+        WOMPI_INTEGRITY_SECRET: integritySecret,
+        WOMPI_EVENTS_SECRET: process.env.WOMPI_EVENTS_SECRET,
+        WOMPI_BASE_URL: process.env.WOMPI_BASE_URL,
+      });
+      if (ambiente.status === 'mismatch') {
+        console.error(`[checkoutLink] ${WOMPI_ENV_MISMATCH}: ${ambiente.detail}`);
+        return { checkoutUrl: null, error: WOMPI_ENV_MISMATCH };
       }
       return {
         checkoutUrl: buildCheckoutUrl(

@@ -189,6 +189,9 @@ export const SESSION_KEYS = {
   SESSION: 'tierra-madre-session',
   FILTER_ACTIVITY: 'treasure-filter-activity',
   CART: 'tierramadre-cart',
+  /** Idioma con el que el cliente abrió la hoja de pago — lo lee
+   *  `/pedido-confirmado` al volver de Wompi (la redirección no lo trae). */
+  CHECKOUT_LANG: 'tierramadre-checkout-lang',
   AUTH: 'tierra-madre-auth',
   CHUNK_RELOAD: 'tm_chunk_reload',
 } as const;
