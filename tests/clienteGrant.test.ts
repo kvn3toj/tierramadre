@@ -9,9 +9,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   mintSessionToken,
   verifySessionToken,
+  verifyAnySessionToken,
 } from '../api/_lib/sessionToken';
-import { verifySessionToken as verifySessionTokenConvex } from '../convex/_lib/sessionToken';
-import { resolveGrant } from '../api/_lib/catalogGrant';
+import {
+  verifySessionToken as verifySessionTokenConvex,
+  verifyAnySessionToken as verifyAnySessionTokenConvex,
+} from '../convex/_lib/sessionToken';
+import { isStaffSession } from '../convex/_lib/requireStaffSession';
+import { resolveGrant, bearerWasRejected } from '../api/_lib/catalogGrant';
 import {
   projectForGrant,
   projectAsesoresForGrant,
@@ -35,15 +40,26 @@ const neverCalled = vi.fn(async () => {
 });
 
 describe('session token con sello de cliente', () => {
-  it('round-trips lvl=cliente en Node y en el espejo Convex', async () => {
+  it('verifyAny round-trips lvl=cliente en Node y en el espejo Convex', async () => {
     const token = mintSessionToken('cliente@gmail.com', { lvl: 'cliente' })!;
-    expect(verifySessionToken(token)?.lvl).toBe('cliente');
-    expect((await verifySessionTokenConvex(token))?.lvl).toBe('cliente');
+    expect(verifyAnySessionToken(token)?.lvl).toBe('cliente');
+    expect((await verifyAnySessionTokenConvex(token))?.lvl).toBe('cliente');
   });
 
-  it('un token sin sello no trae lvl (staff, como siempre)', () => {
+  it('el verificador de STAFF rechaza el token sellado en Node y en Convex', async () => {
+    // Ésta es la propiedad que mantiene ciertos todos los gates escritos
+    // sobre la premisa "sólo el roster puede acuñar un tms1".
+    const token = mintSessionToken('cliente@gmail.com', { lvl: 'cliente' })!;
+    expect(verifySessionToken(token)).toBeNull();
+    expect(await verifySessionTokenConvex(token)).toBeNull();
+    expect(await isStaffSession(token)).toBe(false);
+  });
+
+  it('un token sin sello sigue siendo staff en los dos verificadores', async () => {
     const token = mintSessionToken('asesor@tierramadre.app')!;
+    expect(verifySessionToken(token)?.email).toBe('asesor@tierramadre.app');
     expect(verifySessionToken(token)?.lvl).toBeUndefined();
+    expect(await isStaffSession(token)).toBe(true);
   });
 });
 
@@ -62,6 +78,13 @@ describe('resolveGrant para clientes', () => {
       lookupVitrina: neverCalled,
     });
     expect(g).toEqual({ kind: 'staff' });
+  });
+
+  it('un bearer de cliente válido NO cuenta como rechazado (sin doble fetch)', async () => {
+    const token = mintSessionToken('cliente@gmail.com', { lvl: 'cliente' });
+    const r = req({ authorization: `Bearer ${token}` });
+    const g = await resolveGrant(r, { lookupVitrina: neverCalled });
+    expect(bearerWasRejected(r, g)).toBe(false);
   });
 });
 

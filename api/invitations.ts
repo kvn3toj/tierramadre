@@ -24,7 +24,11 @@ import {
   generateShortCode,
 } from './_lib/index.js';
 import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
-import { isSessionToken, verifySessionToken } from './_lib/sessionToken.js';
+import {
+  isSessionToken,
+  verifySessionToken,
+  verifyAnySessionToken,
+} from './_lib/sessionToken.js';
 import { extractBearer } from './_lib/bearer.js';
 import { api } from '../convex/_generated/api.js';
 import { puedeFijarMultiplicador } from '../src/utils/permisosMultiplicador.js';
@@ -327,7 +331,9 @@ async function resolveInvitationCaller(
   // 1. Token → verified email.
   let email: string | null = null;
   if (isSessionToken(idToken)) {
-    email = verifySessionToken(idToken)?.email ?? null;
+    // verifyANY: un cliente autorregistrado también invita (2026-09-09); su
+    // nivel sale del roster lookup de abajo, no del token.
+    email = verifyAnySessionToken(idToken)?.email ?? null;
   } else {
     email = await verifyGoogleIdTokenEmail(idToken);
   }
@@ -982,7 +988,13 @@ export default withApiHandler(
         guestCurrencyMode: body.guestCurrencyMode
           ? String(body.guestCurrencyMode)
           : undefined,
-        guestMultiplier: sanitizeMultiplier(body.guestMultiplier),
+        // Quien no puede fijar multiplicador (asesor, cliente…) invita a x1,
+        // decida lo que decida el cuerpo del POST — la UI ya lo oculta, y
+        // esto es lo que lo vuelve verdad también sin la UI.
+        guestMultiplier:
+          creator.isAdmin || puedeFijarMultiplicador(creator.accessLevel)
+            ? sanitizeMultiplier(body.guestMultiplier)
+            : 1,
       };
 
       // 1) Convex — the validation path reads from here when enabled, so this

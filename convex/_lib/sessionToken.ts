@@ -27,6 +27,19 @@ export interface SessionTokenPayload {
   lvl?: 'cliente';
 }
 
+/**
+ * STAFF-ONLY verify (mirror of api/_lib/sessionToken.ts): a token carrying
+ * the `lvl` stamp of a cliente never passes. Every Convex gate that treats
+ * "verifies" as "is staff" (isStaffSession, verifyCallerIdentity) relies on
+ * this. Use verifyAnySessionToken only where a cliente is legitimate.
+ */
+export async function verifySessionToken(
+  token: string,
+): Promise<SessionTokenPayload | null> {
+  const payload = await verifyAnySessionToken(token);
+  return payload && payload.lvl === undefined ? payload : null;
+}
+
 /** Cheap shape check so authz can route session tokens vs Google ID tokens. */
 export function isSessionToken(token: string): boolean {
   return token.startsWith(`${PREFIX}.`);
@@ -55,7 +68,7 @@ function base64UrlToUtf8(b64url: string): string {
  * (malformed, tampered, expired, secret missing) — never throws. Callers
  * should treat null exactly like an invalid Google ID token.
  */
-export async function verifySessionToken(
+export async function verifyAnySessionToken(
   token: string,
 ): Promise<SessionTokenPayload | null> {
   const secret = process.env.ADMIN_SYNC_TOKEN;

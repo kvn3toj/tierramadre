@@ -661,7 +661,8 @@ export const zh = {
     privateAccess: '私密访问',
     colombianEmeralds: 'Colombian Emeralds',
     invitationOnly: '仅限邀请访问',
-    invitationOnlyMessage: '访客访问需要邀请链接。请向 Tierra Madre 大使索取。',
+    invitationOnlyMessage:
+      '点击“使用 Google 继续”即可直接进入带价格的目录。邀请链接是另一种方式，由 Tierra Madre 大使分享。',
     inAppBrowserTitle: '为了更好的体验',
     inAppBrowserMessage:
       '请在您常用的浏览器（Chrome、Safari 等）中打开，以使用 Google 登录。',

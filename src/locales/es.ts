@@ -683,7 +683,7 @@ export const es = {
     colombianEmeralds: 'Colombian Emeralds',
     invitationOnly: 'Acceso solo con invitación',
     invitationOnlyMessage:
-      'El acceso de invitado requiere un enlace de invitación. Solicita uno a un embajador de Tierra Madre.',
+      'Con «Continuar con Google» entras directo al catálogo con precios. El enlace de invitación es la otra puerta: lo comparte un embajador de Tierra Madre.',
     // In-app browser (Telegram, Instagram, etc.) messages
     inAppBrowserTitle: 'Para una mejor experiencia',
     inAppBrowserMessage:

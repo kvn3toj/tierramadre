@@ -10,7 +10,7 @@
  */
 import type { VercelRequest } from '@vercel/node';
 import { extractBearer, bearerMatches } from './bearer.js';
-import { isSessionToken, verifySessionToken } from './sessionToken.js';
+import { isSessionToken, verifyAnySessionToken } from './sessionToken.js';
 import type { Grant } from './catalogProjection.js';
 
 /** Same shape check VitrinaContent uses (VitrinaPage.tsx:57). */
@@ -43,7 +43,9 @@ function verifiedSession(
 ): { email: string; lvl?: 'cliente' } | null {
   const token = extractBearer(authHeader);
   if (!token || !isSessionToken(token)) return null;
-  const payload = verifySessionToken(token);
+  // verifyANY: the catalog is one of the three places a stamped cliente
+  // token is legitimate — it is what grants them prices.
+  const payload = verifyAnySessionToken(token);
   return payload ? { email: payload.email, lvl: payload.lvl } : null;
 }
 
@@ -97,6 +99,6 @@ export async function resolveGrant(
  * (recoverable — the client should refresh and retry).
  */
 export function bearerWasRejected(req: VercelRequest, grant: Grant): boolean {
-  if (grant.kind === 'staff') return false;
+  if (grant.kind === 'staff' || grant.kind === 'cliente') return false;
   return extractBearer(req.headers?.authorization) !== null;
 }

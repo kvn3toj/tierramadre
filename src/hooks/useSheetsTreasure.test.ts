@@ -34,6 +34,9 @@ vi.mock('../utils/sessionToken', () => ({
   ensureAppSession: ensureAppSessionMock,
   readFreshAuthToken: () => auth.token,
   readFreshSessionToken: () => auth.token,
+  // Staff token in every scenario here; the cliente skip is covered by the
+  // real implementation (decodes the token) — see clienteGrant.test.ts.
+  sessionTokenLevel: () => undefined,
 }));
 
 import { useSheetsTreasure } from './useSheetsTreasure';

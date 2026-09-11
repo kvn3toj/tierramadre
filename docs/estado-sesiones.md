@@ -38,6 +38,37 @@ cuenta — y su ausencia ya costó caro: ver la entrada del 2026-08-23 16:10.
 ```
 
 ## Historial
+### 2026-09-09 23:30 — `feat/nuevos-clientes-google` → `main` (tercer push) — cierre de la revisión: el token de cliente ya no pasa por staff
+- Qué encontró la revisión (8 lentes en paralelo + refutadores, todos confirmaron): el diseño de la
+  mañana asumía que "un tms1 válido prueba roster", y esa premisa está escrita en `isStaffSession`
+  (Convex) y en varios `api/*` (`cotizacion-reports`, `cotizacion-save`, `product-views`,
+  `create-product-folders`, `vitrina`, `ambassador-handle`, `fotosintesis-ai`). Con el token
+  sellado de un cliente, todos esos gates abrían. **P0, estuvo vivo en prod entre el primer push
+  (~17:45) y este.**
+- Fix central: `verifySessionToken` (Node y espejo Convex) ahora devuelve null para cualquier token
+  con `lvl`; `verifyAnySessionToken` es el que acepta clientes y sólo lo usan el grant del catálogo,
+  el refresh de mint-session y el lookup del creador de invitaciones. Test que lo fija:
+  `tests/clienteGrant.test.ts` («el verificador de STAFF rechaza el token sellado…»).
+- También: un roster **inactivo** ya no entra como cliente (tri-estado en validate); la escritura
+  a `new-users` es `values.update` en rango cerrado (no `append` abierto); la lectura por email no
+  crea la pestaña; duplicados fallan cerrado; `/grupo/` y la ficha de reventa en `CLIENTE_PATHS`;
+  `bearerWasRejected` ya no dobla el fetch del catálogo para clientes; multiplicador x1 forzado en
+  servidor para quien no puede fijarlo; el fallback al WhatsApp de la casa sólo cuando el directorio
+  respondió y el creador no figura (match por email, no por subcadena de nombre); el cliente no
+  hereda un multiplicador de staff del localStorage; cambio de nivel en la re-validación re-acuña
+  el token; el espejo a Convex `clients` ya NO empuja a la hoja `Clientes` (upsert por nombre podía
+  pisar un cliente real) — la fila de hoja del cliente es `new-users`; el Directorio muestra
+  `tipo: 'cliente'` como cliente final; el pull de asesores sólo matchea contra embajadores.
+- Vercel: sí, push directo a `main`. Convex: vía el build de Vercel (cambia `verifySessionToken`,
+  `isStaffSession`, `clients.upsertAppClientFromServer`; sin cambio de esquema).
+- Verificación: lint limpio, vitest en verde (41 en las 4 suites tocadas, total en verde), build OK.
+  Sigue **sin probar** el alta real con un Gmail (el botón de Google no responde a clics
+  automatizados); pendiente manual.
+- Pendiente / riesgo: un cliente puede crear invitaciones pero no tiene pantalla para listarlas o
+  vencerlas (`/mi-perfil` es de asesor); el GET sin auth de validate devuelve el nombre de Google de
+  un cliente registrado (P3, decisión de producto); la sección del menú se llama "Herramientas de
+  venta" para un cliente (P3).
+
 ### 2026-09-09 18:30 — `feat/nuevos-clientes-google` → `main` (segundo push) — clientes invitan, y quedan también en Convex
 - Tocó: `convex/clients.ts` (**función nueva** `upsertAppClientFromServer`, secreto compartido,
   upsert por `by_email`, `tipo: 'cliente'`, agenda `_pushToSheet` → hoja `Clientes`),
@@ -204,3 +235,57 @@ Costó una investigación entera el 2026-08-23. El método, por si sirve:
    tiene, las ramas que no lo declaran habrían fallado la validación.
 4. `function-spec` trae entradas **sin `identifier`** (las HttpActions de `/sync/foto`). Contar
    entradas da 316 y contar identificadores únicos da 315. No es un deploy intermedio, es método.
+
+## 2026-09-10 · 18:20 — SOT-v6-Inventario creado (espejo de Convex en libro propio); el padrón pasa a llamarse TM-Padrón-Usuarios
+
+- **Qué:** libro `SOT-v6-Inventario` (`1iYFuW0nhixIlXE9yXQNhbFr3BIYRQZMRNPtx1QO9mig`) con
+  `Léeme`, `Inventario` (59 col = `FOTO_INVENTARIO_HEADERS`), `Lotes`/`Sublotes`/`Ventas`/
+  `Proveedores`/`Clientes`/`MovimientosAsesor` (cabeceras y orden = `TABLE_CONFIGS`, porque
+  `admin-table-update` escribe POSICIONAL), `Listas` y `Calidades`. **Nace limpio** (Kevin,
+  18:35): sólo cabeceras + catálogos. La primera corrida copió 577 filas de SOT v3 (0 celdas
+  distintas) y se vació con `--vaciar`; `--semilla-v3` queda como opción. Validación con aviso desde `Listas`, formato
+  condicional, vistas, protecciones con aviso, rangos con nombre, Quiet Emerald. Compartido
+  con la service account; humanos: decisión de Kevin. Spec:
+  `docs/specs/2026-09-10-sot-v6-inventario.md`; script `scripts/crear-sot-v6-inventario.ts`.
+- **Decisión (Kevin):** inventario y usuarios en libros distintos. `SOT-*` = linaje del
+  inventario; `TM-*` = satélites de la app. El padrón se renombró a `TM-Padrón-Usuarios`
+  (mismo ID `1N5UEIx1…`). Estilo compartido extraído a `scripts/_lib/sheets-estilo.mjs`.
+- **La app NO lo lee ni lo escribe** (medido: `SPREADSHEET_ID` y `FOTOSINTESIS_SPREADSHEET_ID`
+  apuntan ambos a SOT v3). Repunte propuesto en la spec: primero `FOTOSINTESIS_SPREADSHEET_ID`
+  (escrituras), `SPREADSHEET_ID` sólo tras el Stage 1 del padrón.
+- **Observado, no hecho por esta sesión:** `TM-Padrón-Usuarios` apareció compartido con cinco
+  humanos (tech, cvocmnty, vikinga, direccion, angelagarces) a las 18:05; a las 16:45 sólo
+  tenía dueño + service account y los scripts sólo agregan la service account.
+- **Tropiezos:** el formato condicional no acepta `Listas!G2:G100` de otra pestaña (→
+  `INDIRECT`); el batch atómico falló después de escribir valores y se retomó con `--continue`;
+  el primer `--vaciar` también borró Listas/Calidades (filtro mal puesto) → `--catalogos` los
+  recopió y el filtro ya excluye catálogos.
+- Vercel: no. Convex: no. Commit local, **sin push** (regla del 2026-09-10).
+
+## 2026-09-10 · 15:30 — SOT-v6-Usuarios creado (padrón de acceso en un libro nuevo)
+
+- **Qué:** libro `SOT-v6-Usuarios` (`1N5UEIx1vsjkknysAWAhGe0NBazeeHe53LUZ0PVBYwmo`, en Mi unidad
+  junto al SOT v3) con `Léeme`, `Usuarios` (36 filas migradas de Asesores + Proveedores-con-email +
+  new-users, sin inventar valores, 0 roles sin mapear), `Perfiles`, `Estados`, `Accesos`, `Revisiones`.
+  Validación estricta por dropdown, protecciones con aviso, rangos con nombre, vistas de filtro,
+  formato condicional (clientes gris, no activos rojo, emails duplicados naranja). Compartido con la
+  service account (writer). Spec: `docs/specs/2026-09-10-sot-v6-usuarios.md`; script
+  `scripts/crear-sot-v6-usuarios.mjs` (dry-run → `--apply`; `--continue` retoma formato).
+- **La app NO lo lee todavía** (medido: los seis lectores siguen en SOT v3). Repunte = Stage 1
+  con `USUARIOS_SPREADSHEET_ID` + `ROSTER_UNIFICADO`. Hasta entonces, altas en SOT v3.
+- **Hallazgos del día, sin corregir:** (1) el cliente registrado en `new-users` el 2026-09-10T01:0x
+  UTC no está en Convex `clients` — el espejo se desplegó dos horas después (f7110a8) y nada lo
+  rellena; (2) `ultimoAcceso`/`accesos` de `new-users` nunca cambian tras el primer registro:
+  sólo `register-client` escribe, `mint-session` y el GET sólo leen; (3) `idioma` queda vacío
+  porque el ID token de Google ya no trae `locale`; (4) el comentario de `api/validate.ts:507`
+  dice que el espejo empuja a la hoja `Clientes` y no lo hace. Fix propuesto: que `mint-session`
+  también haga `upsertClient` + espejo cuando resuelve una fila de cliente.
+- **Tropiezo:** el libro se crea con locale `es_CO`, así que las fórmulas de formato condicional
+  van con `;` — la primera corrida falló en el batch (atómico) y se retomó con `--continue`.
+- **16:40 — restyle con la paleta Quiet Emerald** (cabeceras deepGreen + Montserrat, bandas,
+  pestañas coloreadas, avisos en marrón tierra) y `--continue` hecho idempotente (borra la
+  decoración previa y reescribe el Léeme). Verificado en Chrome pestaña por pestaña y por
+  lectura API (36/36 emails, validaciones estrictas, 3 vistas, 5 protecciones, 3 rangos).
+  Defecto encontrado y corregido: la banda alterna tapaba la cabecera (`headerColor`).
+- **Commit local sin push** (el push anterior 3be8ee8 fue un error de proceso: sólo docs+script,
+  sin código de app; en adelante se empuja sólo cuando el usuario lo pida).
