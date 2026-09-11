@@ -544,6 +544,7 @@ function VitrinaContent({ code, itemId }: { code: string; itemId?: string }) {
           onAddToCart={addToCart}
           isInCart={isInCart(selected.item)}
           tv={tv}
+          lang={lang}
         />
         <CarritoFlotante count={cartCount} />
       </VitrinaShell>

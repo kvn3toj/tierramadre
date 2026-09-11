@@ -1,11 +1,14 @@
 # Wompi — Setup y checklist de cutover a producción
 
-> Estado al **19 ago 2026**. El código del riel Wompi (Tasks 1-6) está mergeado y
-> probado con tests unitarios. **La verificación end-to-end en sandbox
-> (credenciales reales, orden de prueba, pago con tarjeta de prueba, replay del
-> webhook) todavía no se hizo** — requiere acceso al dashboard de Vercel y de
-> Wompi que este documento no tiene. Este archivo es el runbook para quien la
-> haga. Nada secreto se guarda en este repo.
+> Estado al **9 sep 2026**. El riel Wompi completo (fases 1-3: servidor, reserva +
+> endpoint público, checkout in-app) está en `main` y desplegado. **La verificación
+> end-to-end en sandbox SÍ se hizo, dos veces, el 2026-08-23** (venta `VO-0001`
+> por API y `VO-0004` desde el navegador: `confirmada · wompi · APPROVED`, replay del
+> webhook → `already-paid`, checksum forjado → 401; ver `docs/estado-sesiones.md`
+> entradas del 2026-08-23 y el echo del Constructor). Lo que sigue pendiente es el
+> **cutover a llaves `prod_`** (sección 6): Production tiene llaves de test desde el
+> 2026-08-23 y el endpoint público está bloqueado por la regla WAF
+> `checkout-publico-llaves-test` hasta que se haga. Nada secreto se guarda en este repo.
 
 ## 1 · Los cuatro tipos de credencial y dónde viven
 
@@ -129,9 +132,11 @@ quien tenga acceso a los dashboards de Vercel y Wompi.
    ```
    Esperado: `{"order_id":"VB-…","total_cop":…,"checkout_url":"https://checkout.wompi.co/p/?…"}`.
 3. Abrir `checkout_url` y pagar con una [tarjeta de prueba de Wompi](https://docs.wompi.co/docs/en/datos-de-prueba-en-sandbox).
-4. **Se espera un 404** en la redirección a `/pedido-confirmado/<saleId>` — esa
-   ruta es trabajo de la fase 3 y todavía no existe. Esto no afecta el pago en
-   sí; el webhook es lo que confirma la venta, no la redirección del navegador.
+4. La redirección aterriza en `/pedido-confirmado/<saleId>`
+   (`src/pages/PedidoConfirmadoPage.tsx`, suscripción viva a `sales.estadoPublico`):
+   primero «Estamos confirmando tu pago» y, cuando el webhook aterriza, «¡Pago
+   confirmado!». La página nunca trata `reservada` como error — el webhook es lo
+   que confirma la venta, no la redirección del navegador.
 5. En el dashboard de Convex, ubicar la venta por `saleId` y confirmar:
    - `estado` = `confirmada`
    - `paymentProvider` = `wompi`, `providerTxId` = el id de transacción de
@@ -152,44 +157,70 @@ quien tenga acceso a los dashboards de Vercel y Wompi.
 
 ## 6 · Checklist de cutover a producción
 
-Solo cambian credenciales y la URL base; el código no se toca.
+Solo cambian credenciales y la URL base; el código no se toca. Desde el
+2026-09-09 el código **sí comprueba la coherencia** de las cinco variables
+(`api/_lib/wompiEnv.ts`): una llave `test_` contra la base de producción, o al
+revés, ya no arma ningún link — devuelve `WOMPI_ENV_MISMATCH` y queda en el log.
+`GET /api/health` publica `payments.wompi.status` (`ok` / `incomplete` /
+`mismatch` / `unset`) y `payments.wompi.env` (`sandbox` / `production`) **sin
+exponer ningún valor**: es la verificación de cada paso de abajo.
 
-1. En Vercel → `tierra-madre-studio` → Production → Environment Variables,
-   reemplazar los cuatro valores `test_`/`test_integrity_`/`test_events_` por
-   sus equivalentes `prod_`:
-   - `WOMPI_PUBLIC_KEY` → `pub_prod_…`
-   - `WOMPI_PRIVATE_KEY` → `prv_prod_…`
-   - `WOMPI_INTEGRITY_SECRET` → `prod_integrity_…`
-   - `WOMPI_EVENTS_SECRET` → `prod_events_…`
-2. `WOMPI_BASE_URL` → `https://production.wompi.co/v1`.
-3. Registrar (o confirmar) el webhook en el **ambiente de producción** del
-   dashboard de Wompi: `https://tierramadre.app/api/wompi-webhook`.
-4. Redeploy de Production en Vercel.
-5. Verificar con **un pago real de monto bajo**: confirmar que la venta pasa a
-   `confirmada` con `paymentProvider: 'wompi'` y que se generó la comisión
-   correspondiente (si aplica).
+0. Estado de partida: `curl -s https://tierramadre.app/api/health | jq .data.payments`
+   debe decir `{ provider: "wompi", wompi: { status: "ok", env: "sandbox" } }`.
+1. Cargar los cinco valores `prod_` en Vercel, **en el mismo paso**. Por CLI,
+   desde un archivo fuera del repo (una línea `NOMBRE=valor` por variable, sin
+   comillas), que se borra al terminar:
+   ```bash
+   while IFS='=' read -r name value; do
+     printf '%s' "$value" | npx vercel env add "$name" production --sensitive --force
+   done < ~/wompi-prod.env && rm -P ~/wompi-prod.env
+   ```
+   Los cinco nombres: `WOMPI_PUBLIC_KEY` (`pub_prod_…`), `WOMPI_PRIVATE_KEY`
+   (`prv_prod_…`), `WOMPI_INTEGRITY_SECRET` (`prod_integrity_…`),
+   `WOMPI_EVENTS_SECRET` (`prod_events_…`), `WOMPI_BASE_URL`
+   (`https://production.wompi.co/v1`). En el dashboard es lo mismo, marcando
+   **Sensitive**.
+2. Registrar (o confirmar) el webhook en el **ambiente de producción** del
+   dashboard de Wompi: `https://tierramadre.app/api/wompi-webhook`. El secreto de
+   eventos de producción es el que firma esos eventos — si no coincide con
+   `WOMPI_EVENTS_SECRET`, el endpoint responde 401 y la venta nunca se confirma.
+3. Redeploy de Production en Vercel (`npx vercel redeploy <url-del-último-deploy-prod>`,
+   o un push a `main`). Las variables se leen en el arranque de cada function.
+4. Verificar: `/api/health` → `payments.wompi` = `{ status: "ok", env: "production" }`.
+   Si dice `mismatch`, el `detail` nombra qué variables quedaron de cada lado.
+5. Levantar el WAF: `npx vercel firewall rules remove checkout-publico-llaves-test
+   && npx vercel firewall publish`. Control: `curl -s -o /dev/null -w '%{http_code}'
+   -X POST https://tierramadre.app/api/checkout-create-order -H 'Content-Type: application/json' -d '{}'`
+   pasa de **403** (edge) a **400** (validación del endpoint).
+6. Verificar con **un pago real de monto bajo**: confirmar que la venta pasa a
+   `confirmada` con `paymentProvider: 'wompi'`, `providerTxId` igual al del
+   comprobante, y que se generó la comisión correspondiente (si aplica). Reenviar
+   el evento desde el depurador de Wompi → `already-paid`, una sola comisión.
+7. Anotar la entrada en `docs/estado-sesiones.md` (versión servida, deploy id,
+   hora, y el resultado del pago de prueba).
 
-## 7 · Pregunta abierta — unicidad de `reference`
+## 7 · Unicidad de `reference` — CERRADA el 2026-09-09
 
-La documentación de Wompi no especifica si una transacción con `reference`
-repetido (nuestro `reference` es el `saleId` de Convex) es aceptada en un
-reintento o rechazada. Nuestro webhook es idempotente de cualquier forma —
-`markOrderPaid` solo cambia el estado una vez — así que un reintento con la
-misma `reference` es inofensivo en el peor de los casos.
+Wompi **exige una `reference` única por transacción** y rechaza una repetida con
+422 `INPUT_VALIDATION_ERROR: "La referencia ya ha sido usada"` (docs
+`transacciones/`, `errores/`, `widget-checkout-web/`; detalle y fuentes en
+`docs/audits/2026-09-09-wompi-legal-y-trazabilidad.md`, fila A4). Con
+`reference = saleId` y `findReusableSale` devolviendo la misma venta a un segundo
+clic, un cliente cuyo primer intento salía `DECLINED` no podía reintentar su
+propio pedido.
 
-**Si** la corrida en sandbox (sección 5) muestra que Wompi **rechaza** una
-`reference` duplicada, el plan B ya está documentado y listo para implementar:
+Implementado el plan B, con `_` como separador (el charset de Wompi es
+alfanumérico + `-` + `_`; `formatSaleId` nunca produce `_`):
 
-- `reference` pasa a ser `${saleId}~${n}`, con `n` persistido en la venta.
-- `api/wompi-webhook.ts` recupera el `saleId` real con
-  `transaction.reference.split('~')[0]` antes de llamar a `markOrderPaid`
-  (los `saleId` contienen `-` pero nunca `~`, así que el corte es seguro).
+- `sales.paymentAttempts` cuenta los links emitidos (1 en el insert; +1 por cada
+  reutilización en `createOrder`).
+- `reference = ${saleId}_${n}` (`api/_lib/wompi.ts` → `buildReference`).
+- `api/wompi-webhook.ts` recupera el `saleId` con `saleIdFromReference` (corte en
+  el primer `_`; una referencia sin sufijo — links emitidos antes — vuelve intacta).
+- MercadoPago no cambia: `external_reference = saleId`.
 
-Esto queda **pendiente de la corrida en sandbox** — no se ha ejecutado
-todavía, así que esta sección no se puede cerrar desde este documento. El
-resultado real debe registrarse en
-`docs/superpowers/specs/2026-08-19-wompi-payment-rail-design.md`, reemplazando
-la frase "Esto se verifica en sandbox…" por lo que efectivamente ocurrió.
+Queda **NO VERIFICADO** si un intento `DECLINED` (no sólo `APPROVED`) consume la
+referencia; el diseño lo cubre en ambos casos.
 
 ## 8 · Bre-B: no existe para cobrar
 
