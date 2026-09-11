@@ -665,7 +665,7 @@ export const pt = {
     colombianEmeralds: 'Colombian Emeralds',
     invitationOnly: 'Acesso somente por convite',
     invitationOnlyMessage:
-      'O acesso de visitante requer um link de convite. Solicite um a um embaixador Tierra Madre.',
+      '«Continuar com Google» leva você direto ao catálogo com preços. O link de convite é a outra porta: um embaixador da Tierra Madre o compartilha.',
     inAppBrowserTitle: 'Para uma melhor experiência',
     inAppBrowserMessage:
       'Abra no seu navegador preferido (Chrome, Safari, etc.) para entrar com o Google.',
@@ -812,5 +812,16 @@ export const pt = {
     shareTextOne: 'Esta peça é para você 💚',
     whatsappMessage: 'Estas peças são para você 💚 ({n} peças)\n{link}',
     whatsappMessageOne: 'Esta peça é para você 💚\n{link}',
+  },
+
+  // Clientes autorregistrados con Google (2026-09-09): catálogo con precio,
+  // consulta por WhatsApp a la línea de la casa, y el descargo bajo el precio.
+  cliente: {
+    priceDisclaimer:
+      'Todos os nossos preços estão sujeitos a alterações sem aviso prévio. Aproveite a tarifa do eterno presente.',
+    consultWhatsApp: 'Consultar pelo WhatsApp',
+    addToSelection: 'Adicionar à seleção',
+    inSelection: 'Na sua seleção · Ver',
+    cartBanner: 'Sua consulta será enviada à Tierra Madre pelo WhatsApp',
   },
 };

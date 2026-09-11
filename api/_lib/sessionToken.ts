@@ -44,6 +44,18 @@ export interface SessionTokenPayload {
   email: string;
   iat: number;
   exp: number;
+  /**
+   * Nivel del portador cuando NO es staff. Ausente = staff (roster de
+   * Asesores/Proveedores), que es lo que significaban todos los tokens
+   * emitidos antes del 2026-09-09. `'cliente'` = autorregistrado con Google
+   * (hoja `new-users`): el resolvedor de grants del catálogo lo baja a la
+   * proyección de vitrina en vez de darle el catálogo crudo.
+   */
+  lvl?: 'cliente';
+}
+
+export interface MintSessionOptions {
+  lvl?: SessionTokenPayload['lvl'];
 }
 
 function hmacHex(secret: string, message: string): string {
@@ -61,7 +73,10 @@ export function isSessionToken(token: string): boolean {
  * membership before calling. Returns null when ADMIN_SYNC_TOKEN isn't
  * configured (fail closed).
  */
-export function mintSessionToken(email: string): string | null {
+export function mintSessionToken(
+  email: string,
+  options: MintSessionOptions = {},
+): string | null {
   const secret = process.env.ADMIN_SYNC_TOKEN;
   if (!secret) return null;
   const now = Math.floor(Date.now() / 1000);
@@ -69,6 +84,7 @@ export function mintSessionToken(email: string): string | null {
     email: email.toLowerCase().trim(),
     iat: now,
     exp: now + SESSION_TTL_SECONDS,
+    ...(options.lvl ? { lvl: options.lvl } : {}),
   };
   const b64 = Buffer.from(JSON.stringify(payload), 'utf8').toString(
     'base64url',
@@ -78,11 +94,30 @@ export function mintSessionToken(email: string): string | null {
 }
 
 /**
- * Verifies signature + expiry and returns the payload, or null on ANY problem
- * (malformed, tampered, expired, secret missing) — never throws. Callers
- * should treat null exactly like an invalid Google ID token (401).
+ * STAFF-ONLY verify: signature + expiry, and the token must carry NO `lvl`
+ * stamp. Returns null on ANY problem (malformed, tampered, expired, secret
+ * missing, or a cliente token) — never throws. Callers should treat null
+ * exactly like an invalid Google ID token (401). Every gate that was written
+ * on the premise "only roster members can mint a tms1" keeps that premise by
+ * using this function; a cliente's stamped token is invisible to it.
  */
 export function verifySessionToken(token: string): SessionTokenPayload | null {
+  const payload = verifyAnySessionToken(token);
+  return payload && payload.lvl === undefined ? payload : null;
+}
+
+/**
+ * Verifies signature + expiry and returns the payload INCLUDING a possible
+ * `lvl` stamp. Only for the three places where a cliente token is legitimate:
+ * the catalog grant (api/_lib/catalogGrant.ts), the rolling refresh in
+ * mint-session, and the invitation creator lookup. Everywhere else use
+ * `verifySessionToken`, which rejects stamped tokens — that is what keeps
+ * every "a valid tms1 proves staff" gate in api/ and convex/ true after
+ * clientes started receiving tokens (2026-09-09).
+ */
+export function verifyAnySessionToken(
+  token: string,
+): SessionTokenPayload | null {
   const secret = process.env.ADMIN_SYNC_TOKEN;
   if (!secret) return null;
 

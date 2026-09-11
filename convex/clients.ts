@@ -1,6 +1,7 @@
 import {
   query,
   action,
+  mutation,
   internalMutation,
   internalQuery,
 } from './_generated/server';
@@ -10,6 +11,7 @@ import { pushTableRowToVercel } from './_lib/sheetSync';
 import { marshalRow } from './_lib/columnMaps';
 import { planAsesorUpsert } from './_lib/asesorSync';
 import { requireAccessLevel } from './_lib/authz';
+import { ConvexError } from 'convex/values';
 import { isStaffSession } from './_lib/requireStaffSession';
 import type { Id } from './_generated/dataModel';
 
@@ -98,6 +100,57 @@ export const create = action({
   ): Promise<{ id: Id<'clients'> }> => {
     await requireAccessLevel(idToken, ['admin']);
     return await ctx.runMutation(internal.clients._create, args);
+  },
+});
+
+/**
+ * Alta de un cliente autorregistrado con Google (2026-09-09). La identidad ya
+ * la verificó `/api/validate?action=register-client` con el ID token; este
+ * secreto compartido (ADMIN_SYNC_TOKEN, mismo patrón que
+ * invitations.createFromServer) prueba que quien llama es ese backend y no un
+ * navegador. Upsert por email: la primera vez inserta `tipo: 'cliente'`; las
+ * siguientes sólo devuelven el id, sin tocar nada que un admin haya editado.
+ */
+export const upsertAppClientFromServer = mutation({
+  args: {
+    secret: v.string(),
+    email: v.string(),
+    nombre: v.string(),
+    telefono: v.optional(v.string()),
+  },
+  handler: async (ctx, { secret, email, nombre, telefono }) => {
+    const expected = process.env.ADMIN_SYNC_TOKEN;
+    if (!expected || secret !== expected) {
+      throw new ConvexError('No autorizado.');
+    }
+    const normalized = email.toLowerCase().trim();
+    const existing = await ctx.db
+      .query('clients')
+      .withIndex('by_email', (q) => q.eq('email', normalized))
+      .first();
+    if (existing) return { id: existing._id, created: false };
+
+    const now = new Date().toISOString();
+    const all = await ctx.db.query('clients').collect();
+    const maxRow = all.reduce((m, c) => Math.max(m, c.rowIndex), 1);
+    // Sin espejo a la hoja `Clientes`: ese riel upserta por NOMBRE (columna
+    // A), y el nombre de Google de un cliente puede coincidir con el de un
+    // cliente real del CRM y pisarle la fila. La fila de hoja de un cliente
+    // autorregistrado es la de `new-users`, que register-client ya escribió
+    // antes de llamar acá. `syncStatus: 'synced'` = no hay nada pendiente de
+    // empujar, no "aterrizó en Clientes".
+    const id = await ctx.db.insert('clients', {
+      nombre: nombre.trim() || normalized.split('@')[0],
+      email: normalized,
+      telefono,
+      tipo: 'cliente',
+      canalOrigen: 'app-google',
+      rowIndex: maxRow + 1,
+      lastPulledAt: now,
+      lastPushedAt: now,
+      syncStatus: 'synced' as const,
+    });
+    return { id, created: true };
   },
 });
 
@@ -328,9 +381,11 @@ export const _upsertManyAsesores = internalMutation({
   },
   handler: async (ctx, { rows }) => {
     const existing = await ctx.db.query('clients').collect();
+    // Sólo los embajadores participan del match por nombre: un cliente
+    // autorregistrado que se llame como un asesor no debe absorber su email.
     const plan = planAsesorUpsert(
       rows,
-      existing.map((c) => ({
+      existing.filter((c) => c.tipo === 'embajador').map((c) => ({
         _id: c._id,
         nombre: c.nombre,
         email: c.email,

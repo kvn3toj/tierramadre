@@ -30,17 +30,22 @@ export const usePermissions = (): Permission => {
     // "Special guest": can browse + share Vitrinas, but is NOT staff — treated
     // like a guest for editing/upload/download so it gains no admin powers.
     const isInvitadoEspecial = accessLevel === 'invitado_especial';
+    // Self-registered client: browses with prices, nothing else. Treated like
+    // a guest for every write/upload/download gate.
+    const isCliente = accessLevel === 'cliente';
     const isStaff = isAdmin || isEmbajador || isAsesor;
+    const isAudience = isGuest || isCliente;
 
     return {
-      canEdit: !isGuest && !isProvider && !isInvitadoEspecial,
-      canUpload: !isGuest && !isInvitadoEspecial,
-      canDownload: !isGuest && !isProvider && !isInvitadoEspecial,
+      canEdit: !isAudience && !isProvider && !isInvitadoEspecial,
+      canUpload: !isAudience && !isInvitadoEspecial,
+      canDownload: !isAudience && !isProvider && !isInvitadoEspecial,
       isAdmin,
       isProvider,
       isEmbajador,
       isAsesor,
       isInvitadoEspecial,
+      isCliente,
       canViewPrices: !isProvider, // Providers cannot see prices
       canUseManualProduct: isAdmin || isEmbajador, // Only admin and embajador can use manual products
       // Who may fix the multiplier that determines a Vitrina's sale price.

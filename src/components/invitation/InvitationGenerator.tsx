@@ -49,6 +49,7 @@ import {
   CredentialResponse,
 } from '@react-oauth/google';
 import { useInvitation } from '../../hooks/useInvitation';
+import { useIsCliente } from '../../hooks/useAuth';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useGoogleAuth } from '../../contexts/GoogleAuthContext';
@@ -110,6 +111,11 @@ export default function InvitationGenerator({
   const [guestCurrency, setGuestCurrency] = useState<GuestCurrencyMode>('COP');
   const [guestMultiplier, setGuestMultiplier] = useState<GuestMultiplier>(4);
   const [formError, setFormError] = useState('');
+  // Un cliente autorregistrado invita a precio de lista: elige la moneda,
+  // pero sin multiplicador (ver puedeFijarMultiplicador — no está en el
+  // allowlist). El x1 se manda explícito para que el invitado no herede otro.
+  const isCliente = useIsCliente();
+  const effectiveMultiplier: GuestMultiplier = isCliente ? 1 : guestMultiplier;
 
   const isFormValid =
     guestName.trim().length > 0 &&
@@ -152,7 +158,7 @@ export default function InvitationGenerator({
       guestContact: contactInfo,
       contactType,
       ...(showPrices && { guestCurrencyMode: guestCurrency }),
-      ...(showPrices && { guestMultiplier }),
+      ...(showPrices && { guestMultiplier: effectiveMultiplier }),
     });
   };
 
@@ -634,80 +640,91 @@ export default function InvitationGenerator({
                     </ToggleButtonGroup>
                   </Box>
 
-                  {/* Multiplier label + value badge */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      mb: 0.5,
-                    }}
-                  >
-                    <Typography sx={{ ...qeType.overline, color: qe.muted }}>
-                      {inv.priceMultiplier}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        ...qeType.data,
-                        fontSize: '0.82rem',
-                        fontWeight: 600,
-                        color: qe.accent,
-                        bgcolor: tint(0.1),
-                        px: 1,
-                        py: 0.15,
-                        borderRadius: qeRadius.sm,
-                        border: `1px solid ${tint(0.22)}`,
-                      }}
-                    >
-                      x{guestMultiplier}
-                    </Typography>
-                  </Box>
+                  {/* Multiplier label + value badge — staff only */}
+                  {!isCliente && (
+                    <>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          mb: 0.5,
+                        }}
+                      >
+                        <Typography
+                          sx={{ ...qeType.overline, color: qe.muted }}
+                        >
+                          {inv.priceMultiplier}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            ...qeType.data,
+                            fontSize: '0.82rem',
+                            fontWeight: 600,
+                            color: qe.accent,
+                            bgcolor: tint(0.1),
+                            px: 1,
+                            py: 0.15,
+                            borderRadius: qeRadius.sm,
+                            border: `1px solid ${tint(0.22)}`,
+                          }}
+                        >
+                          x{guestMultiplier}
+                        </Typography>
+                      </Box>
 
-                  {/* Slider with range labels */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      px: 0.25,
-                    }}
-                  >
-                    <Typography sx={{ ...qeType.spec, color: qe.subtle }}>
-                      x1
-                    </Typography>
-                    <Slider
-                      value={guestMultiplier}
-                      onChange={(_e, val) => setGuestMultiplier(val as number)}
-                      min={1}
-                      max={4}
-                      step={0.1}
-                      valueLabelDisplay="auto"
-                      valueLabelFormat={(v) => `x${v}`}
-                      aria-label={inv.priceMultiplier}
-                      aria-valuetext={`x${guestMultiplier}`}
-                      sx={{
-                        color: qe.accent,
-                        '& .MuiSlider-rail': { opacity: 1, bgcolor: qe.border },
-                        '& .MuiSlider-thumb': {
-                          width: 18,
-                          height: 18,
-                          boxShadow: `0 0 0 2px ${qe.surface}`,
-                          '&:hover, &.Mui-focusVisible': {
-                            boxShadow: `0 0 0 6px ${tint(0.16)}`,
-                          },
-                        },
-                        '& .MuiSlider-valueLabel': {
-                          fontFamily: qeFont.mono,
-                          fontSize: '0.72rem',
-                          bgcolor: qe.accentStrong,
-                          color: qe.onAccent,
-                        },
-                      }}
-                    />
-                    <Typography sx={{ ...qeType.spec, color: qe.subtle }}>
-                      x4
-                    </Typography>
-                  </Box>
+                      {/* Slider with range labels */}
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          px: 0.25,
+                        }}
+                      >
+                        <Typography sx={{ ...qeType.spec, color: qe.subtle }}>
+                          x1
+                        </Typography>
+                        <Slider
+                          value={guestMultiplier}
+                          onChange={(_e, val) =>
+                            setGuestMultiplier(val as number)
+                          }
+                          min={1}
+                          max={4}
+                          step={0.1}
+                          valueLabelDisplay="auto"
+                          valueLabelFormat={(v) => `x${v}`}
+                          aria-label={inv.priceMultiplier}
+                          aria-valuetext={`x${guestMultiplier}`}
+                          sx={{
+                            color: qe.accent,
+                            '& .MuiSlider-rail': {
+                              opacity: 1,
+                              bgcolor: qe.border,
+                            },
+                            '& .MuiSlider-thumb': {
+                              width: 18,
+                              height: 18,
+                              boxShadow: `0 0 0 2px ${qe.surface}`,
+                              '&:hover, &.Mui-focusVisible': {
+                                boxShadow: `0 0 0 6px ${tint(0.16)}`,
+                              },
+                            },
+                            '& .MuiSlider-valueLabel': {
+                              fontFamily: qeFont.mono,
+                              fontSize: '0.72rem',
+                              bgcolor: qe.accentStrong,
+                              color: qe.onAccent,
+                            },
+                          }}
+                        />
+                        <Typography sx={{ ...qeType.spec, color: qe.subtle }}>
+                          x4
+                        </Typography>
+                      </Box>
+                    </>
+                  )}
 
                   {/* Live price preview */}
                   <Box
@@ -735,8 +752,8 @@ export default function InvitationGenerator({
                       }}
                     >
                       {guestCurrency === 'COP'
-                        ? `$${(2_000_000 * guestMultiplier).toLocaleString('es-CO')} COP`
-                        : `$${Math.round((2_000_000 / 4200) * guestMultiplier).toLocaleString('en-US')} USD`}
+                        ? `$${(2_000_000 * effectiveMultiplier).toLocaleString('es-CO')} COP`
+                        : `$${Math.round((2_000_000 / 4200) * effectiveMultiplier).toLocaleString('en-US')} USD`}
                     </Typography>
                   </Box>
                 </Box>

@@ -22,6 +22,7 @@ const INVITE_LEVELS = [
   'asesor',
   'provider',
   'invitado_especial',
+  'cliente', // autorregistrado con Google (hoja new-users), 2026-09-09
 ] as const;
 
 // ─── Queries ────────────────────────────────────────────────────────

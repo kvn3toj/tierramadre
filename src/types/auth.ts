@@ -10,6 +10,13 @@
  */
 export type AccessLevel =
   | 'guest'
+  /**
+   * 'cliente': self-registered with Google (2026-09-09). Not on any roster —
+   * the sign-in wrote them to the SOT v3 `new-users` tab. Browses the treasure
+   * catalog WITH prices, builds a selection, and asks by WhatsApp to the house
+   * line. No invitations, vitrinas, cotizaciones, ambassadors or admin.
+   */
+  | 'cliente'
   | 'invitado_especial'
   | 'asesor'
   | 'embajador'
@@ -30,6 +37,8 @@ export interface Permission {
   isEmbajador: boolean;
   isAsesor: boolean;
   isInvitadoEspecial: boolean;
+  /** Self-registered client (see AccessLevel 'cliente'). */
+  isCliente: boolean;
   canViewPrices: boolean;
   canUseManualProduct: boolean;
   /** Can fix a Vitrina's sale-price multiplier (admin, embajador, invitado especial — NOT asesor). */

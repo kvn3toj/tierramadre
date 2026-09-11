@@ -174,11 +174,22 @@ export function GoogleAuthProvider({
               validateData.user
             ) {
               // User found in Asesores - update role/accessLevel in case it changed
+              const levelChanged =
+                parsedUser.accessLevel !== validateData.user.accessLevel;
               parsedUser.role = validateData.user.role;
               parsedUser.accessLevel = validateData.user.accessLevel;
               setUser(parsedUser);
               setIsAuthorized(true);
               localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(parsedUser));
+              // The app session token carries the level it was minted with
+              // (a cliente's is stamped). If the roster says the level moved
+              // — cliente promoted to asesor, or the reverse — drop the old
+              // token and mint one that matches, so the catalog grant and the
+              // UI agree instead of drifting for up to 10 days.
+              if (levelChanged) {
+                clearAppSession();
+                void ensureAppSession();
+              }
               log.debug('User re-validated successfully:', {
                 email: parsedUser.email,
                 role: parsedUser.role,
@@ -526,14 +537,53 @@ export function GoogleAuthProvider({
               provider: validateData.provider?.name,
             });
           } else {
-            // User email not found in any authorized list - BLOCK ACCESS
-            setIsAuthorized(false);
-            setAuthError(
-              'Tu correo no está registrado en el sistema. Contacta al administrador.',
+            // Not on any roster. Since 2026-09-09 that is not a rejection:
+            // the verified Google credential registers them as a `cliente`
+            // in the SOT v3 `new-users` tab (server-side, token-verified —
+            // never from the bare email above).
+            const registerResponse = await fetch(
+              '/api/validate?action=register-client',
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken: credential }),
+              },
             );
-            log.warn('User not authorized - access blocked:', profile.email);
-            setIsLoading(false);
-            return; // Don't store user or continue
+            const registerData = await registerResponse.json();
+            if (
+              registerResponse.ok &&
+              registerData.success &&
+              registerData.isAuthorized &&
+              registerData.user
+            ) {
+              profile.role = registerData.user.role;
+              profile.accessLevel = registerData.user.accessLevel;
+              setIsAuthorized(true);
+              log.debug('Client registered:', {
+                email: profile.email,
+                accessLevel: profile.accessLevel,
+              });
+            } else if (
+              registerResponse.ok &&
+              registerData.success &&
+              registerData.isProvider &&
+              registerData.provider
+            ) {
+              profile.role = 'Proveedor';
+              profile.accessLevel = 'provider';
+              setIsAuthorized(true);
+            } else {
+              // Blocked client row, or the registration itself failed.
+              setIsAuthorized(false);
+              setAuthError(
+                registerData?.reason === 'blocked'
+                  ? 'Tu cuenta no está activa. Escríbenos por WhatsApp para ayudarte.'
+                  : 'No pudimos crear tu cuenta. Intenta nuevamente.',
+              );
+              log.warn('Client registration declined:', profile.email);
+              setIsLoading(false);
+              return; // Don't store user or continue
+            }
           }
         } catch (validateError) {
           log.error('Validation API error:', validateError);

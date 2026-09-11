@@ -10,6 +10,7 @@ import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 import type { CartItem } from '../types/cart';
 import type { Asesor } from './useAsesores';
 import { formatCarats } from '../utils/formatting';
+import { HOUSE_WHATSAPP } from '../constants/contact';
 
 // Admin contacts - these are the only people staff can contact
 const ADMIN_NAMES = [
@@ -46,6 +47,8 @@ interface UseWhatsAppContactReturn {
   // Actions
   openWhatsAppToInviter: (items: CartItem[]) => Promise<void>;
   openWhatsAppToAdmin: (items: CartItem[], adminName: string) => Promise<boolean>;
+  /** Clientes autorregistrados: la consulta va a la línea de la casa. */
+  openWhatsAppToHouse: (items: CartItem[], senderName?: string) => void;
   checkGuestHistory: () => Promise<GuestHistoryResult>;
   fetchAdmins: () => Promise<AdminInfo[]>;
   // State
@@ -309,6 +312,17 @@ export function useWhatsAppContact(): UseWhatsAppContactReturn {
   );
 
   /**
+   * Open WhatsApp to the house line (self-registered clients). Same product
+   * details message as the other two flows — no prices in it.
+   */
+  const openWhatsAppToHouse = useCallback(
+    (items: CartItem[], senderName?: string): void => {
+      openWhatsApp(HOUSE_WHATSAPP, formatCartMessage(items, senderName));
+    },
+    [],
+  );
+
+  /**
    * Open WhatsApp to selected admin (for staff)
    * Returns true if WhatsApp was opened successfully, false otherwise
    */
@@ -357,6 +371,7 @@ export function useWhatsAppContact(): UseWhatsAppContactReturn {
   return {
     openWhatsAppToInviter,
     openWhatsAppToAdmin,
+    openWhatsAppToHouse,
     checkGuestHistory,
     fetchAdmins,
     isLoading,

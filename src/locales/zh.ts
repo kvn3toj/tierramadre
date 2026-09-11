@@ -637,7 +637,8 @@ export const zh = {
     privateAccess: '私密访问',
     colombianEmeralds: 'Colombian Emeralds',
     invitationOnly: '仅限邀请访问',
-    invitationOnlyMessage: '访客访问需要邀请链接。请向 Tierra Madre 大使索取。',
+    invitationOnlyMessage:
+      '点击“使用 Google 继续”即可直接进入带价格的目录。邀请链接是另一种方式，由 Tierra Madre 大使分享。',
     inAppBrowserTitle: '为了更好的体验',
     inAppBrowserMessage:
       '请在您常用的浏览器（Chrome、Safari 等）中打开，以使用 Google 登录。',
@@ -777,5 +778,16 @@ export const zh = {
     shareTextOne: '这件宝石是为你挑选的 💚',
     whatsappMessage: '这些宝石是为你挑选的 💚（{n} 件）\n{link}',
     whatsappMessageOne: '这件宝石是为你挑选的 💚\n{link}',
+  },
+
+  // Clientes autorregistrados con Google (2026-09-09): catálogo con precio,
+  // consulta por WhatsApp a la línea de la casa, y el descargo bajo el precio.
+  cliente: {
+    priceDisclaimer:
+      '我们的所有价格如有变动，恕不另行通知。把握“永恒当下”的价格。',
+    consultWhatsApp: '通过 WhatsApp 咨询',
+    addToSelection: '加入选品',
+    inSelection: '已在选品中 · 查看',
+    cartBanner: '您的咨询将通过 WhatsApp 发送给 Tierra Madre',
   },
 };

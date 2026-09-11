@@ -58,6 +58,18 @@ export const STOREFRONT_SLOTS: readonly TabSlot[] = [
   { id: 'more', label: 'Menú', icon: MenuIcon, action: true },
 ] as const;
 
+// Self-registered clients: the catalog is their whole app. Tesoros + Menú.
+export const CLIENTE_SLOTS: readonly TabSlot[] = [
+  {
+    id: 'treasure',
+    label: 'Tesoros',
+    icon: EmeraldCutIcon as TabSlot['icon'],
+    route: '/treasure',
+    match: 'prefix',
+  },
+  { id: 'more', label: 'Menú', icon: MenuIcon, action: true },
+] as const;
+
 // Provider variant keeps its four direct places; no action slot. Mirrors the
 // provider tabs the old IOSTabBar shipped — Cotizar (/provider/submit) stays a
 // direct tab, so providers reach quoting in one tap (no Menú indirection).

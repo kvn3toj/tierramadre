@@ -119,6 +119,9 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
         // Don't fall through to localStorage for guests — avoid stale asesor values
         return DEFAULT_MULTIPLIER;
       }
+      // A cliente autorregistrado always sees list price: never inherit a
+      // staff multiplier left in localStorage on a shared browser.
+      if (accessLevel === 'cliente') return DEFAULT_MULTIPLIER;
       const saved = localStorage.getItem(STORAGE_KEYS.CURRENCY_MULTIPLIER);
       const parsed = saved ? Number(saved) : NaN;
       return (!isNaN(parsed) && parsed >= MIN_MULTIPLIER && parsed <= MAX_MULTIPLIER) ? normalizeMultiplier(parsed) : DEFAULT_MULTIPLIER;

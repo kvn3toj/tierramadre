@@ -23,7 +23,13 @@ import { ConvexError } from 'convex/values';
 import { isSessionToken, verifySessionToken } from './sessionToken';
 
 export type AccessLevel =
-  'admin' | 'asesor' | 'embajador' | 'provider' | 'invitado_especial' | 'guest';
+  | 'admin'
+  | 'asesor'
+  | 'embajador'
+  | 'provider'
+  | 'invitado_especial'
+  | 'cliente' // autorregistrado con Google (hoja new-users); nunca en un allowlist
+  | 'guest';
 
 /**
  * Los roles que pueden ver DATOS DE COSTO: el gasto fijo vigente, el conteo de

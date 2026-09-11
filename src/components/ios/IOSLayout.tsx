@@ -43,9 +43,11 @@ import {
 import {
   STOREFRONT_SLOTS,
   PROVIDER_SLOTS,
+  CLIENTE_SLOTS,
   storefrontTabTheme,
 } from '../navigation/tabBarConfig';
 import { useIsProvider } from '../../hooks/usePermissions';
+import { useIsCliente } from '../../hooks/useAuth';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useThemeMode } from '../../contexts/ThemeContext';
 
@@ -283,6 +285,7 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
   // Providers get their own direct-place bar; everyone else gets the storefront
   // bar. Selection is by permission (not path), same as the old IOSTabBar.
   const isProvider = useIsProvider();
+  const isCliente = useIsCliente();
 
   // Bóveda / Esmereogénesis is a cinematic desktop scope: at ≥ desktop width it
   // hands navigation to its slim left side-nav, so the bottom bar AUTO-HIDES
@@ -554,7 +557,13 @@ const IOSLayout: React.FC<IOSLayoutProps> = ({ children }) => {
           sx={{ display: 'contents' }}
         >
           <TabBar
-            slots={isProvider ? PROVIDER_SLOTS : STOREFRONT_SLOTS}
+            slots={
+              isProvider
+                ? PROVIDER_SLOTS
+                : isCliente
+                  ? CLIENTE_SLOTS
+                  : STOREFRONT_SLOTS
+            }
             theme={storefrontTabTheme(mode)}
             onAction={() => setMoreSheetOpen(true)}
             actionOpen={moreSheetOpen}
