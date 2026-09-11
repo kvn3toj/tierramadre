@@ -813,4 +813,299 @@ export const pt = {
     whatsappMessage: 'Estas peças são para você 💚 ({n} peças)\n{link}',
     whatsappMessageOne: 'Esta peça é para você 💚\n{link}',
   },
+
+  // TIENDA — the public storefront (/tienda).
+  // Mirrors the `tienda` namespace schema in es.ts, key for key.
+  tienda: {
+    shell: {
+      tienda: 'Loja',
+      back: 'Voltar',
+      menu: 'Menu',
+      openMenu: 'Abrir menu',
+      closeMenu: 'Fechar menu',
+      toLight: 'Mudar para o modo claro',
+      toDark: 'Mudar para o modo escuro',
+      language: 'Idioma',
+      sampleNotice: 'Catálogo de amostra. Peças e preços de referência.',
+      skipToContent: 'Ir para o conteúdo',
+    },
+
+    nav: {
+      /** Nombre del landmark <nav>, no un enlace: un lector de pantalla
+       *  anunciaba «Colecciones, navegación» porque reusábamos la
+       *  etiqueta del primer enlace para nombrar la región entera. */
+      landmark: 'Navegação da loja',
+      colecciones: 'Coleções',
+      laCasa: 'A casa',
+      seleccion: 'Minha seleção',
+      contacto: 'Contato',
+    },
+
+    puerta: {
+      eyebrow: 'Tierra Mädre',
+      title: 'Duas coleções',
+      lead: 'Esmeralda colombiana, feita à mão. Escolha por onde quer começar.',
+    },
+
+    eyebrowColeccion: 'Coleção',
+
+    categorias: {
+      joyeria: {
+        nombre: 'Joalheria',
+        resumen: '2 desenhos · 4 montagens',
+        descripcion:
+          'Peças sob encomenda, montadas sobre esmeralda colombiana. Cada desenho é trabalhado em quatro montagens e se ajusta a quem vai usá-lo.',
+      },
+      simbolos: {
+        nombre: 'Símbolos Renacer',
+        resumen: '3 peças',
+        descripcion:
+          'Três peças que levam a Colômbia consigo. Nasceram de uma campanha e ficaram como símbolo de paz, esperança e irmandade.',
+      },
+    },
+
+    montura: 'Montagem',
+    metales: {
+      'plata-925': 'Prata 925',
+      'oro-18k': 'Ouro 18k',
+      'oro-blanco': 'Ouro branco 18k',
+      'oro-rosa': 'Ouro rosé 18k',
+    },
+    metalesCorto: {
+      'plata-925': 'Prata',
+      'oro-18k': 'Ouro',
+      'oro-blanco': 'Ouro branco',
+      'oro-rosa': 'Ouro rosé',
+    },
+    disponibilidad: {
+      'hecho-a-medida': 'Feito sob medida',
+      'en-stock': 'Em estoque',
+    },
+
+    ficha: {
+      detalles: 'Detalhes',
+      cta: 'Pedir esta peça',
+      ctaAyuda:
+        'Escrevemos para você pelo WhatsApp. Nada é cobrado nesta etapa.',
+      comprar: 'Comprar agora',
+      comprarAyuda: 'Pagamento simulado. Nenhum cartão é cobrado.',
+      sobreElTope:
+        'Esta peça ultrapassa o limite por transação do nosso provedor de pagamentos. A compra se fecha conversando com a casa.',
+    },
+
+    productos: {
+      'anillo-compromiso': {
+        nombre: 'Anel de Noivado',
+        subtitulo: 'Um só engaste, uma só pedra.',
+        descripcion:
+          'A esmeralda é montada em garras altas para que a luz entre pelos quatro lados. O aro é ajustado à mão sobre o tamanho exato de quem vai usá-lo, por isso nenhuma cópia sai igual à anterior.',
+        detalles: [
+          'Esmeralda colombiana de lapidação retangular, cravada em garras altas',
+          'Aro forjado à mão e ajustado ao tamanho exato',
+          'Entrega estimada: 3 a 4 semanas',
+          'Certificado de origem e garantia vitalícia sobre o engaste',
+        ],
+      },
+      'pulsera-infinito': {
+        nombre: 'Pulseira Infinito',
+        subtitulo: 'O laço que não tem começo.',
+        descripcion:
+          'Duas curvas que se cruzam sem se fechar, sustentando uma esmeralda no ponto em que se tocam. É trabalhada em fio contínuo, então a peça não tem solda visível em toda a volta.',
+        detalles: [
+          'Nó infinito em fio contínuo, sem solda visível',
+          'Esmeralda cravada no cruzamento',
+          'Fecho ajustável de 16 a 19 cm',
+          'Entrega estimada: 2 a 3 semanas',
+        ],
+      },
+      'mapa-colombia': {
+        nombre: 'Mapa Colombia',
+        subtitulo: 'O país, do tamanho de um pingente.',
+        descripcion:
+          'O contorno da Colômbia recortado em prata, com uma esmeralda plantada sobre Boyacá, onde nascem as pedras. Usa-se no pescoço, em corrente curta.',
+        detalles: [
+          'Contorno vazado à mão em prata 925',
+          'Esmeralda de origem boyacense cravada sobre a cordilheira',
+          'Corrente de 45 cm incluída',
+          'Entrega estimada: 2 semanas',
+        ],
+      },
+      'manilla-colombia': {
+        nombre: 'Manilla Colombia',
+        subtitulo: 'Mais que uma pulseira: um símbolo.',
+        descripcion:
+          'Fio trançado nas cores da bandeira, arrematado em prata com uma esmeralda pequena. Nasceu como peça de campanha e ficou como símbolo de paz, esperança e irmandade.',
+        detalles: [
+          'Trançado à mão em fio encerado',
+          'Arremate em prata 925 com esmeralda de 2 mm',
+          'Tamanho único, fecho corrediço',
+          'Entrega estimada: 1 semana',
+        ],
+      },
+      'palabra-colombia': {
+        nombre: 'Palabra Colombia',
+        subtitulo: 'Oito letras, uma esmeralda.',
+        descripcion:
+          'A palavra COLOMBIA vazada em uma única lâmina de prata, com o primeiro O convertido em um engaste que sustenta a pedra. Usa-se como pingente ou como placa em corrente longa.',
+        detalles: [
+          'Letras vazadas em uma única lâmina de prata 925',
+          'Esmeralda cravada dentro do primeiro O',
+          'Corrente longa de 60 cm incluída',
+          'Entrega estimada: 2 semanas',
+        ],
+      },
+    },
+
+    seleccion: {
+      title: 'Minha seleção',
+      enter: 'Selecionar',
+      exit: 'Pronto',
+      add: 'Adicionar à minha seleção',
+      added: 'Na sua seleção',
+      remove: 'Retirar da minha seleção',
+      count: '{n} peças escolhidas',
+      countOne: '1 peça escolhida',
+      clear: 'Esvaziar',
+      view: 'Ver seleção',
+      full: 'Você pode escolher até {n} peças.',
+      emptyTitle: 'Sua seleção está vazia',
+      emptyBody: 'Marque as peças de que gostar e nós as reunimos aqui.',
+      emptyCta: 'Ver as coleções',
+      share: 'Compartilhar',
+      linkCopied: 'Link copiado',
+      linkCopyFailed: 'Não conseguimos copiar o link.',
+      whatsapp: 'Enviar pelo WhatsApp',
+      whatsappMessage: 'Olá, tenho interesse nestas peças da Tierra Mädre:',
+      whatsappMessageOne: 'Olá, tenho interesse nesta peça da Tierra Mädre:',
+      whatsappTail: '…e mais {n}.',
+      announceAdded: '{nombre} adicionada à sua seleção. {n} no total.',
+      announceRemoved: '{nombre} retirada da sua seleção. {n} no total.',
+    },
+
+    pago: {
+      resumenTitle: 'Seu pedido',
+      pieces: 'Peças',
+      total: 'Total',
+      datos: 'Seus dados',
+      nombre: 'Nome completo',
+      celular: 'Celular',
+      email: 'E-mail (opcional)',
+      documento: 'Documento',
+      direccion: 'Endereço de entrega',
+      ciudad: 'Cidade',
+      consent: 'Li e aceito os termos e a política de tratamento de dados.',
+      consentRequired: 'Precisamos da sua aceitação para continuar.',
+      pay: 'Pagar',
+      paying: 'Enviando…',
+      simulated: 'Simulação',
+      simulatedBody:
+        'Esta versão não cobra. Escolha um desfecho para ver como a loja responde.',
+      scenario: 'Desfecho simulado',
+      backToShop: 'Continuar vendo',
+      estado: {
+        confirmando: 'Confirmando seu pagamento',
+        confirmandoBody:
+          'Seu pedido foi registrado. Estamos aguardando a confirmação do banco, costuma levar alguns segundos.',
+        confirmada: 'Pagamento confirmado',
+        confirmadaBody:
+          'Obrigado. Escrevemos para você pelo WhatsApp para combinar a entrega.',
+        cancelada: 'O pagamento não foi concluído',
+        canceladaBody:
+          'Nenhuma cobrança foi feita. Você pode tentar de novo ou escrever para nós e resolvemos isso com você.',
+        tardando:
+          'Está demorando mais que o normal. Escreva para nós e olhamos isso com você.',
+        notFound: 'Não encontramos esse pedido',
+        notFoundBody:
+          'Confira o link, ou escreva para nós com o número que informamos.',
+      },
+      pedido: 'Pedido',
+      retry: 'Tentar de novo',
+      writeUs: 'Escreva para nós',
+      whatsappPedido: 'Olá, escrevo sobre o pedido {id}.',
+    },
+
+    laCasa: {
+      title: 'A casa',
+      lead: 'Esmeraldas colombianas com DNA de paz.',
+      body1:
+        'A Tierra Mädre nasceu em torno de uma ideia simples: que uma pedra saída da montanha colombiana possa contar de onde vem e a quem deixou algo pelo caminho.',
+      body2:
+        'Trabalhamos com lapidários e joalheiros do país. Cada peça é feita sob encomenda, então o que você vê aqui é o desenho, e o que você recebe é seu.',
+      contact: 'Falar com a casa',
+    },
+
+    legal: {
+      terminos: 'Termos e condições',
+      privacidad: 'Política de tratamento de dados',
+      retracto: 'Direito de arrependimento',
+      contacto: 'Contato',
+      pendingTitle: 'Em preparação',
+      pendingBody:
+        'Este texto legal depende da informação oficial da empresa. Não o redigimos por conta própria.',
+      sellerLabel: 'Vendedor',
+      lead: {
+        terminos:
+          'As condições de venda da casa: o que se compra, a que preço e com que garantia.',
+        privacidad:
+          'Que dados pessoais pedimos, para que os usamos e como podem ser pedidos de volta.',
+        retracto:
+          'Como se desfaz uma compra dentro do prazo que a lei colombiana concede.',
+        contacto: 'Os canais pelos quais a casa responde.',
+      },
+      indexTitle: 'O que vai conter',
+      secciones: {
+        terminos: [
+          'Identificação do vendedor',
+          'Âmbito e aceitação',
+          'Preços, impostos e moeda',
+          'Meios de pagamento',
+          'Envio e prazos de entrega',
+          'Garantia legal',
+          'Trocas e devoluções',
+          'Atendimento ao consumidor e reclamações',
+          'Lei aplicável',
+        ],
+        privacidad: [
+          'Responsável pelo tratamento',
+          'Dados que recolhemos',
+          'Finalidades do tratamento',
+          'Autorização do titular',
+          'Direitos do titular',
+          'Canal de consultas e reclamações',
+          'Segurança e conservação',
+          'Operadores e transferências',
+          'Vigência da política',
+        ],
+        retracto: [
+          'Prazo para exercer o arrependimento',
+          'Compras a que se aplica',
+          'Exceções',
+          'Como comunicar a decisão',
+          'Estado em que a peça é devolvida',
+          'Custos de transporte',
+          'Prazo e meio de devolução do dinheiro',
+          'Canal para registar o pedido',
+        ],
+      },
+      sellerPending: 'Pendente: razão social, NIT e endereço do vendedor.',
+    },
+
+    footer: {
+      colecciones: 'Coleções',
+      laCasa: 'A casa',
+      contacto: 'Contato',
+      legal: 'Legal',
+      rights: 'Tierra Mädre · Esmeraldas colombianas com DNA de paz',
+    },
+
+    notFound: {
+      coleccionTitle: 'Essa coleção não existe',
+      coleccionBody:
+        'Talvez o link esteja incompleto ou a coleção tenha mudado de nome.',
+      piezaTitle: 'Essa peça não existe',
+      piezaBody:
+        'Talvez o link esteja incompleto ou a peça já não esteja na coleção.',
+      cta: 'Ver as coleções',
+    },
+  },
 };

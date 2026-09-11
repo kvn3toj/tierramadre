@@ -811,4 +811,301 @@ export const en = {
     whatsappMessage: 'These pieces are for you 💚 ({n} pieces)\n{link}',
     whatsappMessageOne: 'This piece is for you 💚\n{link}',
   },
+
+  // Public shop (/tienda) — mirrors the `tienda` namespace in es.ts, which is
+  // the schema. Piece copy is resolved by slug; keys must stay identical.
+  tienda: {
+    shell: {
+      tienda: 'Shop',
+      back: 'Back',
+      menu: 'Menu',
+      openMenu: 'Open menu',
+      closeMenu: 'Close menu',
+      toLight: 'Switch to light mode',
+      toDark: 'Switch to dark mode',
+      language: 'Language',
+      sampleNotice: 'Sample catalogue. Reference pieces and prices.',
+      skipToContent: 'Skip to content',
+    },
+
+    nav: {
+      /** Nombre del landmark <nav>, no un enlace: un lector de pantalla
+       *  anunciaba «Colecciones, navegación» porque reusábamos la
+       *  etiqueta del primer enlace para nombrar la región entera. */
+      landmark: 'Store navigation',
+      colecciones: 'Collections',
+      laCasa: 'The house',
+      seleccion: 'My selection',
+      contacto: 'Contact',
+    },
+
+    puerta: {
+      eyebrow: 'Tierra Mädre',
+      title: 'Two collections',
+      lead: 'Colombian emerald, made by hand. Choose where you would like to begin.',
+    },
+
+    eyebrowColeccion: 'Collection',
+
+    categorias: {
+      joyeria: {
+        nombre: 'Jewellery',
+        resumen: '2 designs · 4 settings',
+        descripcion:
+          'Made to order, set on Colombian emerald. Each design is worked in four settings and fitted to the person who will wear it.',
+      },
+      simbolos: {
+        nombre: 'Símbolos Renacer',
+        resumen: '3 pieces',
+        descripcion:
+          'Three pieces that carry Colombia with them. They were born of a campaign and stayed on as a symbol of peace, hope and kinship.',
+      },
+    },
+
+    montura: 'Setting',
+    metales: {
+      'plata-925': 'Silver 925',
+      'oro-18k': 'Gold 18k',
+      'oro-blanco': 'White gold 18k',
+      'oro-rosa': 'Rose gold 18k',
+    },
+    metalesCorto: {
+      'plata-925': 'Silver',
+      'oro-18k': 'Gold',
+      'oro-blanco': 'White gold',
+      'oro-rosa': 'Rose gold',
+    },
+    disponibilidad: {
+      'hecho-a-medida': 'Made to order',
+      'en-stock': 'In stock',
+    },
+
+    ficha: {
+      detalles: 'Details',
+      cta: 'Request this piece',
+      ctaAyuda:
+        'We will write to you on WhatsApp. Nothing is charged at this step.',
+      comprar: 'Buy now',
+      comprarAyuda: 'Simulated payment. No card is charged.',
+      sobreElTope:
+        'This piece is above our payment provider’s limit per transaction. It is completed by speaking with the house.',
+    },
+
+    productos: {
+      'anillo-compromiso': {
+        nombre: 'Engagement Ring',
+        subtitulo: 'One setting, one stone.',
+        descripcion:
+          'The emerald is held in high prongs so the light enters from all four sides. The band is adjusted by hand to the exact size of the person who will wear it, so no two come out alike.',
+        detalles: [
+          'Rectangular-cut Colombian emerald, held in high prongs',
+          'Band forged by hand and fitted to the exact size',
+          'Estimated delivery: 3 to 4 weeks',
+          'Certificate of origin and lifetime warranty on the setting',
+        ],
+      },
+      'pulsera-infinito': {
+        nombre: 'Infinity Bracelet',
+        subtitulo: 'The knot that has no beginning.',
+        descripcion:
+          'Two curves that cross without closing, holding an emerald where they meet. It is worked in one continuous thread, so the piece has no visible solder anywhere along its turn.',
+        detalles: [
+          'Infinity knot in one continuous thread, no visible solder',
+          'Emerald set at the crossing',
+          'Adjustable clasp, 16 to 19 cm',
+          'Estimated delivery: 2 to 3 weeks',
+        ],
+      },
+      'mapa-colombia': {
+        nombre: 'Mapa Colombia',
+        subtitulo: 'The country, the size of a pendant.',
+        descripcion:
+          'The outline of Colombia cut from silver, with an emerald set over Boyacá, where the stones are born. Worn at the neck, on a short chain.',
+        detalles: [
+          'Outline pierced by hand in 925 silver',
+          'Emerald from Boyacá set over the mountain range',
+          '45 cm chain included',
+          'Estimated delivery: 2 weeks',
+        ],
+      },
+      'manilla-colombia': {
+        nombre: 'Manilla Colombia',
+        subtitulo: 'More than a bracelet: a symbol.',
+        descripcion:
+          'Thread braided in the colours of the flag, finished in silver with a small emerald. It was born as a campaign piece and stayed on as a symbol of peace, hope and kinship.',
+        detalles: [
+          'Braided by hand in waxed thread',
+          '925 silver finish with a 2 mm emerald',
+          'One size, sliding clasp',
+          'Estimated delivery: 1 week',
+        ],
+      },
+      'palabra-colombia': {
+        nombre: 'Palabra Colombia',
+        subtitulo: 'Eight letters, one emerald.',
+        descripcion:
+          'The word COLOMBIA pierced from a single sheet of silver, with the first O turned into a setting that holds the stone. Worn as a pendant, or as a plaque on a long chain.',
+        detalles: [
+          'Letters pierced from a single sheet of 925 silver',
+          'Emerald set inside the first O',
+          '60 cm long chain included',
+          'Estimated delivery: 2 weeks',
+        ],
+      },
+    },
+
+    seleccion: {
+      title: 'My selection',
+      enter: 'Select',
+      exit: 'Done',
+      add: 'Add to my selection',
+      added: 'In your selection',
+      remove: 'Remove from my selection',
+      count: '{n} pieces chosen',
+      countOne: '1 piece chosen',
+      clear: 'Empty',
+      view: 'View selection',
+      full: 'You can choose up to {n} pieces.',
+      emptyTitle: 'Your selection is empty',
+      emptyBody: 'Mark the pieces you like and we will gather them here.',
+      emptyCta: 'View the collections',
+      share: 'Share',
+      linkCopied: 'Link copied',
+      linkCopyFailed: 'We could not copy the link.',
+      whatsapp: 'Send on WhatsApp',
+      whatsappMessage: 'Hello, I am interested in these Tierra Mädre pieces:',
+      whatsappMessageOne: 'Hello, I am interested in this Tierra Mädre piece:',
+      whatsappTail: '…and {n} more.',
+      announceAdded: '{nombre} added to your selection. {n} in total.',
+      announceRemoved: '{nombre} removed from your selection. {n} in total.',
+    },
+
+    pago: {
+      resumenTitle: 'Your order',
+      pieces: 'Pieces',
+      total: 'Total',
+      datos: 'Your details',
+      nombre: 'Full name',
+      celular: 'Mobile',
+      email: 'Email (optional)',
+      documento: 'ID number',
+      direccion: 'Delivery address',
+      ciudad: 'City',
+      consent:
+        'I have read and accept the terms and the data processing policy.',
+      consentRequired: 'We need your acceptance to continue.',
+      pay: 'Pay',
+      paying: 'Sending…',
+      simulated: 'Simulation',
+      simulatedBody:
+        'This version does not charge. Choose an outcome to see how the shop responds.',
+      scenario: 'Simulated outcome',
+      backToShop: 'Keep browsing',
+      estado: {
+        confirmando: 'Confirming your payment',
+        confirmandoBody:
+          'Your order has been recorded. We are waiting for the bank to confirm, which usually takes a few seconds.',
+        confirmada: 'Payment confirmed',
+        confirmadaBody:
+          'Thank you. We will write to you on WhatsApp to arrange delivery.',
+        cancelada: 'The payment did not go through',
+        canceladaBody:
+          'No charge was made. You can try again, or write to us and we will sort it out with you.',
+        tardando:
+          'This is taking longer than usual. Write to us and we will look into it with you.',
+        notFound: 'We could not find that order',
+        notFoundBody:
+          'Check the link, or write to us with the number we gave you.',
+      },
+      pedido: 'Order',
+      retry: 'Try again',
+      writeUs: 'Write to us',
+      whatsappPedido: 'Hello, I am writing about order {id}.',
+    },
+
+    laCasa: {
+      title: 'The house',
+      lead: 'Colombian emeralds with peace in their DNA.',
+      body1:
+        'Tierra Mädre began around a simple idea: that a stone taken from the Colombian mountains should be able to tell where it comes from, and who it left something with along the way.',
+      body2:
+        'We work with cutters and jewellers from the country. Each piece is made to order, so what you see here is the design, and what you receive is yours.',
+      contact: 'Talk with the house',
+    },
+
+    legal: {
+      terminos: 'Terms and conditions',
+      privacidad: 'Data processing policy',
+      retracto: 'Right of withdrawal',
+      contacto: 'Contact',
+      pendingTitle: 'In preparation',
+      pendingBody:
+        'This legal text is pending the company’s official information. We do not draft it on our own.',
+      sellerLabel: 'Seller',
+      lead: {
+        terminos:
+          'The house’s conditions of sale: what you buy, at what price and under what warranty.',
+        privacidad:
+          'What personal data we ask for, what we use it for and how it can be reclaimed.',
+        retracto:
+          'How a purchase is undone within the term Colombian law grants.',
+        contacto: 'The channels the house answers on.',
+      },
+      indexTitle: 'What it will cover',
+      secciones: {
+        terminos: [
+          'Seller identification',
+          'Scope and acceptance',
+          'Prices, taxes and currency',
+          'Means of payment',
+          'Shipping and delivery times',
+          'Legal warranty',
+          'Exchanges and returns',
+          'Consumer service and claims',
+          'Applicable law',
+        ],
+        privacidad: [
+          'Data controller',
+          'Data we collect',
+          'Purposes of processing',
+          'Consent of the data subject',
+          'Rights of the data subject',
+          'Channel for queries and claims',
+          'Security and retention',
+          'Processors and transfers',
+          'Term of the policy',
+        ],
+        retracto: [
+          'Term to exercise withdrawal',
+          'Purchases it applies to',
+          'Exceptions',
+          'How to notify the decision',
+          'Condition the piece is returned in',
+          'Shipping costs',
+          'Term and means of refund',
+          'Channel to file the request',
+        ],
+      },
+      sellerPending:
+        'Pending: registered name, tax ID and address of the seller.',
+    },
+
+    footer: {
+      colecciones: 'Collections',
+      laCasa: 'The house',
+      contacto: 'Contact',
+      legal: 'Legal',
+      rights: 'Tierra Mädre · Colombian emeralds with peace in their DNA',
+    },
+
+    notFound: {
+      coleccionTitle: 'That collection does not exist',
+      coleccionBody:
+        'The link may be incomplete, or the collection may have changed its name.',
+      piezaTitle: 'That piece does not exist',
+      piezaBody:
+        'The link may be incomplete, or the piece may no longer be in the collection.',
+      cta: 'View the collections',
+    },
+  },
 };

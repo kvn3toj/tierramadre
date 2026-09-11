@@ -78,6 +78,13 @@ export const zIndex = {
   hide: -1,
   /** Base layer */
   base: 0,
+  /** Celda `position: sticky` DENTRO de un contenedor con scroll propio
+   *  (cabecera de tabla). Un escalón por encima del contenido en flujo y
+   *  nada más: con `base` (0) el contenido de las filas se pinta ENCIMA de la
+   *  cabecera fija — se veía el punto de una insignia de estado atravesando
+   *  la cabecera de su columna. Deliberadamente muy por debajo de `sticky`
+   *  (500), que es para barras de la aplicación. */
+  stickyCell: 1,
   /** Sticky headers, tab bars */
   sticky: 500,
   /** Fixed navigation, scroll-to-top */

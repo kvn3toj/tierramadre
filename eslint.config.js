@@ -98,6 +98,7 @@ export default tseslint.config(
       'src/pages/ambassadors/**/*.{ts,tsx}',
       'src/components/ambassador/**/*.{ts,tsx}',
       'src/pages/mi-perfil/**/*.{ts,tsx}',
+      'src/pages/tienda/**/*.{ts,tsx}',
       'eslint-fixtures/migrated/**/*.{ts,tsx}',
     ],
     languageOptions: {
@@ -128,6 +129,26 @@ export default tseslint.config(
         {
           selector: "Property[key.name='zIndex'] > Literal[raw=/^-?[0-9]+$/]",
           message: 'DS3: no raw zIndex integers. Use the zIndex scale.',
+        },
+        // --- Ley de movimiento (DS3 §4) -----------------------------------
+        // Hasta hoy NADA en eslint la vigilaba: las cadenas 'spring',
+        // 'whileHover' y 'framer' aparecían cero veces en este archivo, así
+        // que la regla vivía sólo en la prosa del spec y se podía deshacer
+        // sin que nadie se enterara. Estos tres selectores la hacen fallar.
+        {
+          selector: "Property[key.name='type'] > Literal[value='spring']",
+          message:
+            'DS3 §4: sin resortes en UI de producto. Usa ds3Motion (ease/fast/base/slow). Los springs quedan reservados a Vault Cinema / Esmereogénesis.',
+        },
+        {
+          selector: "JSXAttribute[name.name=/^while(Hover|Tap)$/]",
+          message:
+            'DS3 §4: whileHover/whileTap escalan y reescalan al vuelo. El hover cambia color u opacidad, nunca la geometría.',
+        },
+        {
+          selector: "Property[key.name='scale']",
+          message:
+            'DS3 §4: no animes `scale`. Sólo transform-translate y opacidad; un cambio de tamaño al pasar por encima re-maqueta la fila entera.',
         },
       ],
     },

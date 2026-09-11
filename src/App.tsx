@@ -327,6 +327,45 @@ const PedidoConfirmadoPage = lazyWithRetry(
   'PedidoConfirmadoPage',
 );
 
+// Tienda pública (Storefront v2) — la puerta de dos colecciones. Ruta pública
+// sin shell, como /v/ y /c/: quien llega puede no tener sesión ninguna.
+const TiendaPage = lazyWithRetry(
+  () => import('./pages/tienda/TiendaPage'),
+  'TiendaPage',
+);
+const TiendaCategoriaPage = lazyWithRetry(
+  () => import('./pages/tienda/CategoriaPage'),
+  'TiendaCategoriaPage',
+);
+const TiendaProductoPage = lazyWithRetry(
+  () => import('./pages/tienda/ProductoPage'),
+  'TiendaProductoPage',
+);
+const TiendaSeleccionPage = lazyWithRetry(
+  () => import('./pages/tienda/SeleccionPage'),
+  'TiendaSeleccionPage',
+);
+const TiendaLaCasaPage = lazyWithRetry(
+  () => import('./pages/tienda/LaCasaPage'),
+  'TiendaLaCasaPage',
+);
+const TiendaLegalPage = lazyWithRetry(
+  () => import('./pages/tienda/LegalPage'),
+  'TiendaLegalPage',
+);
+const TiendaPagoPage = lazyWithRetry(
+  () => import('./pages/tienda/PagoPage'),
+  'TiendaPagoPage',
+);
+const TiendaPedidoPage = lazyWithRetry(
+  () => import('./pages/tienda/PedidoPage'),
+  'TiendaPedidoPage',
+);
+const TiendaAdminMockupPage = lazyWithRetry(
+  () => import('./pages/tienda/AdminMockupPage'),
+  'TiendaAdminMockupPage',
+);
+
 // Primary tabs (always visible) + secondary tabs (in "More" menu)
 export type TabValue = 'home' | 'treasure' | 'ambassadors';
 
@@ -1017,6 +1056,11 @@ function AppContent() {
 
 // Component to handle invitation routes before auth check
 function InvitationRouter() {
+  // Dev-only mientras el inventario sea de muestra. Se omiten las rutas
+  // enteras (mismo gesto que Esmereogénesis) para que con la bandera apagada
+  // /tienda caiga por el splat a WelcomeScreen y no a una pantalla muerta.
+  const tiendaEnabled = getFeatureFlag('TIENDA_PUBLICA');
+
   return (
     <Routes>
       {/* Invitation page with short code (e.g., /invite/ABC123) */}
@@ -1066,6 +1110,120 @@ function InvitationRouter() {
           </Suspense>
         }
       />
+      {/* Tienda pública: la puerta de dos colecciones, sin sesión y sin shell.
+          Va en esta capa a propósito. AuthenticatedApp manda todo lo que no
+          reconoce a WelcomeScreen, así que una ruta allí sería invisible justo
+          para el público al que existe para servir. Consecuencia aceptada, al
+          revés que /cart más abajo: el staff con sesión que entre a /tienda
+          también ve la tienda sin shell, que es exactamente lo que debe ver
+          quien necesita mirar lo mismo que el cliente. */}
+      {tiendaEnabled && (
+        <Route
+          path="/tienda"
+          element={
+            <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+              <TiendaPage />
+            </Suspense>
+          }
+        />
+      )}
+      {tiendaEnabled && (
+        <Route
+          path="/tienda/:categoria"
+          element={
+            <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+              <TiendaCategoriaPage />
+            </Suspense>
+          }
+        />
+      )}
+      {/* Rutas con segmento estático. NO dependen del orden en el JSX: React
+          Router 7 puntúa por especificidad y un segmento literal siempre gana
+          a uno dinámico, así que /tienda/seleccion nunca cae en
+          /tienda/:categoria. Se listan antes por legibilidad, no por
+          necesidad. */}
+      {tiendaEnabled && (
+        <Route
+          path="/tienda/seleccion"
+          element={
+            <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+              <TiendaSeleccionPage />
+            </Suspense>
+          }
+        />
+      )}
+      {tiendaEnabled && (
+        <Route
+          path="/tienda/la-casa"
+          element={
+            <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+              <TiendaLaCasaPage />
+            </Suspense>
+          }
+        />
+      )}
+      {tiendaEnabled &&
+        (
+          [
+            ['terminos', 'terminos'],
+            ['privacidad', 'privacidad'],
+            ['retracto', 'retracto'],
+            ['contacto', 'contacto'],
+          ] as const
+        ).map(([ruta, kind]) => (
+          <Route
+            key={ruta}
+            path={`/tienda/${ruta}`}
+            element={
+              <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+                <TiendaLegalPage kind={kind} />
+              </Suspense>
+            }
+          />
+        ))}
+      {tiendaEnabled && (
+        <Route
+          path="/tienda/pago"
+          element={
+            <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+              <TiendaPagoPage />
+            </Suspense>
+          }
+        />
+      )}
+      {tiendaEnabled && (
+        <Route
+          path="/tienda/pedido/:pedidoId"
+          element={
+            <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+              <TiendaPedidoPage />
+            </Suspense>
+          }
+        />
+      )}
+      {/* Maqueta estática de herramientas de admin. No toca datos reales ni
+          las pantallas de /admin: es un artefacto de diseño para decidir la
+          dirección de un admin nuevo y limpio. */}
+      {tiendaEnabled && (
+        <Route
+          path="/tienda/admin-preview"
+          element={
+            <Suspense fallback={<LocalizedLoading messageKey="general" />}>
+              <TiendaAdminMockupPage />
+            </Suspense>
+          }
+        />
+      )}
+      {tiendaEnabled && (
+        <Route
+          path="/tienda/:categoria/:productoSlug"
+          element={
+            <Suspense fallback={<LocalizedLoading messageKey="product" />}>
+              <TiendaProductoPage />
+            </Suspense>
+          }
+        />
+      )}
       <Route path="*" element={<AuthenticatedApp />} />
     </Routes>
   );
@@ -1171,7 +1329,9 @@ function shouldShowSplash(): boolean {
     path.startsWith('/invite/') ||
     path.startsWith('/g/') ||
     path === '/cart' ||
-    path.startsWith('/pedido-confirmado/')
+    path.startsWith('/pedido-confirmado/') ||
+    path === '/tienda' ||
+    path.startsWith('/tienda/')
   ) {
     return false;
   }

@@ -15,7 +15,7 @@ import {
   CircularProgress,
   styled,
 } from '@mui/material';
-import { spacing, componentHeights } from '../../tokens/spacing';
+import { spacing, componentHeights, touchTargets } from '../../tokens/spacing';
 import { fontSizes } from '../../tokens/typography';
 
 // =============================================================================
@@ -56,6 +56,24 @@ export interface ButtonProps extends Omit<MuiButtonProps, 'variant' | 'size'> {
   'aria-label'?: string;
   /** Button content */
   children: React.ReactNode;
+
+  // --- Polimorfismo -------------------------------------------------------
+  // MUI SÍ reenvía `component` en tiempo de ejecución; lo que se pierde al
+  // envolver su botón en un `forwardRef<HTMLButtonElement, ButtonProps>` es la
+  // firma `OverridableComponent`, así que TypeScript deja de aceptar
+  // `component`, `to` y `target` aunque el DOM resultante sea correcto.
+  // Declararlos aquí devuelve el contrato sin un `as any` y sin renunciar al
+  // tipado del resto de props. Un CTA que abre WhatsApp o navega con el Link
+  // de react-router es un botón, no un enlace disfrazado: debe verse y
+  // comportarse igual que los demás.
+  /** Renderiza como otro elemento: `'a'`, o el `Link` de react-router. */
+  component?: React.ElementType;
+  /** Sólo con `component="a"`. */
+  target?: string;
+  /** Sólo con `component="a"`. Acompaña siempre a `target="_blank"`. */
+  rel?: string;
+  /** Sólo con `component={Link}` de react-router. */
+  to?: string;
 }
 
 // =============================================================================
@@ -79,6 +97,22 @@ const sizeStyles = {
     fontSize: fontSizes.xl, // 16px callout
   },
 };
+
+// DS3 §6.3 dice, entero: «targets ≥ 44×44px (40px pointer-precision on
+// desktop)». Los 40px de `button.md` SON ese piso de escritorio, no un
+// descuido — con un ratón el objetivo se apunta, con el dedo se estima. Así
+// que el 44 se pide por el dispositivo de entrada (`pointer: coarse`) y no
+// por el ancho de la ventana, que no dice nada sobre con qué se toca: un
+// portátil angosto sigue teniendo ratón y un iPad de 1180px sigue siendo dedo.
+//
+// `min-height` gana sobre `height` en el cálculo (la altura final es el
+// máximo de las dos), así que esto sube el botón bajo el dedo sin tocar una
+// sola pantalla de escritorio. `lg` (48) ya cumple y se queda quieto.
+const TOUCH_FLOOR = {
+  '@media (pointer: coarse)': {
+    minHeight: touchTargets.minimum,
+  },
+} as const;
 
 // Emerald step-cut octagon (§E1 item 4) — chamfers all four corners so a
 // bevel-primary button reads as a table-cut emerald, not a rounded pill.
@@ -107,6 +141,7 @@ const StyledButton = styled(MuiButton, {
 
   const baseStyles = {
     height: size.height,
+    ...(buttonSize === 'lg' ? {} : TOUCH_FLOOR),
     padding: size.padding,
     fontSize: size.fontSize,
     fontWeight: 600,

@@ -815,4 +815,303 @@ export const fr = {
     whatsappMessage: 'Ces pièces sont pour vous 💚 ({n} pièces)\n{link}',
     whatsappMessageOne: 'Cette pièce est pour vous 💚\n{link}',
   },
+
+  // TIENDA — the public storefront (/tienda). Mirrors the es.ts schema:
+  // same keys, same order; counted phrases come in pairs (`...One` singular).
+  tienda: {
+    shell: {
+      tienda: 'Boutique',
+      back: 'Retour',
+      menu: 'Menu',
+      openMenu: 'Ouvrir le menu',
+      closeMenu: 'Fermer le menu',
+      toLight: 'Passer en mode clair',
+      toDark: 'Passer en mode sombre',
+      language: 'Langue',
+      sampleNotice: 'Catalogue de démonstration. Pièces et prix indicatifs.',
+      skipToContent: 'Aller au contenu',
+    },
+
+    nav: {
+      /** Nombre del landmark <nav>, no un enlace: un lector de pantalla
+       *  anunciaba «Colecciones, navegación» porque reusábamos la
+       *  etiqueta del primer enlace para nombrar la región entera. */
+      landmark: 'Navigation de la boutique',
+      colecciones: 'Collections',
+      laCasa: 'La maison',
+      seleccion: 'Ma sélection',
+      contacto: 'Contact',
+    },
+
+    puerta: {
+      eyebrow: 'Tierra Mädre',
+      title: 'Deux collections',
+      lead: 'Émeraude colombienne, faite à la main. Choisissez par où commencer.',
+    },
+
+    eyebrowColeccion: 'Collection',
+
+    categorias: {
+      joyeria: {
+        nombre: 'Joaillerie',
+        resumen: '2 modèles · 4 montures',
+        descripcion:
+          'Pièces sur commande, montées sur émeraude colombienne. Chaque modèle se travaille en quatre montures et s’ajuste à celle ou celui qui va le porter.',
+      },
+      simbolos: {
+        nombre: 'Símbolos Renacer',
+        resumen: '3 pièces',
+        descripcion:
+          'Trois pièces qui portent la Colombie sur soi. Nées d’une campagne, elles sont restées comme symbole de paix, d’espérance et de fraternité.',
+      },
+    },
+
+    montura: 'Monture',
+    metales: {
+      'plata-925': 'Argent 925',
+      'oro-18k': 'Or 18k',
+      'oro-blanco': 'Or blanc 18k',
+      'oro-rosa': 'Or rose 18k',
+    },
+    metalesCorto: {
+      'plata-925': 'Argent',
+      'oro-18k': 'Or',
+      'oro-blanco': 'Or blanc',
+      'oro-rosa': 'Or rose',
+    },
+    disponibilidad: {
+      'hecho-a-medida': 'Fait sur mesure',
+      'en-stock': 'En stock',
+    },
+
+    ficha: {
+      detalles: 'Détails',
+      cta: 'Demander cette pièce',
+      ctaAyuda:
+        'Nous vous écrivons sur WhatsApp. Rien n’est facturé à cette étape.',
+      comprar: 'Acheter maintenant',
+      comprarAyuda: 'Paiement simulé. Aucune carte n’est débitée.',
+      sobreElTope:
+        'Cette pièce dépasse le plafond par transaction de notre prestataire de paiement. Elle se conclut en parlant avec la maison.',
+    },
+
+    productos: {
+      'anillo-compromiso': {
+        nombre: 'Bague de Fiançailles',
+        subtitulo: 'Un seul sertissage, une seule pierre.',
+        descripcion:
+          'L’émeraude est montée sur griffes hautes pour que la lumière entre par les quatre côtés. L’anneau est ajusté à la main au tour de doigt exact de celle ou celui qui va le porter, aucun exemplaire ne ressemble donc au précédent.',
+        detalles: [
+          'Émeraude colombienne de taille rectangulaire, sertie sur griffes hautes',
+          'Anneau forgé à la main et ajusté au tour de doigt exact',
+          'Livraison estimée : 3 à 4 semaines',
+          'Certificat d’origine et garantie à vie sur le sertissage',
+        ],
+      },
+      'pulsera-infinito': {
+        nombre: 'Bracelet Infini',
+        subtitulo: 'Le lien qui n’a pas de commencement.',
+        descripcion:
+          'Deux courbes qui se croisent sans se refermer, retenant une émeraude au point où elles se touchent. Le travail se fait en fil continu, la pièce n’a donc aucune soudure visible sur tout le tour.',
+        detalles: [
+          'Nœud infini en fil continu, sans soudure visible',
+          'Émeraude sertie au croisement',
+          'Fermoir réglable de 16 à 19 cm',
+          'Livraison estimée : 2 à 3 semaines',
+        ],
+      },
+      'mapa-colombia': {
+        nombre: 'Mapa Colombia',
+        subtitulo: 'Le pays, à la taille d’un pendentif.',
+        descripcion:
+          'Le contour de la Colombie découpé dans l’argent, avec une émeraude posée sur le Boyacá, là où naissent les pierres. Il se porte au cou, sur chaîne courte.',
+        detalles: [
+          'Contour ajouré à la main en argent 925',
+          'Émeraude d’origine boyacaise sertie sur la cordillère',
+          'Chaîne de 45 cm incluse',
+          'Livraison estimée : 2 semaines',
+        ],
+      },
+      'manilla-colombia': {
+        nombre: 'Manilla Colombia',
+        subtitulo: 'Plus qu’un bracelet : un symbole.',
+        descripcion:
+          'Fil tressé aux couleurs du drapeau, terminé en argent avec une petite émeraude. Née comme pièce de campagne, elle est restée comme symbole de paix, d’espérance et de fraternité.',
+        detalles: [
+          'Tressage à la main en fil ciré',
+          'Embout en argent 925 avec émeraude de 2 mm',
+          'Taille unique, fermoir coulissant',
+          'Livraison estimée : 1 semaine',
+        ],
+      },
+      'palabra-colombia': {
+        nombre: 'Palabra Colombia',
+        subtitulo: 'Huit lettres, une émeraude.',
+        descripcion:
+          'Le mot COLOMBIA ajouré dans une seule plaque d’argent, le premier O transformé en sertissage qui retient la pierre. Il se porte en pendentif ou en plaque sur chaîne longue.',
+        detalles: [
+          'Lettres ajourées dans une seule plaque d’argent 925',
+          'Émeraude sertie à l’intérieur du premier O',
+          'Chaîne longue de 60 cm incluse',
+          'Livraison estimée : 2 semaines',
+        ],
+      },
+    },
+
+    seleccion: {
+      title: 'Ma sélection',
+      enter: 'Sélectionner',
+      exit: 'Terminé',
+      add: 'Ajouter à ma sélection',
+      added: 'Dans votre sélection',
+      remove: 'Retirer de ma sélection',
+      count: '{n} pièces choisies',
+      countOne: '1 pièce choisie',
+      clear: 'Vider',
+      view: 'Voir la sélection',
+      full: 'Vous pouvez choisir jusqu’à {n} pièces.',
+      emptyTitle: 'Votre sélection est vide',
+      emptyBody:
+        'Marquez les pièces qui vous plaisent et nous les rassemblons ici.',
+      emptyCta: 'Voir les collections',
+      share: 'Partager',
+      linkCopied: 'Lien copié',
+      linkCopyFailed: 'Nous n’avons pas pu copier le lien.',
+      whatsapp: 'Envoyer sur WhatsApp',
+      whatsappMessage: 'Bonjour, ces pièces de Tierra Mädre m’intéressent :',
+      whatsappMessageOne: 'Bonjour, cette pièce de Tierra Mädre m’intéresse :',
+      whatsappTail: '…et {n} de plus.',
+      announceAdded: '{nombre} ajoutée à votre sélection. {n} au total.',
+      announceRemoved: '{nombre} retirée de votre sélection. {n} au total.',
+    },
+
+    pago: {
+      resumenTitle: 'Votre commande',
+      pieces: 'Pièces',
+      total: 'Total',
+      datos: 'Vos coordonnées',
+      nombre: 'Nom complet',
+      celular: 'Téléphone mobile',
+      email: 'E-mail (facultatif)',
+      documento: 'Pièce d’identité',
+      direccion: 'Adresse de livraison',
+      ciudad: 'Ville',
+      consent:
+        'J’ai lu et j’accepte les conditions et la politique de traitement des données.',
+      consentRequired: 'Nous avons besoin de votre accord pour continuer.',
+      pay: 'Payer',
+      paying: 'Envoi…',
+      simulated: 'Simulation',
+      simulatedBody:
+        'Cette version ne facture rien. Choisissez une issue pour voir comment la boutique répond.',
+      scenario: 'Issue simulée',
+      backToShop: 'Continuer la visite',
+      // Order states: the THREE of the real schema
+      // (reservada · confirmada · cancelada), not the provider’s.
+      estado: {
+        confirmando: 'Confirmation de votre paiement',
+        confirmandoBody:
+          'Votre commande est enregistrée. Nous attendons la confirmation de la banque, cela prend en général quelques secondes.',
+        confirmada: 'Paiement confirmé',
+        confirmadaBody:
+          'Merci. Nous vous écrivons sur WhatsApp pour organiser la livraison.',
+        cancelada: 'Le paiement n’a pas abouti',
+        canceladaBody:
+          'Aucun débit n’a été effectué. Vous pouvez réessayer, ou nous écrire et nous le résolvons avec vous.',
+        tardando:
+          'Cela prend plus de temps que d’habitude. Écrivez-nous et nous regardons cela avec vous.',
+        notFound: 'Nous ne trouvons pas cette commande',
+        notFoundBody:
+          'Vérifiez le lien, ou écrivez-nous avec le numéro que nous vous avons donné.',
+      },
+      pedido: 'Commande',
+      retry: 'Réessayer',
+      writeUs: 'Écrivez-nous',
+      whatsappPedido: 'Bonjour, je vous écris au sujet de la commande {id}.',
+    },
+
+    laCasa: {
+      title: 'La maison',
+      lead: 'Émeraudes colombiennes à l’ADN de paix.',
+      body1:
+        'Tierra Mädre est née autour d’une idée simple : qu’une pierre sortie de la montagne colombienne puisse raconter d’où elle vient et à qui elle a laissé quelque chose en chemin.',
+      body2:
+        'Nous travaillons avec des tailleurs et des joailliers du pays. Chaque pièce se fait sur commande : ce que vous voyez ici est le modèle, et ce que vous recevez est à vous.',
+      contact: 'Parler avec la maison',
+    },
+
+    legal: {
+      terminos: 'Conditions générales',
+      privacidad: 'Politique de traitement des données',
+      retracto: 'Droit de rétractation',
+      contacto: 'Contact',
+      pendingTitle: 'En préparation',
+      pendingBody:
+        'Ce texte légal est en attente des informations officielles de l’entreprise. Nous ne le rédigeons pas de notre propre initiative.',
+      sellerLabel: 'Vendeur',
+      lead: {
+        terminos:
+          'Les conditions de vente de la maison : ce que vous achetez, à quel prix et sous quelle garantie.',
+        privacidad:
+          'Quelles données personnelles nous demandons, à quelles fins et comment les récupérer.',
+        retracto:
+          'Comment défaire un achat dans le délai prévu par la loi colombienne.',
+        contacto: 'Les canaux par lesquels la maison répond.',
+      },
+      indexTitle: 'Ce qu’il contiendra',
+      secciones: {
+        terminos: [
+          'Identification du vendeur',
+          'Portée et acceptation',
+          'Prix, taxes et devise',
+          'Moyens de paiement',
+          'Expédition et délais de livraison',
+          'Garantie légale',
+          'Échanges et retours',
+          'Service au consommateur et réclamations',
+          'Loi applicable',
+        ],
+        privacidad: [
+          'Responsable du traitement',
+          'Données que nous recueillons',
+          'Finalités du traitement',
+          'Consentement de la personne concernée',
+          'Droits de la personne concernée',
+          'Canal de demandes et réclamations',
+          'Sécurité et conservation',
+          'Sous-traitants et transferts',
+          'Durée de validité de la politique',
+        ],
+        retracto: [
+          'Délai pour exercer la rétractation',
+          'Achats concernés',
+          'Exceptions',
+          'Comment notifier la décision',
+          'État dans lequel la pièce est retournée',
+          'Frais de transport',
+          'Délai et moyen de remboursement',
+          'Canal pour déposer la demande',
+        ],
+      },
+      sellerPending: 'En attente : raison sociale, NIT et adresse du vendeur.',
+    },
+
+    footer: {
+      colecciones: 'Collections',
+      laCasa: 'La maison',
+      contacto: 'Contact',
+      legal: 'Mentions légales',
+      rights: 'Tierra Mädre · Émeraudes colombiennes à l’ADN de paix',
+    },
+
+    notFound: {
+      coleccionTitle: 'Cette collection n’existe pas',
+      coleccionBody:
+        'Le lien est peut-être incomplet, ou la collection a changé de nom.',
+      piezaTitle: 'Cette pièce n’existe pas',
+      piezaBody:
+        'Le lien est peut-être incomplet, ou la pièce n’est plus dans la collection.',
+      cta: 'Voir les collections',
+    },
+  },
 };

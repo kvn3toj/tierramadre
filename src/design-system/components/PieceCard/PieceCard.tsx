@@ -227,7 +227,14 @@ export const PieceCard: React.FC<PieceCardProps> = ({
         flexDirection: 'column',
         cursor: isInteractive ? 'pointer' : 'default',
         outline: 'none',
-        transition: 'border-color var(--tm-fast) var(--tm-ease)',
+        transition:
+          'border-color var(--tm-fast) var(--tm-ease), opacity var(--tm-fast) var(--tm-ease)',
+        // Atenuación al pulsar. Sin esto, en un teléfono no ocurre NADA entre
+        // el toque y el cambio de ruta: el hover no existe ahí, así que la
+        // tarjeta se sentía muerta justo en el gesto más común del catálogo.
+        // Opacidad y nada más — es el mismo valor que `ds3States.pressed`, y
+        // no mueve ni redimensiona la tarjeta.
+        ...(isInteractive && { '&:active': { opacity: 0.85 } }),
         ...(isWell
           ? {
               border: '1px solid var(--tm-border)',
