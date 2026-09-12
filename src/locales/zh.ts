@@ -804,6 +804,290 @@ export const zh = {
     whatsappMessageOne: '这件宝石是为你挑选的 💚\n{link}',
   },
 
+  // TIENDA — the public storefront (/tienda). Mirrors the `tienda` namespace
+  // and key order of src/locales/es.ts, which is the schema.
+  tienda: {
+    shell: {
+      tienda: '商店',
+      back: '返回',
+      menu: '菜单',
+      openMenu: '打开菜单',
+      closeMenu: '关闭菜单',
+      toLight: '切换到浅色模式',
+      toDark: '切换到深色模式',
+      language: '语言',
+      sampleNotice: '示例目录。作品与价格仅供参考。',
+      skipToContent: '跳到主要内容',
+    },
+
+    nav: {
+      /** Nombre del landmark <nav>, no un enlace: un lector de pantalla
+       *  anunciaba «Colecciones, navegación» porque reusábamos la
+       *  etiqueta del primer enlace para nombrar la región entera. */
+      landmark: '商店导航',
+      colecciones: '系列',
+      laCasa: '品牌之家',
+      seleccion: '我的选择',
+      contacto: '联系',
+    },
+
+    puerta: {
+      eyebrow: 'Tierra Mädre',
+      title: '两个系列',
+      lead: '哥伦比亚祖母绿，手工制作。请选择从哪里开始。',
+    },
+
+    eyebrowColeccion: '系列',
+
+    categorias: {
+      joyeria: {
+        nombre: '珠宝',
+        resumen: '2 款设计 · 4 种镶托',
+        descripcion:
+          '定制作品，以哥伦比亚祖母绿镶嵌。每款设计提供四种镶托，并按佩戴者的尺寸调整。',
+      },
+      simbolos: {
+        nombre: 'Símbolos Renacer',
+        resumen: '3 件作品',
+        descripcion:
+          '三件作品，把哥伦比亚带在身上。它们诞生于一场活动，后来成为和平、希望与手足情谊的象征。',
+      },
+    },
+
+    montura: '镶托',
+    metales: {
+      'plata-925': '925 银',
+      'oro-18k': '18k 金',
+      'oro-blanco': '18k 白金',
+      'oro-rosa': '18k 玫瑰金',
+    },
+    metalesCorto: {
+      'plata-925': '银',
+      'oro-18k': '金',
+      'oro-blanco': '白金',
+      'oro-rosa': '玫瑰金',
+    },
+    disponibilidad: {
+      'hecho-a-medida': '定制制作',
+      'en-stock': '现货',
+    },
+
+    ficha: {
+      detalles: '细节',
+      cta: '预订这件作品',
+      ctaAyuda: '我们会通过 WhatsApp 与你联系。此步骤不收取任何费用。',
+      comprar: '立即购买',
+      comprarAyuda: '模拟支付，不会对任何卡片扣款。',
+      sobreElTope:
+        '这件作品超出我们支付服务商的单笔交易上限，需要与品牌直接联系完成。',
+    },
+
+    productos: {
+      'anillo-compromiso': {
+        nombre: '订婚戒指',
+        subtitulo: '一个镶座，一颗宝石。',
+        descripcion:
+          '祖母绿以高爪镶固定，让光线从四面进入。戒圈按佩戴者的准确尺寸手工调整，因此没有两枚完全相同。',
+        detalles: [
+          '哥伦比亚祖母绿，长方形切割，以高爪镶固定',
+          '戒圈手工锻造，按准确尺寸调整',
+          '预计交付：3 至 4 周',
+          '原产地证书，镶座享终身保固',
+        ],
+      },
+      'pulsera-infinito': {
+        nombre: '无限手链',
+        subtitulo: '没有起点的结。',
+        descripcion:
+          '两道曲线交错而不闭合，在相触之处托起一颗祖母绿。以一根连续的线材制成，整圈没有可见焊点。',
+        detalles: [
+          '连续线材编成的无限结，没有可见焊点',
+          '祖母绿镶于交叉之处',
+          '可调式收口，16 至 19 cm',
+          '预计交付：2 至 3 周',
+        ],
+      },
+      'mapa-colombia': {
+        nombre: 'Mapa Colombia',
+        subtitulo: '一枚吊坠大小的国家。',
+        descripcion:
+          '哥伦比亚的轮廓以银片镂空，一颗祖母绿落在博亚卡，宝石诞生之地。以短链佩于颈间。',
+        detalles: [
+          '925 银手工镂空轮廓',
+          '产自博亚卡的祖母绿，镶于山脉之上',
+          '含 45 cm 项链',
+          '预计交付：2 周',
+        ],
+      },
+      'manilla-colombia': {
+        nombre: 'Manilla Colombia',
+        subtitulo: '不只是一条手绳，更是一个象征。',
+        descripcion:
+          '以国旗颜色编成的线绳，末端以银收口，配一颗小祖母绿。它诞生于一场活动，后来成为和平、希望与手足情谊的象征。',
+        detalles: [
+          '蜡线手工编织',
+          '925 银收口，镶 2 mm 祖母绿',
+          '均码，滑动式收口',
+          '预计交付：1 周',
+        ],
+      },
+      'palabra-colombia': {
+        nombre: 'Palabra Colombia',
+        subtitulo: '八个字母，一颗祖母绿。',
+        descripcion:
+          'COLOMBIA 一词镂空于单片银板，第一个 O 化作托住宝石的镶座。可作吊坠，也可作长链上的铭牌。',
+        detalles: [
+          '字母镂空于单片 925 银板',
+          '祖母绿镶于第一个 O 之内',
+          '含 60 cm 长链',
+          '预计交付：2 周',
+        ],
+      },
+    },
+
+    seleccion: {
+      title: '我的选择',
+      enter: '挑选',
+      exit: '完成',
+      add: '加入我的选择',
+      added: '已在你的选择中',
+      remove: '从我的选择中移除',
+      count: '已选 {n} 件',
+      countOne: '已选 1 件',
+      clear: '清空',
+      view: '查看选择',
+      full: '最多可选 {n} 件。',
+      emptyTitle: '你的选择是空的',
+      emptyBody: '标记你喜欢的作品，我们会把它们集中在这里。',
+      emptyCta: '查看系列',
+      share: '分享',
+      linkCopied: '链接已复制',
+      linkCopyFailed: '我们无法复制链接。',
+      whatsapp: '通过 WhatsApp 发送',
+      whatsappMessage: '你好，我对 Tierra Mädre 的这些作品感兴趣：',
+      whatsappMessageOne: '你好，我对 Tierra Mädre 的这件作品感兴趣：',
+      whatsappTail: '…还有 {n} 件。',
+      announceAdded: '{nombre} 已加入你的选择。共 {n} 件。',
+      announceRemoved: '{nombre} 已从你的选择中移除。共 {n} 件。',
+    },
+
+    pago: {
+      resumenTitle: '你的订单',
+      pieces: '作品',
+      total: '合计',
+      datos: '你的信息',
+      nombre: '全名',
+      celular: '手机号',
+      email: '邮箱（选填）',
+      documento: '证件号码',
+      direccion: '收货地址',
+      ciudad: '城市',
+      consent: '我已阅读并接受条款与数据处理政策。',
+      consentRequired: '需要你的同意才能继续。',
+      pay: '支付',
+      paying: '发送中…',
+      simulated: '模拟',
+      simulatedBody: '此版本不会扣款。请选择一种结果，看看商店如何回应。',
+      scenario: '模拟结果',
+      backToShop: '继续浏览',
+      estado: {
+        confirmando: '正在确认你的付款',
+        confirmandoBody:
+          '你的订单已登记。我们正在等待银行确认，通常需要几秒钟。',
+        confirmada: '付款已确认',
+        confirmadaBody: '谢谢。我们会通过 WhatsApp 与你联系，安排交付。',
+        cancelada: '付款未完成',
+        canceladaBody:
+          '没有产生任何扣款。你可以再试一次，或与我们联系，我们一起解决。',
+        tardando: '这比平常要久一些。请与我们联系，我们一起查看。',
+        notFound: '找不到该订单',
+        notFoundBody: '请检查链接，或用我们提供的编号与我们联系。',
+      },
+      pedido: '订单',
+      retry: '再试一次',
+      writeUs: '与我们联系',
+      whatsappPedido: '您好，我想咨询订单 {id}。',
+    },
+
+    laCasa: {
+      title: '品牌之家',
+      lead: '拥有和平基因的哥伦比亚祖母绿。',
+      body1:
+        'Tierra Mädre 始于一个简单的想法：一块从哥伦比亚山中开采出来的宝石，应该能说出自己来自哪里，又在沿途给谁留下了什么。',
+      body2:
+        '我们与本国的切割师和珠宝匠一起工作。每件作品都按订单制作，所以你在这里看到的是设计，而你收到的属于你自己。',
+      contact: '与品牌联系',
+    },
+
+    legal: {
+      terminos: '条款与条件',
+      privacidad: '数据处理政策',
+      retracto: '撤回权',
+      contacto: '联系',
+      pendingTitle: '准备中',
+      pendingBody: '此法律文本尚待公司的官方信息。我们不会自行拟定。',
+      sellerLabel: '卖方',
+      lead: {
+        terminos: '本店的销售条件：所购为何、价格几何、附带何种保障。',
+        privacidad:
+          '我们收集哪些个人数据、用于何种目的，以及如何行使相关权利。',
+        retracto: '如何在哥伦比亚法律规定的期限内撤销一笔订单。',
+        contacto: '本店回应的联络渠道。',
+      },
+      indexTitle: '本文件将包含的内容',
+      secciones: {
+        terminos: [
+          '卖方身份信息',
+          '适用范围与条款接受',
+          '价格、税费与币种',
+          '支付方式',
+          '配送与交付时间',
+          '法定保修',
+          '换货与退货',
+          '消费者服务与投诉',
+          '适用法律',
+        ],
+        privacidad: [
+          '数据处理责任方',
+          '我们收集的数据',
+          '处理目的',
+          '数据主体的授权',
+          '数据主体的权利',
+          '咨询与投诉渠道',
+          '安全与保存',
+          '受托方与数据转移',
+          '政策有效期',
+        ],
+        retracto: [
+          '行使撤回权的期限',
+          '适用的订单',
+          '例外情形',
+          '如何通知撤回决定',
+          '退回时作品应有的状态',
+          '运输费用',
+          '退款期限与方式',
+          '提交申请的渠道',
+        ],
+      },
+      sellerPending: '待补充：卖方的公司名称、NIT 税号与地址。',
+    },
+
+    footer: {
+      colecciones: '系列',
+      laCasa: '品牌之家',
+      contacto: '联系',
+      legal: '法律信息',
+      rights: 'Tierra Mädre · 拥有和平基因的哥伦比亚祖母绿',
+    },
+
+    notFound: {
+      coleccionTitle: '该系列不存在',
+      coleccionBody: '可能是链接不完整，或该系列已经更名。',
+      piezaTitle: '该作品不存在',
+      piezaBody: '可能是链接不完整，或该作品已不在此系列中。',
+      cta: '查看系列',
+    },
+  },
   // Clientes autorregistrados con Google (2026-09-09): catálogo con precio,
   // consulta por WhatsApp a la línea de la casa, y el descargo bajo el precio.
   cliente: {

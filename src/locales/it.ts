@@ -838,6 +838,304 @@ export const it = {
     whatsappMessageOne: 'Questo pezzo è per te 💚\n{link}',
   },
 
+  // TIENDA — the public storefront (/tienda).
+  // Mirrors the `tienda` namespace of es.ts: same keys, same order.
+  tienda: {
+    shell: {
+      tienda: 'Boutique',
+      back: 'Indietro',
+      menu: 'Menu',
+      openMenu: 'Apri il menu',
+      closeMenu: 'Chiudi il menu',
+      toLight: 'Passa alla modalità chiara',
+      toDark: 'Passa alla modalità scura',
+      language: 'Lingua',
+      sampleNotice: 'Catalogo dimostrativo. Pezzi e prezzi indicativi.',
+      skipToContent: 'Vai al contenuto',
+    },
+
+    nav: {
+      /** Nombre del landmark <nav>, no un enlace: un lector de pantalla
+       *  anunciaba «Colecciones, navegación» porque reusábamos la
+       *  etiqueta del primer enlace para nombrar la región entera. */
+      landmark: 'Navigazione del negozio',
+      colecciones: 'Collezioni',
+      laCasa: 'La casa',
+      seleccion: 'La mia selezione',
+      contacto: 'Contatti',
+    },
+
+    puerta: {
+      eyebrow: 'Tierra Mädre',
+      title: 'Due collezioni',
+      lead: 'Smeraldo colombiano, fatto a mano. Scegli da dove vuoi cominciare.',
+    },
+
+    eyebrowColeccion: 'Collezione',
+
+    categorias: {
+      joyeria: {
+        nombre: 'Gioielleria',
+        resumen: '2 modelli · 4 montature',
+        descripcion:
+          'Pezzi su commissione, montati su smeraldo colombiano. Ogni modello si lavora in quattro montature e si adatta a chi lo porterà.',
+      },
+      simbolos: {
+        nombre: 'Símbolos Renacer',
+        resumen: '3 pezzi',
+        descripcion:
+          'Tre pezzi che portano la Colombia addosso. Sono nati da una campagna e sono rimasti come simbolo di pace, speranza e fratellanza.',
+      },
+    },
+
+    montura: 'Montatura',
+    metales: {
+      'plata-925': 'Argento 925',
+      'oro-18k': 'Oro 18k',
+      'oro-blanco': 'Oro bianco 18k',
+      'oro-rosa': 'Oro rosa 18k',
+    },
+    metalesCorto: {
+      'plata-925': 'Argento',
+      'oro-18k': 'Oro',
+      'oro-blanco': 'Oro bianco',
+      'oro-rosa': 'Oro rosa',
+    },
+    disponibilidad: {
+      'hecho-a-medida': 'Su misura',
+      'en-stock': 'Disponibile',
+    },
+
+    ficha: {
+      detalles: 'Dettagli',
+      cta: 'Richiedi questo pezzo',
+      ctaAyuda:
+        'Ti scriviamo su WhatsApp. In questo passaggio non si paga nulla.',
+      comprar: 'Acquista ora',
+      comprarAyuda: 'Pagamento simulato. Nessuna carta viene addebitata.',
+      sobreElTope:
+        'Questo pezzo supera il limite per transazione del nostro fornitore di pagamenti. Si conclude parlando con la casa.',
+    },
+
+    productos: {
+      'anillo-compromiso': {
+        nombre: 'Anello di Fidanzamento',
+        subtitulo: 'Un solo castone, una sola pietra.',
+        descripcion:
+          'Lo smeraldo è montato su griffe alte perché la luce entri dai quattro lati. Il gambo si regola a mano sulla misura esatta di chi lo porterà, così nessuna copia esce uguale alla precedente.',
+        detalles: [
+          'Smeraldo colombiano a taglio rettangolare, incastonato su griffe alte',
+          'Anello forgiato a mano e regolato sulla misura esatta',
+          'Consegna stimata: 3 o 4 settimane',
+          "Certificato di origine e garanzia a vita sull'incastonatura",
+        ],
+      },
+      'pulsera-infinito': {
+        nombre: 'Bracciale Infinito',
+        subtitulo: 'Il legame che non ha principio.',
+        descripcion:
+          'Due curve che si incrociano senza chiudersi e sorreggono uno smeraldo nel punto in cui si toccano. Si lavora in filo continuo, così il pezzo non presenta saldature visibili lungo tutto il giro.',
+        detalles: [
+          'Nodo infinito in filo continuo, senza saldature visibili',
+          "Smeraldo incastonato nell'incrocio",
+          'Chiusura regolabile da 16 a 19 cm',
+          'Consegna stimata: 2 o 3 settimane',
+        ],
+      },
+      'mapa-colombia': {
+        nombre: 'Mapa Colombia',
+        subtitulo: 'Il paese, nella misura di un ciondolo.',
+        descripcion:
+          "Il profilo della Colombia ritagliato nell'argento, con uno smeraldo posato su Boyacá, dove nascono le pietre. Si porta al collo, su catena corta.",
+        detalles: [
+          'Profilo traforato a mano in argento 925',
+          'Smeraldo di origine boyacense incastonato sulla cordigliera',
+          'Catena da 45 cm inclusa',
+          'Consegna stimata: 2 settimane',
+        ],
+      },
+      'manilla-colombia': {
+        nombre: 'Manilla Colombia',
+        subtitulo: 'Più di un braccialetto: un simbolo.',
+        descripcion:
+          'Filo intrecciato nei colori della bandiera, rifinito in argento con un piccolo smeraldo. È nato come pezzo di campagna ed è rimasto come simbolo di pace, speranza e fratellanza.',
+        detalles: [
+          'Intrecciato a mano in filo cerato',
+          'Rifinitura in argento 925 con smeraldo da 2 mm',
+          'Taglia unica, chiusura scorrevole',
+          'Consegna stimata: 1 settimana',
+        ],
+      },
+      'palabra-colombia': {
+        nombre: 'Palabra Colombia',
+        subtitulo: 'Otto lettere, uno smeraldo.',
+        descripcion:
+          "La parola COLOMBIA traforata in un'unica lastra d'argento, con la prima O trasformata in un castone che sorregge la pietra. Si porta come ciondolo o come placca su catena lunga.",
+        detalles: [
+          "Lettere traforate in un'unica lastra di argento 925",
+          'Smeraldo incastonato dentro la prima O',
+          'Catena lunga da 60 cm inclusa',
+          'Consegna stimata: 2 settimane',
+        ],
+      },
+    },
+
+    seleccion: {
+      title: 'La mia selezione',
+      enter: 'Seleziona',
+      exit: 'Fatto',
+      add: 'Aggiungi alla mia selezione',
+      added: 'Nella tua selezione',
+      remove: 'Togli dalla mia selezione',
+      count: '{n} pezzi scelti',
+      countOne: '1 pezzo scelto',
+      clear: 'Svuota',
+      view: 'Vedi la selezione',
+      full: 'Puoi scegliere fino a {n} pezzi.',
+      emptyTitle: 'La tua selezione è vuota',
+      emptyBody: 'Segna i pezzi che ti piacciono e te li raccogliamo qui.',
+      emptyCta: 'Vedi le collezioni',
+      share: 'Condividi',
+      linkCopied: 'Link copiato',
+      linkCopyFailed: 'Non siamo riusciti a copiare il link.',
+      whatsapp: 'Invia su WhatsApp',
+      whatsappMessage:
+        'Buongiorno, mi interessano questi pezzi di Tierra Mädre:',
+      whatsappMessageOne:
+        'Buongiorno, mi interessa questo pezzo di Tierra Mädre:',
+      whatsappTail: '…e altri {n}.',
+      announceAdded: '{nombre} aggiunto alla tua selezione. {n} in totale.',
+      announceRemoved: '{nombre} tolto dalla tua selezione. {n} in totale.',
+    },
+
+    pago: {
+      resumenTitle: 'Il tuo ordine',
+      pieces: 'Pezzi',
+      total: 'Totale',
+      datos: 'I tuoi dati',
+      nombre: 'Nome e cognome',
+      celular: 'Cellulare',
+      email: 'Email (facoltativa)',
+      documento: 'Documento',
+      direccion: 'Indirizzo di consegna',
+      ciudad: 'Città',
+      consent:
+        'Ho letto e accetto i termini e la politica di trattamento dei dati.',
+      consentRequired: 'Ci serve la tua accettazione per proseguire.',
+      pay: 'Paga',
+      paying: 'Invio in corso…',
+      simulated: 'Simulazione',
+      simulatedBody:
+        'Questa versione non addebita nulla. Scegli un esito per vedere come risponde la boutique.',
+      scenario: 'Esito simulato',
+      backToShop: 'Continua a guardare',
+      estado: {
+        confirmando: 'Stiamo confermando il pagamento',
+        confirmandoBody:
+          'Il tuo ordine è registrato. Stiamo aspettando la conferma della banca, di solito bastano pochi secondi.',
+        confirmada: 'Pagamento confermato',
+        confirmadaBody:
+          'Grazie. Ti scriviamo su WhatsApp per organizzare la consegna.',
+        cancelada: 'Il pagamento non è andato a buon fine',
+        canceladaBody:
+          'Non è stato fatto alcun addebito. Puoi riprovare, oppure scriverci e lo risolviamo insieme.',
+        tardando:
+          'Sta richiedendo più tempo del solito. Scrivici e lo verifichiamo insieme.',
+        notFound: 'Non troviamo questo ordine',
+        notFoundBody:
+          'Controlla il link, oppure scrivici con il numero che ti abbiamo dato.',
+      },
+      pedido: 'Ordine',
+      retry: 'Riprova',
+      writeUs: 'Scrivici',
+      whatsappPedido: 'Ciao, scrivo per l’ordine {id}.',
+    },
+
+    laCasa: {
+      title: 'La casa',
+      lead: 'Smeraldi colombiani con DNA di pace.',
+      body1:
+        "Tierra Mädre è nata attorno a un'idea semplice: che una pietra uscita dalla montagna colombiana possa raccontare da dove viene e a chi ha lasciato qualcosa lungo il cammino.",
+      body2:
+        'Lavoriamo con tagliatori e orafi del paese. Ogni pezzo si realizza su commissione, quindi quello che vedi qui è il progetto, e quello che ricevi è tuo.',
+      contact: 'Parla con la casa',
+    },
+
+    legal: {
+      terminos: 'Termini e condizioni',
+      privacidad: 'Politica di trattamento dei dati',
+      retracto: 'Diritto di recesso',
+      contacto: 'Contatti',
+      pendingTitle: 'In preparazione',
+      pendingBody:
+        "Questo testo legale è in attesa delle informazioni ufficiali dell'azienda. Non lo redigiamo per conto nostro.",
+      sellerLabel: 'Venditore',
+      lead: {
+        terminos:
+          'Le condizioni di vendita della casa: che cosa si acquista, a quale prezzo e con quale garanzia.',
+        privacidad:
+          'Quali dati personali chiediamo, per quali finalità e come si possono richiedere indietro.',
+        retracto:
+          'Come si annulla un acquisto entro il termine previsto dalla legge colombiana.',
+        contacto: 'I canali attraverso cui risponde la casa.',
+      },
+      indexTitle: 'Che cosa conterrà',
+      secciones: {
+        terminos: [
+          'Identificazione del venditore',
+          'Ambito e accettazione',
+          'Prezzi, imposte e valuta',
+          'Modalità di pagamento',
+          'Spedizione e tempi di consegna',
+          'Garanzia legale',
+          'Cambi e resi',
+          'Assistenza al consumatore e reclami',
+          'Legge applicabile',
+        ],
+        privacidad: [
+          'Titolare del trattamento',
+          'Dati che raccogliamo',
+          'Finalità del trattamento',
+          'Consenso dell’interessato',
+          'Diritti dell’interessato',
+          'Canale per richieste e reclami',
+          'Sicurezza e conservazione',
+          'Responsabili e trasferimenti',
+          'Validità della politica',
+        ],
+        retracto: [
+          'Termine per esercitare il recesso',
+          'Acquisti a cui si applica',
+          'Eccezioni',
+          'Come comunicare la decisione',
+          'Stato in cui si restituisce il pezzo',
+          'Costi di trasporto',
+          'Termine e modalità di rimborso',
+          'Canale per presentare la richiesta',
+        ],
+      },
+      sellerPending:
+        'In attesa: ragione sociale, NIT e indirizzo del venditore.',
+    },
+
+    footer: {
+      colecciones: 'Collezioni',
+      laCasa: 'La casa',
+      contacto: 'Contatti',
+      legal: 'Legale',
+      rights: 'Tierra Mädre · Smeraldi colombiani con DNA di pace',
+    },
+
+    notFound: {
+      coleccionTitle: 'Questa collezione non esiste',
+      coleccionBody:
+        'Forse il link è incompleto, oppure la collezione ha cambiato nome.',
+      piezaTitle: 'Questo pezzo non esiste',
+      piezaBody:
+        'Forse il link è incompleto, oppure il pezzo non fa più parte della collezione.',
+      cta: 'Vedi le collezioni',
+    },
+  },
   // Clientes autorregistrados con Google (2026-09-09): catálogo con precio,
   // consulta por WhatsApp a la línea de la casa, y el descargo bajo el precio.
   cliente: {

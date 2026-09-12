@@ -16,6 +16,8 @@ import {
   BarChart3,
   Users,
   Gem,
+  Landmark,
+  Bookmark,
   Menu as MenuIcon,
 } from 'lucide-react';
 import EmeraldCutIcon from '../icons/EmeraldCutIcon';
@@ -193,3 +195,21 @@ export function fotoTabTheme(mode: QEMode): TabBarTheme {
       '"Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
   };
 }
+
+/**
+ * Tienda pública (storefront v2) — la opción B del menú.
+ *
+ * La misma TabBar del resto de la app, con otras ranuras. Existe en paralelo a
+ * la navegación en cabecera (opción A) porque la colocación del menú está a
+ * decisión del dueño: las dos se montan de verdad y se alternan en vivo, que
+ * es la única forma de elegir entre ellas mirándolas.
+ *
+ * `match: 'exact'` en Colecciones a propósito: con 'prefix', /tienda dejaría
+ * la primera ranura encendida en TODAS las rutas de la tienda.
+ */
+export const TIENDA_SLOTS: readonly TabSlot[] = [
+  { id: 'colecciones', label: 'Colecciones', icon: Gem, route: '/tienda', match: 'exact' },
+  { id: 'la-casa', label: 'La casa', icon: Landmark, route: '/tienda/la-casa' },
+  { id: 'seleccion', label: 'Selección', icon: Bookmark, route: '/tienda/seleccion' },
+  { id: 'menu', label: 'Menú', icon: MenuIcon, action: true },
+] as const;

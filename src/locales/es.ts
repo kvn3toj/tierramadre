@@ -854,6 +854,316 @@ export const es = {
     whatsappMessageOne: 'Esta pieza es para ti 💚\n{link}',
   },
 
+  // ==========================================================================
+  // TIENDA — la vitrina pública (/tienda). Namespace nuevo, 2026-09-10.
+  //
+  // Toda la copia del escaparate vive aquí, incluida la de las piezas: el
+  // fixture `src/data/tienda.ts` guarda sólo lo estructural (slug, montura,
+  // precio, foto) y el texto se resuelve por slug contra `productos`. Ése es
+  // el punto de costura que evita que traducir el catálogo obligue a tocar
+  // datos.
+  //
+  // Las frases que cuentan piezas vienen de a dos (`...One` para el singular)
+  // por la misma razón que en `vitrina`: el chino no ramifica singular y
+  // plural, y una regla del español impuesta sobre él produce texto raro.
+  // ==========================================================================
+  tienda: {
+    shell: {
+      tienda: 'Tienda',
+      back: 'Volver',
+      menu: 'Menú',
+      openMenu: 'Abrir menú',
+      closeMenu: 'Cerrar menú',
+      toLight: 'Cambiar a modo claro',
+      toDark: 'Cambiar a modo oscuro',
+      language: 'Idioma',
+      sampleNotice: 'Catálogo de muestra. Piezas y precios de referencia.',
+      skipToContent: 'Saltar al contenido',
+    },
+
+    nav: {
+      /** Nombre del landmark <nav>, no un enlace: un lector de pantalla
+       *  anunciaba «Colecciones, navegación» porque reusábamos la
+       *  etiqueta del primer enlace para nombrar la región entera. */
+      landmark: 'Navegación de la tienda',
+      colecciones: 'Colecciones',
+      laCasa: 'La casa',
+      seleccion: 'Mi selección',
+      contacto: 'Contacto',
+    },
+
+    puerta: {
+      eyebrow: 'Tierra Mädre',
+      title: 'Dos colecciones',
+      lead: 'Esmeralda colombiana, hecha a mano. Elige por dónde quieres empezar.',
+    },
+
+    eyebrowColeccion: 'Colección',
+
+    categorias: {
+      joyeria: {
+        nombre: 'Joyería',
+        resumen: '2 diseños · 4 monturas',
+        descripcion:
+          'Piezas de encargo, montadas sobre esmeralda colombiana. Cada diseño se trabaja en cuatro monturas y se ajusta a quien lo va a llevar.',
+      },
+      simbolos: {
+        nombre: 'Símbolos Renacer',
+        resumen: '3 piezas',
+        descripcion:
+          'Tres piezas que llevan a Colombia encima. Nacieron de una campaña y se quedaron como símbolo de paz, esperanza y hermandad.',
+      },
+    },
+
+    // Claves iguales a los miembros de MetalKey (src/types/tienda.ts) para que
+    // un componente indexe directo: t.tienda.metales[variante.metal].
+    montura: 'Montura',
+    metales: {
+      'plata-925': 'Plata 925',
+      'oro-18k': 'Oro 18k',
+      'oro-blanco': 'Oro blanco 18k',
+      'oro-rosa': 'Oro rosado 18k',
+    },
+    metalesCorto: {
+      'plata-925': 'Plata',
+      'oro-18k': 'Oro',
+      'oro-blanco': 'Oro blanco',
+      'oro-rosa': 'Oro rosado',
+    },
+    disponibilidad: {
+      'hecho-a-medida': 'Hecho a medida',
+      'en-stock': 'En stock',
+    },
+
+    ficha: {
+      detalles: 'Detalles',
+      cta: 'Pedir esta pieza',
+      ctaAyuda: 'Te escribimos por WhatsApp. Nada se cobra en este paso.',
+      comprar: 'Comprar ahora',
+      comprarAyuda: 'Pago simulado. Ninguna tarjeta se cobra.',
+      sobreElTope:
+        'Esta pieza supera el tope por transacción de nuestro proveedor de pagos. Se cierra hablando con la casa.',
+    },
+
+    // La copia de cada familia, por slug. Estructura en src/data/tienda.ts.
+    productos: {
+      'anillo-compromiso': {
+        nombre: 'Anillo de Compromiso',
+        subtitulo: 'Un solo engaste, una sola piedra.',
+        descripcion:
+          'La esmeralda va montada en garras altas para que la luz entre por los cuatro costados. El aro se ajusta a mano sobre la talla exacta de quien lo va a llevar, así que ninguna copia sale igual a la anterior.',
+        detalles: [
+          'Esmeralda colombiana de talla rectangular, engastada en garras altas',
+          'Aro forjado a mano y ajustado a la talla exacta',
+          'Entrega estimada: 3 a 4 semanas',
+          'Certificado de origen y garantía de por vida sobre el engaste',
+        ],
+      },
+      'pulsera-infinito': {
+        nombre: 'Pulsera Infinito',
+        subtitulo: 'El lazo que no tiene principio.',
+        descripcion:
+          'Dos curvas que se cruzan sin cerrarse, sosteniendo una esmeralda en el punto donde se tocan. Se trabaja en hilo continuo, así que la pieza no tiene soldadura visible en toda la vuelta.',
+        detalles: [
+          'Nudo infinito en hilo continuo, sin soldadura visible',
+          'Esmeralda engastada en el cruce',
+          'Cierre ajustable de 16 a 19 cm',
+          'Entrega estimada: 2 a 3 semanas',
+        ],
+      },
+      'mapa-colombia': {
+        nombre: 'Mapa Colombia',
+        subtitulo: 'El país, del tamaño de un dije.',
+        descripcion:
+          'El contorno de Colombia recortado en plata, con una esmeralda sembrada sobre Boyacá, donde nacen las piedras. Se lleva al cuello, en cadena corta.',
+        detalles: [
+          'Contorno calado a mano en plata 925',
+          'Esmeralda de origen boyacense engastada sobre la cordillera',
+          'Cadena de 45 cm incluida',
+          'Entrega estimada: 2 semanas',
+        ],
+      },
+      'manilla-colombia': {
+        nombre: 'Manilla Colombia',
+        subtitulo: 'Más que una manilla: un símbolo.',
+        descripcion:
+          'Hilo trenzado en los colores de la bandera, rematado en plata con una esmeralda pequeña. Nació como pieza de campaña y se quedó como símbolo de paz, esperanza y hermandad.',
+        detalles: [
+          'Trenzado a mano en hilo encerado',
+          'Remate en plata 925 con esmeralda de 2 mm',
+          'Talla única, cierre corredizo',
+          'Entrega estimada: 1 semana',
+        ],
+      },
+      'palabra-colombia': {
+        nombre: 'Palabra Colombia',
+        subtitulo: 'Ocho letras, una esmeralda.',
+        descripcion:
+          'La palabra COLOMBIA calada en una sola lámina de plata, con la primera O convertida en un engaste que sostiene la piedra. Se usa como dije o como placa sobre cadena larga.',
+        detalles: [
+          'Letras caladas en una sola lámina de plata 925',
+          'Esmeralda engastada dentro de la primera O',
+          'Cadena larga de 60 cm incluida',
+          'Entrega estimada: 2 semanas',
+        ],
+      },
+    },
+
+    seleccion: {
+      title: 'Mi selección',
+      enter: 'Seleccionar',
+      exit: 'Listo',
+      add: 'Agregar a mi selección',
+      added: 'En tu selección',
+      remove: 'Quitar de mi selección',
+      count: '{n} piezas elegidas',
+      countOne: '1 pieza elegida',
+      clear: 'Vaciar',
+      view: 'Ver selección',
+      full: 'Puedes elegir hasta {n} piezas.',
+      emptyTitle: 'Tu selección está vacía',
+      emptyBody: 'Marca las piezas que te gusten y te las agrupamos aquí.',
+      emptyCta: 'Ver las colecciones',
+      share: 'Compartir',
+      linkCopied: 'Enlace copiado',
+      linkCopyFailed: 'No pudimos copiar el enlace.',
+      whatsapp: 'Enviar por WhatsApp',
+      whatsappMessage: 'Hola, me interesan estas piezas de Tierra Mädre:',
+      whatsappMessageOne: 'Hola, me interesa esta pieza de Tierra Mädre:',
+      whatsappTail: '…y {n} más.',
+      announceAdded: '{nombre} agregada a tu selección. {n} en total.',
+      announceRemoved: '{nombre} quitada de tu selección. {n} en total.',
+    },
+
+    pago: {
+      resumenTitle: 'Tu pedido',
+      pieces: 'Piezas',
+      total: 'Total',
+      datos: 'Tus datos',
+      nombre: 'Nombre completo',
+      celular: 'Celular',
+      email: 'Correo (opcional)',
+      documento: 'Documento',
+      direccion: 'Dirección de entrega',
+      ciudad: 'Ciudad',
+      consent:
+        'He leído y acepto los términos y la política de tratamiento de datos.',
+      consentRequired: 'Necesitamos tu aceptación para continuar.',
+      pay: 'Pagar',
+      paying: 'Enviando…',
+      simulated: 'Simulación',
+      simulatedBody:
+        'Esta versión no cobra. Elige un desenlace para ver cómo responde la tienda.',
+      scenario: 'Desenlace simulado',
+      backToShop: 'Seguir viendo',
+      // Estados del pedido. Son los TRES del esquema real
+      // (reservada · confirmada · cancelada), no los del proveedor.
+      estado: {
+        confirmando: 'Confirmando tu pago',
+        confirmandoBody:
+          'Tu pedido quedó registrado. Estamos esperando la confirmación del banco, suele tardar unos segundos.',
+        confirmada: 'Pago confirmado',
+        confirmadaBody:
+          'Gracias. Te escribimos por WhatsApp para coordinar la entrega.',
+        cancelada: 'El pago no se completó',
+        canceladaBody:
+          'No se hizo ningún cobro. Puedes intentarlo de nuevo o escribirnos y lo resolvemos contigo.',
+        tardando:
+          'Está tardando más de lo normal. Escríbenos y lo miramos contigo.',
+        notFound: 'No encontramos ese pedido',
+        notFoundBody:
+          'Revisa el enlace, o escríbenos con el número que te dimos.',
+      },
+      pedido: 'Pedido',
+      retry: 'Intentar de nuevo',
+      writeUs: 'Escríbenos',
+      whatsappPedido: 'Hola, escribo por el pedido {id}.',
+    },
+
+    laCasa: {
+      title: 'La casa',
+      lead: 'Esmeraldas colombianas con ADN de paz.',
+      body1:
+        'Tierra Mädre nació alrededor de una idea simple: que una piedra que sale de la montaña colombiana pueda contar de dónde viene y a quién dejó algo por el camino.',
+      body2:
+        'Trabajamos con talladores y joyeros del país. Cada pieza se hace por encargo, así que lo que ves aquí es el diseño, y lo que recibes es tuyo.',
+      contact: 'Hablar con la casa',
+    },
+
+    legal: {
+      terminos: 'Términos y condiciones',
+      privacidad: 'Política de tratamiento de datos',
+      retracto: 'Derecho de retracto',
+      contacto: 'Contacto',
+      pendingTitle: 'En preparación',
+      pendingBody:
+        'Este texto legal está pendiente de la información oficial de la empresa. No lo redactamos por nuestra cuenta.',
+      sellerLabel: 'Vendedor',
+      lead: {
+        terminos:
+          'Las condiciones de venta de la casa: qué se compra, a qué precio y con qué garantía.',
+        privacidad:
+          'Qué datos personales pedimos, para qué los usamos y cómo se piden de vuelta.',
+        retracto:
+          'Cómo se deshace una compra dentro del plazo que da la ley colombiana.',
+        contacto: 'Los canales por los que responde la casa.',
+      },
+      indexTitle: 'Lo que va a contener',
+      secciones: {
+        terminos: [
+          'Identificación del vendedor',
+          'Alcance y aceptación',
+          'Precios, impuestos y moneda',
+          'Medios de pago',
+          'Envío y tiempos de entrega',
+          'Garantía legal',
+          'Cambios y devoluciones',
+          'Atención al consumidor y reclamos',
+          'Ley aplicable',
+        ],
+        privacidad: [
+          'Responsable del tratamiento',
+          'Datos que recogemos',
+          'Finalidades del tratamiento',
+          'Autorización del titular',
+          'Derechos del titular',
+          'Canal de consultas y reclamos',
+          'Seguridad y conservación',
+          'Encargados y transferencias',
+          'Vigencia de la política',
+        ],
+        retracto: [
+          'Plazo para ejercer el retracto',
+          'Compras a las que aplica',
+          'Excepciones',
+          'Cómo notificar la decisión',
+          'Estado en que se devuelve la pieza',
+          'Costos de transporte',
+          'Plazo y medio de devolución del dinero',
+          'Canal para radicar la solicitud',
+        ],
+      },
+      sellerPending: 'Pendiente: razón social, NIT y dirección del vendedor.',
+    },
+
+    footer: {
+      colecciones: 'Colecciones',
+      laCasa: 'La casa',
+      contacto: 'Contacto',
+      legal: 'Legal',
+      rights: 'Tierra Mädre · Esmeraldas colombianas con ADN de paz',
+    },
+
+    notFound: {
+      coleccionTitle: 'Esa colección no existe',
+      coleccionBody:
+        'Puede que el enlace esté incompleto o que la colección haya cambiado de nombre.',
+      piezaTitle: 'Esa pieza no existe',
+      piezaBody:
+        'Puede que el enlace esté incompleto o que la pieza ya no esté en la colección.',
+      cta: 'Ver las colecciones',
+    },
+  },
   // Clientes autorregistrados con Google (2026-09-09): catálogo con precio,
   // consulta por WhatsApp a la línea de la casa, y el descargo bajo el precio.
   cliente: {

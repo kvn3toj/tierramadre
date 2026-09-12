@@ -40,6 +40,14 @@ export interface FeatureFlags {
    */
   ESMEREOGENESIS: boolean;
 
+  /**
+   * Tienda pública (Storefront v2): la puerta de dos colecciones en `/tienda`.
+   * Dev-only mientras el inventario sea de muestra, con el mismo gesto que
+   * ESMEREOGENESIS: invisible en producción, viva en `npm run dev` o vía
+   * `window.featureFlags.enable('TIENDA_PUBLICA')`.
+   */
+  TIENDA_PUBLICA: boolean;
+
   /** A/B Test: Grid Layout Variant */
   AB_GRID_VARIANT: ABGridVariant;
 }
@@ -58,6 +66,7 @@ export const FEATURES: FeatureFlags = {
   IOS_TREASURE: false, // ⏳ Week 7-8
   IOS_AMBASSADORS: false, // ⏳ Future
   ESMEREOGENESIS: import.meta.env.DEV, // 🚧 Dev-only — hidden in production
+  TIENDA_PUBLICA: import.meta.env.DEV, // 🚧 Dev-only — inventario de muestra
   AB_GRID_VARIANT: 'ios-hig', // ✅ Default to iOS HIG strict compliance
 };
 
@@ -157,6 +166,8 @@ export function getAllFeatureFlags(): FeatureFlags {
         flags.IOS_AMBASSADORS = parsed.IOS_AMBASSADORS;
       if ('ESMEREOGENESIS' in parsed)
         flags.ESMEREOGENESIS = parsed.ESMEREOGENESIS;
+      if ('TIENDA_PUBLICA' in parsed)
+        flags.TIENDA_PUBLICA = parsed.TIENDA_PUBLICA;
       if ('AB_GRID_VARIANT' in parsed)
         flags.AB_GRID_VARIANT = parsed.AB_GRID_VARIANT;
     }

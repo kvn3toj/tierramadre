@@ -39,7 +39,20 @@ export default defineConfig({
     },
   ].filter(Boolean),
   server: {
+    // `localhost` explícito, nunca la red. Exponer el servidor en la LAN
+    // (`--host` / 0.0.0.0) cambia el ORIGEN con el que el navegador se
+    // presenta ante Google: `http://192.168.x.x:3000` no está en los orígenes
+    // autorizados de JavaScript del cliente OAuth, así que el botón de
+    // ingresar deja de renderizar con «The given origin is not allowed for
+    // the given client ID». En la consola sólo están autorizados
+    // `http://localhost:3000` y los dominios de producción.
+    host: 'localhost',
     port: 3000,
+    // Fallar en vez de desplazarse. Sin esto Vite toma el 3001 en silencio
+    // cuando el 3000 está ocupado, y el 3001 TAMPOCO es un origen autorizado:
+    // la sesión se rompe con el mismo error de Google y el síntoma no apunta
+    // al puerto. Preferimos un arranque que falle y diga por qué.
+    strictPort: true,
     open: true,
     // Proxy API requests to production for local development
     // This allows local dev to fetch real data from Vercel serverless functions
