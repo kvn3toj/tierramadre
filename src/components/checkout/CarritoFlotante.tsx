@@ -22,6 +22,7 @@
 import { Box, Badge } from '@mui/material';
 import { ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { zIndex } from '../../design-system';
 
 interface CarritoFlotanteProps {
   /** Piezas en el carrito. Con 0 el indicador no se renderiza. */
@@ -46,7 +47,7 @@ export default function CarritoFlotante({ count }: CarritoFlotanteProps) {
         // Por encima del borde inferior seguro en iOS, donde vive la barra
         // de gestos del sistema.
         bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
-        zIndex: 1200,
+        zIndex: zIndex.float,
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -55,15 +56,20 @@ export default function CarritoFlotante({ count }: CarritoFlotanteProps) {
         border: 'none',
         borderRadius: '50%',
         cursor: 'pointer',
-        color: '#fff',
-        bgcolor: 'var(--tm-accent)',
-        boxShadow: '0 6px 20px rgba(0,0,0,0.28)',
-        transition: 'transform 140ms ease, filter 140ms ease',
-        '&:hover': { filter: 'brightness(1.08)' },
-        '&:active': { transform: 'scale(0.94)' },
+        color: 'var(--tm-on-accent)',
+        bgcolor: 'var(--tm-accent-strong)',
+        // La única sombra editorial del sistema (DS3 §3.3), que es exactamente
+        // para lo que existe: una capa que flota de verdad.
+        boxShadow: 'var(--tm-shadow)',
+        // DS3 §4 regla 2/3: sólo color y opacidad. El `scale(0.94)` anterior
+        // movía el layout en el press.
+        transition:
+          'opacity var(--tm-fast) var(--tm-ease), background-color var(--tm-fast) var(--tm-ease)',
+        '&:hover': { backgroundColor: 'var(--tm-accent)' },
+        '&:active': { opacity: 0.85 },
         '&:focus-visible': {
-          outline: '2px solid var(--tm-accent)',
-          outlineOffset: 3,
+          boxShadow: 'var(--tm-focus-ring)',
+          outline: 'none',
         },
       }}
     >
@@ -73,10 +79,11 @@ export default function CarritoFlotante({ count }: CarritoFlotanteProps) {
           '& .MuiBadge-badge': {
             top: -6,
             right: -6,
-            bgcolor: '#fff',
+            bgcolor: 'var(--tm-surface)',
             color: 'var(--tm-accent)',
             fontWeight: 700,
-            fontSize: 11,
+            fontSize: '0.6875rem',
+            fontFamily: 'var(--tm-font-mono)',
           },
         }}
       >

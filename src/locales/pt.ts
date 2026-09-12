@@ -548,10 +548,37 @@ export const pt = {
 
   // Cart
   cart: {
+    title: 'Minha Seleção',
+    piecesSelected: '{n} peças selecionadas',
+    pieceSelectedOne: '1 peça selecionada',
     clear: 'Limpar',
+    itemNumber: 'Item nº {n}',
+    certified: 'Certificada',
+    remove: 'Remover',
+    withPrice: '{n} com preço',
+    totalToCharge: 'Total a cobrar',
+    unpricedLabel: 'Sem preço cadastrado',
+    unpricedAction: 'Consultar',
+    unpricedNotice:
+      'As peças sem preço não entram no total; nós as orçamos para você pelo WhatsApp.',
+    multiplierLabel: 'Preço exibido ×{m}',
+    emptyTitle: 'Sua seleção está vazia',
+    emptyCta: 'Ir para o catálogo',
     exploreCollection: 'Explorar Coleção',
+    inquiryTo: 'Sua consulta será enviada a {name} pelo WhatsApp',
     sending: 'Enviando...',
     sendWhatsApp: 'Enviar consulta pelo WhatsApp',
+    sendHint: 'O WhatsApp abrirá com a sua lista de peças',
+    noInviter:
+      'Não encontramos o contato de quem convidou você. Escreva para nós e ajudamos.',
+    sendFailed:
+      'Não foi possível enviar para {name}. Verifique se tem o WhatsApp configurado.',
+    emptyError: 'Não há peças na sua seleção',
+    pay: 'Pagar',
+    payHint: 'Pagamento seguro online · COP',
+    shareDivider: 'ou compartilhe com um cliente',
+    shareTitle: 'Compartilhar com cliente',
+    shareHint: 'O cliente verá apenas estas peças, sem fazer login.',
   },
 
   // Contact
@@ -665,7 +692,7 @@ export const pt = {
     colombianEmeralds: 'Colombian Emeralds',
     invitationOnly: 'Acesso somente por convite',
     invitationOnlyMessage:
-      'O acesso de visitante requer um link de convite. Solicite um a um embaixador Tierra Madre.',
+      '«Continuar com Google» leva você direto ao catálogo com preços. O link de convite é a outra porta: um embaixador da Tierra Madre o compartilha.',
     inAppBrowserTitle: 'Para uma melhor experiência',
     inAppBrowserMessage:
       'Abra no seu navegador preferido (Chrome, Safari, etc.) para entrar com o Google.',
@@ -1107,5 +1134,82 @@ export const pt = {
         'Talvez o link esteja incompleto ou a peça já não esteja na coleção.',
       cta: 'Ver as coleções',
     },
+  },
+  // Clientes autorregistrados con Google (2026-09-09): catálogo con precio,
+  // consulta por WhatsApp a la línea de la casa, y el descargo bajo el precio.
+  cliente: {
+    priceDisclaimer:
+      'Todos os nossos preços estão sujeitos a alterações sem aviso prévio. Aproveite a tarifa do eterno presente.',
+    consultWhatsApp: 'Consultar pelo WhatsApp',
+    addToSelection: 'Adicionar à seleção',
+    inSelection: 'Na sua seleção · Ver',
+    cartBanner: 'Sua consulta será enviada à Tierra Madre pelo WhatsApp',
+  },
+
+  // La hoja de pago y la página post-pago, en los seis idiomas (2026-09-09).
+  // Todo lo que un cliente lee entre «Pagar» y «Pago confirmado» vive aquí,
+  // incluidos los mensajes de error: `mensajesCheckout.ts` ya no devuelve
+  // texto en español, devuelve un `codigo` que `traducirMensaje` resuelve
+  // contra este bloque. Los `msg*` son ese catálogo de códigos.
+  //
+  // Un cliente que llega por un enlace en inglés y encuentra «Celular /
+  // WhatsApp» en el único formulario donde entrega su plata es exactamente el
+  // agujero que este bloque cierra.
+  checkout: {
+    title: 'Pagar',
+    close: 'Fechar',
+    empty: 'Nenhuma peça selecionada.',
+    totalLabel: 'Total a pagar (COP)',
+    reservationNote:
+      'Ao pagar, reservamos a peça por {minutes} minutos. Se o pagamento não for concluído nesse tempo, ela volta a ficar disponível.',
+    phoneLabel: 'Celular / WhatsApp',
+    phonePlaceholder: '+57 300 123 4567',
+    nameLabel: 'Nome completo (opcional)',
+    emailLabel: 'E-mail (opcional)',
+    payButton: 'Pagar {total}',
+    blockedUnpriced:
+      'Uma ou mais peças da sua seleção ainda não têm preço e não podemos cobrá-las aqui. Escreva para nós pelo WhatsApp e ajudamos você a concluir a compra.',
+    networkError:
+      'Não conseguimos conectar. Verifique sua conexão e tente de novo.',
+    msgGenerico:
+      'Não conseguimos concluir o pedido. Tente de novo em um instante.',
+    msgBloqueadoEdge:
+      'Os pagamentos online estão indisponíveis por enquanto. Escreva para nós pelo WhatsApp e concluímos sua compra.',
+    msgExito: 'Levando você para o pagamento…',
+    msgPedidoSinLink:
+      'Guardamos {pedido}, mas não conseguimos abrir o pagamento. Escrevemos para você pelo WhatsApp para concluir.',
+    msgItemReserved:
+      'Outra pessoa está pagando {sku} neste momento. Tente de novo em alguns minutos.',
+    msgProductUnavailable: 'Esta peça já foi vendida.',
+    msgPrecioNoDisponible:
+      'Não conseguimos calcular o preço de {sku}. Escreva para nós e ajudamos você a concluir a compra.',
+    msgPrecioNoDisponibleSinSku:
+      'Uma ou mais peças não têm preço atribuído. Escreva para nós e ajudamos você a concluir a compra.',
+    msgZeroTotal:
+      'Uma ou mais peças não têm preço atribuído. Escreva para nós e ajudamos você a concluir a compra.',
+    msgOrigenInvalido:
+      'O link pelo qual você chegou não é mais válido. Escreva para nós e ajudamos você.',
+    pedidoConfirmingTitle: 'Estamos confirmando seu pagamento',
+    pedidoConfirmingBody:
+      'Já recebemos seu pedido {saleId}. A confirmação do pagamento pode levar alguns segundos — esta página se atualiza sozinha, não precisa recarregar.',
+    pedidoLoadingBody: 'Isso leva só um momento.',
+    pedidoConfirmedTitle: 'Pagamento confirmado!',
+    pedidoConfirmedBody:
+      'Obrigado pela sua compra. Guarde o número do seu pedido, vamos escrever para você pelo WhatsApp com os próximos passos.',
+    pedidoLabel: 'Pedido',
+    pedidoTotalLabel: 'Total',
+    pedidoCancelledTitle: 'Este pedido foi cancelado',
+    pedidoCancelledBody:
+      'O pedido {saleId} não está mais ativo. Se você acha que isso é um erro ou quer tentar de novo, escreva para nós e teremos prazer em ajudar.',
+    pedidoNotFoundTitle: 'Não encontramos esse pedido',
+    pedidoNotFoundBody:
+      'Confira o link ou escreva para nós, que ajudamos você a localizá-lo.',
+    pedidoWhatsApp: 'Falar pelo WhatsApp',
+    pedidoSlowLine:
+      'Está demorando mais que o normal. Se você já pagou, escreva para nós pelo WhatsApp com o seu pedido {saleId} e verificamos.',
+    pedidoWhatsAppCancelled: 'Olá, meu pedido {saleId} aparece como cancelado.',
+    pedidoWhatsAppNotFound: 'Olá, não encontro meu pedido.',
+    pedidoWhatsAppSlow:
+      'Olá, já paguei o pedido {saleId} mas ele continua em confirmação.',
   },
 };

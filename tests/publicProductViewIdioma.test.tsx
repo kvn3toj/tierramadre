@@ -23,8 +23,13 @@ vi.mock('../src/contexts/ThemeContext', () => ({
 vi.mock('../src/hooks/useTRM', () => ({
   useTRM: () => ({ trmRate: 4000, isLoading: false }),
 }));
+// Espejo de props en vez de `() => null`: el idioma del enlace tiene que
+// SEGUIR hasta el checkout, y la única forma de probarlo desde acá es leer lo
+// que la ficha le entrega a la hoja.
 vi.mock('../src/components/checkout/CheckoutSheet', () => ({
-  default: () => null,
+  default: (props: { lang?: string }) => (
+    <div data-testid="checkout-sheet" data-lang={props.lang} />
+  ),
 }));
 vi.mock('../src/pages/treasure/ProductDetail/gemSheet/GemSheetParts', () => ({
   FormulaPanel: () => null,
@@ -98,6 +103,23 @@ describe('PublicProductView — el idioma del enlace', () => {
     const es = translations.es.vitrina;
     expect(screen.queryByText(es.consultWhatsApp)).toBeNull();
     expect(screen.queryByText(es.footerTagline)).toBeNull();
+  });
+
+  it('el idioma del enlace baja hasta CheckoutSheet', () => {
+    render(
+      <PublicProductView
+        product={producto}
+        pricing={pricing}
+        senderPhone="573001234567"
+        vitrinaToken="AB3K9P2Q4R7S"
+        onAddToCart={() => {}}
+        onBack={() => {}}
+        lang="en"
+        tv={translations.en.vitrina}
+      />,
+    );
+
+    expect(screen.getByTestId('checkout-sheet').dataset.lang).toBe('en');
   });
 
   it('sin `tv` sigue en español — el catálogo público no cambia', () => {

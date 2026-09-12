@@ -14,6 +14,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle, Explore } from '@mui/icons-material';
 import { useInvitation } from '../hooks/useInvitation';
 import { useAuth } from '../hooks/useAuth';
+import { HOUSE_WHATSAPP } from '../constants/contact';
 import { INVITATION_STORAGE_KEYS } from '../types/invitation';
 import { alpha } from '@mui/material/styles';
 import {
@@ -316,25 +317,37 @@ export default function InvitationPage() {
         // this same synchronous validation run.
         let resolvedInviterWhatsApp = '';
         if (result.creatorEmail) {
+          // `directoryRead` = la consulta al directorio SÍ respondió. Sólo
+          // entonces "no está" significa "no es asesor" y no "falló la red".
+          let directoryRead = false;
+          let creatorInDirectory = false;
           try {
             const asesoresResponse = await fetch('/api/get-asesores');
             const asesoresData = await asesoresResponse.json();
             if (asesoresData.success && asesoresData.asesores) {
+              directoryRead = true;
+              const creatorEmail = result.creatorEmail.toLowerCase();
+              // Por email, no por subcadena del nombre: el nombre de Google
+              // de un cliente ("Juan") es subcadena del de un asesor real.
               const inviter = asesoresData.asesores.find(
                 (a: { name: string; email?: string }) =>
-                  a.name
-                    .toLowerCase()
-                    .includes((result.createdBy || '').toLowerCase()) ||
-                  (a.email &&
-                    a.email.toLowerCase() ===
-                      result.creatorEmail?.toLowerCase()),
+                  a.email && a.email.toLowerCase() === creatorEmail,
               );
+              creatorInDirectory = Boolean(inviter);
               if (inviter?.whatsapp) {
                 resolvedInviterWhatsApp = inviter.whatsapp;
               }
             }
           } catch (error) {
             console.warn('Could not fetch inviter WhatsApp:', error);
+          }
+          // Un cliente autorregistrado también invita (2026-09-09) y no está
+          // en el directorio de asesores: su invitado escribe a la línea de
+          // la casa. Sólo cuando el directorio respondió y el creador no
+          // figura — un asesor sin WhatsApp o una red caída siguen igual que
+          // antes (sin contacto, con reintento).
+          if (!resolvedInviterWhatsApp && directoryRead && !creatorInDirectory) {
+            resolvedInviterWhatsApp = HOUSE_WHATSAPP;
           }
         }
 

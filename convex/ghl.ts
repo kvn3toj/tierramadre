@@ -480,11 +480,19 @@ export const createOrder = mutation({
       // puede devolver un link válido hasta T+59 mientras la reserva muere a
       // T+30 (ver `api/_lib/checkoutLink.ts`). `_creationTime` es la fuente
       // de verdad, la misma que ancla la ventana de reserva arriba.
+      //
+      // Cada link emitido cuenta como un intento: Wompi exige `reference`
+      // única por transacción, así que el segundo link de la misma venta
+      // viaja como `${saleId}_2` (ver `api/_lib/wompi.ts`).
+      const doc = pendientes.find((s) => s.saleId === reusable.saleId);
+      const attempt = (doc?.paymentAttempts ?? 1) + 1;
+      if (doc) await ctx.db.patch(doc._id, { paymentAttempts: attempt });
       return {
         saleId: reusable.saleId,
         totalCOP: reusable.totalCOP,
         reused: true as const,
         reservedAt: reusable.creationTime,
+        attempt,
       };
     }
 
@@ -538,12 +546,19 @@ export const createOrder = mutation({
       rowIndex,
       lastPulledAt: nowIso,
       syncStatus: 'pending' as const,
+      paymentAttempts: 1,
     });
 
     // `now` is the instant this sale was created — same source the fresh
     // insert's `_creationTime` will resolve to — so a fresh order's link
     // expires exactly `RESERVA_TTL_MS` from here too.
-    return { saleId, totalCOP, reused: false as const, reservedAt: now };
+    return {
+      saleId,
+      totalCOP,
+      reused: false as const,
+      reservedAt: now,
+      attempt: 1,
+    };
   },
 });
 

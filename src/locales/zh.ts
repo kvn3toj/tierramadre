@@ -542,10 +542,34 @@ export const zh = {
 
   // Cart
   cart: {
+    title: '我的选择',
+    piecesSelected: '已选 {n} 件',
+    pieceSelectedOne: '已选 1 件',
     clear: '清除',
+    itemNumber: '编号 #{n}',
+    certified: '附证书',
+    remove: '移除',
+    withPrice: '{n} 件已标价',
+    totalToCharge: '应收总额',
+    unpricedLabel: '尚未定价',
+    unpricedAction: '咨询',
+    unpricedNotice: '未定价的宝石不计入总额；我们会通过 WhatsApp 为你报价。',
+    multiplierLabel: '显示价格 ×{m}',
+    emptyTitle: '你的选择还是空的',
+    emptyCta: '前往目录',
     exploreCollection: '探索收藏',
+    inquiryTo: '你的咨询将通过 WhatsApp 发送给 {name}',
     sending: '发送中...',
     sendWhatsApp: '通过WhatsApp发送咨询',
+    sendHint: '将打开 WhatsApp 并附上你的选品清单',
+    noInviter: '未找到邀请人的联系方式。请与我们联系，我们来帮你。',
+    sendFailed: '无法发送给 {name}。请确认对方已配置 WhatsApp。',
+    emptyError: '你的选择中没有宝石',
+    pay: '支付',
+    payHint: '安全在线支付 · COP',
+    shareDivider: '或分享给客户',
+    shareTitle: '分享给客户',
+    shareHint: '客户只会看到这些宝石，无需登录。',
   },
 
   // Contact
@@ -637,7 +661,8 @@ export const zh = {
     privateAccess: '私密访问',
     colombianEmeralds: 'Colombian Emeralds',
     invitationOnly: '仅限邀请访问',
-    invitationOnlyMessage: '访客访问需要邀请链接。请向 Tierra Madre 大使索取。',
+    invitationOnlyMessage:
+      '点击“使用 Google 继续”即可直接进入带价格的目录。邀请链接是另一种方式，由 Tierra Madre 大使分享。',
     inAppBrowserTitle: '为了更好的体验',
     inAppBrowserMessage:
       '请在您常用的浏览器（Chrome、Safari 等）中打开，以使用 Google 登录。',
@@ -1062,5 +1087,76 @@ export const zh = {
       piezaBody: '可能是链接不完整，或该作品已不在此系列中。',
       cta: '查看系列',
     },
+  },
+  // Clientes autorregistrados con Google (2026-09-09): catálogo con precio,
+  // consulta por WhatsApp a la línea de la casa, y el descargo bajo el precio.
+  cliente: {
+    priceDisclaimer:
+      '我们的所有价格如有变动，恕不另行通知。把握“永恒当下”的价格。',
+    consultWhatsApp: '通过 WhatsApp 咨询',
+    addToSelection: '加入选品',
+    inSelection: '已在选品中 · 查看',
+    cartBanner: '您的咨询将通过 WhatsApp 发送给 Tierra Madre',
+  },
+
+  // La hoja de pago y la página post-pago, en los seis idiomas (2026-09-09).
+  // Todo lo que un cliente lee entre «Pagar» y «Pago confirmado» vive aquí,
+  // incluidos los mensajes de error: `mensajesCheckout.ts` ya no devuelve
+  // texto en español, devuelve un `codigo` que `traducirMensaje` resuelve
+  // contra este bloque. Los `msg*` son ese catálogo de códigos.
+  //
+  // Un cliente que llega por un enlace en inglés y encuentra «Celular /
+  // WhatsApp» en el único formulario donde entrega su plata es exactamente el
+  // agujero que este bloque cierra.
+  checkout: {
+    title: '支付',
+    close: '关闭',
+    empty: '尚未选择任何宝石。',
+    totalLabel: '应付总额（COP）',
+    reservationNote:
+      '支付时我们会为你保留这件宝石 {minutes} 分钟。若未在此时间内完成支付，它将重新开放选购。',
+    phoneLabel: '手机 / WhatsApp',
+    phonePlaceholder: '+57 300 123 4567',
+    nameLabel: '全名（选填）',
+    emailLabel: '邮箱（选填）',
+    payButton: '支付 {total}',
+    blockedUnpriced:
+      '你的选择中有一件或多件宝石尚未定价，无法在此结算。请通过 WhatsApp 与我们联系，我们协助你完成这笔购买。',
+    networkError: '连接失败。请检查网络后重试。',
+    msgGenerico: '订单未能完成。请稍后再试。',
+    msgBloqueadoEdge:
+      '在线支付暂时不可用。请通过 WhatsApp 与我们联系，我们为你完成这笔购买。',
+    msgExito: '正在带你前往支付…',
+    msgPedidoSinLink:
+      '我们已保存 {pedido}，但支付页面未能打开。我们会通过 WhatsApp 联系你完成支付。',
+    msgItemReserved: '此刻另一位客人正在支付 {sku}。请几分钟后再试。',
+    msgProductUnavailable: '这件宝石已经售出。',
+    msgPrecioNoDisponible:
+      '我们无法计算 {sku} 的价格。请与我们联系，我们协助你完成这笔购买。',
+    msgPrecioNoDisponibleSinSku:
+      '有一件或多件宝石尚未定价。请与我们联系，我们协助你完成这笔购买。',
+    msgZeroTotal:
+      '有一件或多件宝石尚未定价。请与我们联系，我们协助你完成这笔购买。',
+    msgOrigenInvalido: '你进入的链接已失效。请与我们联系，我们来帮你。',
+    pedidoConfirmingTitle: '正在确认你的付款',
+    pedidoConfirmingBody:
+      '我们已收到你的订单 {saleId}。付款确认可能需要几秒钟 —— 本页会自动更新，无需重新加载。',
+    pedidoLoadingBody: '只需稍等片刻。',
+    pedidoConfirmedTitle: '付款已确认！',
+    pedidoConfirmedBody:
+      '感谢你的购买。请保存订单编号，我们会通过 WhatsApp 告知你后续步骤。',
+    pedidoLabel: '订单',
+    pedidoTotalLabel: '合计',
+    pedidoCancelledTitle: '此订单已取消',
+    pedidoCancelledBody:
+      '订单 {saleId} 已不再有效。若你认为这是误操作，或想重新下单，请与我们联系，我们很乐意帮忙。',
+    pedidoNotFoundTitle: '未找到该订单',
+    pedidoNotFoundBody: '请检查链接，或与我们联系，我们很乐意帮你找到它。',
+    pedidoWhatsApp: '通过 WhatsApp 联系我们',
+    pedidoSlowLine:
+      '这比平常花的时间更久。如果你已付款，请通过 WhatsApp 把订单 {saleId} 发给我们，我们来核查。',
+    pedidoWhatsAppCancelled: '你好，我的订单 {saleId} 显示已取消。',
+    pedidoWhatsAppNotFound: '你好，我找不到我的订单。',
+    pedidoWhatsAppSlow: '你好，我已支付订单 {saleId}，但仍在确认中。',
   },
 };

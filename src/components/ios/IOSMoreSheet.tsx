@@ -65,7 +65,7 @@ import {
 } from '../../design-system';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLiquidGlassSafe } from '../../contexts/LiquidGlassContext';
-import { useCanCreateInvitations } from '../../hooks/useAuth';
+import { useCanCreateInvitations, useIsCliente } from '../../hooks/useAuth';
 import {
   useIsAdmin,
   useIsStaff,
@@ -102,6 +102,8 @@ const buildMenuSections = (
     isStaff: boolean;
     canCreateInvitations: boolean;
     canCreateCotizaciones: boolean;
+    /** Self-registered client (`new-users` tab). See AccessLevel 'cliente'. */
+    isCliente: boolean;
   },
 ): MenuSection[] => {
   const sections: MenuSection[] = [];
@@ -159,16 +161,23 @@ const buildMenuSections = (
     }
   }
 
-  // DESCUBRIR (all users)
+  // DESCUBRIR (all users except self-registered clientes)
+  // La Bóveda Secreta no se le ofrece al perfil `cliente`: ClienteGate
+  // (App.tsx, CLIENTE_PATHS) ya rebota /boveda-secreta a /treasure, así que
+  // para ellos la entrada era una puerta pintada. Se oculta en el origen.
   const discoverTools: MoreToolConfig[] = [
-    {
-      id: 'vault',
-      label: t.tools.vault.label,
-      subtitle: t.tools.vault.subtitle,
-      icon: Vault as any,
-      route: '/boveda-secreta',
-      color: brand.gold[500],
-    },
+    ...(flags.isCliente
+      ? []
+      : [
+          {
+            id: 'vault',
+            label: t.tools.vault.label,
+            subtitle: t.tools.vault.subtitle,
+            icon: Vault as any,
+            route: '/boveda-secreta',
+            color: brand.gold[500],
+          },
+        ]),
     // Bóveda re-skin: the Esmereogénesis hub had no persistent nav entry.
     // (Copy promoted to the i18n bundle in Phase 9.)
     // Dev-only feature — omitted in production via the ESMEREOGENESIS flag.
@@ -200,11 +209,13 @@ const buildMenuSections = (
     });
   }
 
-  sections.push({
-    id: 'discover',
-    title: t.menu.discover.toUpperCase(),
-    tools: discoverTools,
-  });
+  if (discoverTools.length > 0) {
+    sections.push({
+      id: 'discover',
+      title: t.menu.discover.toUpperCase(),
+      tools: discoverTools,
+    });
+  }
 
   // ADMINISTRACION (admin only)
   if (flags.isAdmin) {
@@ -340,6 +351,11 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
   const { asesor } = useCurrentAsesor();
   const { user: googleUser } = useGoogleAuth();
 
+  // Clientes autorregistrados: /mi-perfil es una superficie de asesor, así
+  // que para ellos el menú se queda en ajustes + salir (y sin Bóveda Secreta,
+  // ver buildMenuSections).
+  const isCliente = useIsCliente();
+
   // Build grouped menu sections
   const menuSections = useMemo(
     () =>
@@ -348,13 +364,21 @@ const IOSMoreSheet: React.FC<IOSMoreSheetProps> = ({
         isStaff,
         canCreateInvitations,
         canCreateCotizaciones,
+        isCliente,
       }),
-    [t, isAdmin, isStaff, canCreateInvitations, canCreateCotizaciones],
+    [
+      t,
+      isAdmin,
+      isStaff,
+      canCreateInvitations,
+      canCreateCotizaciones,
+      isCliente,
+    ],
   );
 
   const bottomTools = useMemo(
-    () => getBottomTools(t, isStaff, !!googleUser),
-    [t, isStaff, googleUser],
+    () => getBottomTools(t, isStaff, !!googleUser && !isCliente),
+    [t, isStaff, googleUser, isCliente],
   );
 
   // Flat Quiet Emerald surface for the sheet

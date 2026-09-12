@@ -24,6 +24,12 @@ export const useIsGuest = () => {
   return accessLevel === 'guest';
 };
 
+/** Self-registered client (Google sign-in, `new-users` tab). */
+export const useIsCliente = () => {
+  const { accessLevel } = useAuthContext();
+  return accessLevel === 'cliente';
+};
+
 export const useHasFullAccess = () => {
   const { accessLevel } = useAuthContext();
   // Full access = asesor or embajador (staff members)
@@ -64,6 +70,8 @@ export const useCanSeeComunidadPrice = () => {
  */
 export const useCanCreateInvitations = () => {
   const { accessLevel } = useAuthContext();
+  // Self-registered clientes may invite too (2026-09-09): their guests reach
+  // the house line, since a cliente has no roster WhatsApp.
   return accessLevel !== 'guest';
 };
 

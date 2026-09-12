@@ -1,30 +1,39 @@
 /**
- * CartPage Component
+ * CartPage — «Mi Selección», la última pantalla antes de pagar.
  *
- * Displays selected products and allows users to send inquiry via WhatsApp.
- * - Guests send to their inviter
- * - Staff select an admin to contact
+ * Para el visitante anónimo del catálogo público esta pantalla ES el camino
+ * al pago (ficha → carrito → pagar), así que su trabajo no es listar: es
+ * decir con exactitud qué se puede cobrar y qué no.
+ *
+ * ## La pieza sin precio se nombra, no se disfraza de cero
+ *
+ * `precioCOP <= 0` significa «Consultar precio» en el catálogo. La versión
+ * anterior de esta pantalla lo formateaba como «$ 0» y lo sumaba al total,
+ * de modo que el cliente veía un cobro válido de cero pesos y llegaba a
+ * «Pagar» para chocarse con el rechazo del servidor (`ZERO_TOTAL` en
+ * `convex/ghl.ts`). Ahora esa pieza lleva su propia etiqueta ámbar, el borde
+ * punteado la separa del resto, y un aviso dice en voz alta que no entra en
+ * el total — el guardia (`hayPiezaSinPrecio`) sigue siendo el mismo, lo que
+ * cambió es que la pantalla lo explica antes de que el cliente lo descubra.
+ *
+ * ## Las tres ramas de WhatsApp, en este orden
+ *
+ * `handleSendInquiry` ramifica cliente → invitado → staff, y el ORDEN es
+ * carga viva: un `isCliente` evaluado después del `isGuest` mandaría al
+ * cliente registrado por la línea de su invitador (que no tiene). Está
+ * fijado por `tests/cartPageResumen.test.tsx`.
  */
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Box, Typography, IconButton } from '@mui/material';
 import {
-  Box,
-  Typography,
-  Button,
-  Paper,
-  IconButton,
-  Avatar,
-  Divider,
-  Alert,
-  alpha,
-} from '@mui/material';
-import {
-  ShoppingCart,
+  AlertTriangle,
   Trash2,
   ChevronLeft,
   CreditCard,
   MessageCircle,
   Package,
+  Gem,
   X,
   Link2,
 } from 'lucide-react';
@@ -33,32 +42,68 @@ import { useCart } from '../hooks/useCart';
 import { useWhatsAppContact } from '../hooks/useWhatsAppContact';
 import { useCurrentAsesor } from '../hooks/useCurrentAsesor';
 import VitrinaShareDialog from '../components/vitrina/VitrinaShareDialog';
-import { useIsGuest, useGuestCanSeePrices } from '../hooks/useAuth';
+import {
+  useIsGuest,
+  useIsCliente,
+  useGuestCanSeePrices,
+} from '../hooks/useAuth';
 import { useCanShareVitrina } from '../hooks/usePermissions';
 import { useThemeMode } from '../contexts/ThemeContext';
 import AdminSelectDialog from '../components/cart/AdminSelectDialog';
-import {
-  emeraldCore,
-  surfacesLight,
-  surfacesDark,
-} from '../design-system/tokens/colors';
-import { buttonGradients } from '../design-system/tokens/gradients';
 import { useCurrency, useCurrencyFormat } from '../contexts/CurrencyContext';
-import { fontWeights } from '../design-system';
+import { Badge, Button, Card, EmptyState } from '../design-system';
 import CheckoutSheet, {
   CheckoutPieza,
 } from '../components/checkout/CheckoutSheet';
 import { hayPiezaSinPrecio } from '../components/checkout/checkoutGuards';
+import NoticeBox from '../components/checkout/NoticeBox';
 import { leerOrigen } from '../utils/origenCheckout';
 
+/** Metadatos de una pieza: `Ítem #544 · 4.10 ct` — la línea `spec` de DS3 §2.1. */
+const metaSx = {
+  fontFamily: 'var(--tm-font-mono)',
+  fontSize: '0.6875rem',
+  letterSpacing: '0.05em',
+  color: 'var(--tm-muted)',
+} as const;
+
+/** Etiqueta de sección: mono, versalitas anchas (DS3 §2.1 `overline`). */
+const overlineSx = {
+  fontFamily: 'var(--tm-font-mono)',
+  fontSize: '0.6875rem',
+  fontWeight: 500,
+  letterSpacing: '0.14em',
+  textTransform: 'uppercase',
+  color: 'var(--tm-muted)',
+} as const;
+
+/** Cifras: mono con `tabular-nums` para que ninguna columna baile (DS3 §2.2). */
+const dataSx = {
+  fontFamily: 'var(--tm-font-mono)',
+  fontVariantNumeric: 'tabular-nums',
+  fontWeight: 500,
+} as const;
+
+const hintSx = {
+  display: 'block',
+  textAlign: 'center',
+  fontFamily: 'var(--tm-font-ui)',
+  fontSize: '0.8125rem',
+  color: 'var(--tm-muted)',
+} as const;
+
 export default function CartPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { formatCurrency } = useCurrencyFormat();
   const { multiplier } = useCurrency();
   const navigate = useNavigate();
-  const { mode } = useThemeMode();
-  const isLight = mode === 'light';
+  // DS3 pinta por `--tm-*` y el modo lo resuelve el CSS, así que ya no hay un
+  // `isLight` que ramifique colores. La llamada se conserva porque el árbol
+  // sigue dependiendo del provider de tema y quitarla cambiaría el orden de
+  // hooks de esta página.
+  useThemeMode();
   const isGuest = useIsGuest();
+  const isCliente = useIsCliente();
   const canSeePrices = useGuestCanSeePrices();
   const canShareVitrina = useCanShareVitrina();
 
@@ -68,6 +113,7 @@ export default function CartPage() {
   const {
     openWhatsAppToInviter,
     openWhatsAppToAdmin,
+    openWhatsAppToHouse,
     isLoading,
     error,
     admins,
@@ -133,16 +179,20 @@ export default function CartPage() {
     setSendError(null);
 
     if (cartItems.length === 0) {
-      setSendError('No hay productos en el carrito');
+      setSendError(t.cart.emptyError);
+      return;
+    }
+
+    if (isCliente) {
+      // Self-registered client: the whole selection goes to the house line.
+      openWhatsAppToHouse(cartItems);
       return;
     }
 
     if (isGuest) {
       // Guest flow - send to inviter
       if (!hasInviter) {
-        setSendError(
-          'No se encontro el contacto de tu invitador. Por favor contacta al soporte.',
-        );
+        setSendError(t.cart.noInviter);
         return;
       }
       await openWhatsAppToInviter(cartItems);
@@ -159,17 +209,19 @@ export default function CartPage() {
     if (!success) {
       // Show error - the hook already set the error state
       // Keep the dialog closed but cart items remain
-      setSendError(
-        `No se pudo enviar a ${adminName}. Verifica que tenga WhatsApp configurado.`,
-      );
+      setSendError(t.cart.sendFailed.replace('{name}', adminName));
     }
     // Don't clear cart - let user keep their selection
   };
 
-  // iOS HIG colors
-  const separatorColor = isLight
-    ? 'rgba(60, 60, 67, 0.12)'
-    : 'rgba(235, 235, 245, 0.12)';
+  /** «3 piezas seleccionadas» / «1 pieza seleccionada». */
+  const conteoPiezas =
+    cartCount === 1
+      ? t.cart.pieceSelectedOne
+      : t.cart.piecesSelected.replace('{n}', String(cartCount));
+
+  const piezasConPrecio = cartItems.filter((item) => item.precioCOP > 0).length;
+  const haySinPrecio = hayPiezaSinPrecio(cartItems);
 
   return (
     <Box
@@ -184,305 +236,430 @@ export default function CartPage() {
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <IconButton
           onClick={() => navigate(-1)}
+          aria-label={t.actions.back}
           sx={{
-            bgcolor: isLight
-              ? surfacesLight.background.secondary
-              : surfacesDark.background.secondary,
+            color: 'var(--tm-text)',
+            backgroundColor: 'var(--tm-well)',
+            border: '1px solid var(--tm-border)',
+            '&:hover': { borderColor: 'var(--tm-accent)' },
           }}
         >
           <ChevronLeft size={24} />
         </IconButton>
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="h5" sx={{ fontWeight: fontWeights.bold }}>
-            Mi Selección
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography
+            component="h1"
+            sx={{
+              fontFamily: 'var(--tm-font-serif)',
+              fontSize: '1.75rem',
+              fontWeight: 500,
+              lineHeight: 1.15,
+              color: 'var(--tm-text)',
+            }}
+          >
+            {t.cart.title}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {cartCount} {cartCount === 1 ? 'producto' : 'productos'}
-          </Typography>
+          {cartCount > 0 && (
+            <Typography
+              sx={{
+                fontFamily: 'var(--tm-font-ui)',
+                fontSize: '0.8125rem',
+                color: 'var(--tm-muted)',
+              }}
+            >
+              {conteoPiezas}
+            </Typography>
+          )}
         </Box>
         {cartCount > 0 && (
           <Button
-            size="small"
-            color="error"
-            startIcon={<Trash2 size={16} />}
+            variant="plain"
+            size="sm"
             onClick={clearCart}
+            startIcon={
+              <Box
+                component="span"
+                sx={{ display: 'inline-flex', color: 'var(--tm-danger)' }}
+              >
+                <Trash2 size={16} />
+              </Box>
+            }
+            sx={{ color: 'var(--tm-muted)', flexShrink: 0 }}
           >
             {t.cart.clear}
           </Button>
         )}
       </Box>
 
-      {/* Error messages */}
+      {/* Error — plain-language cause, next to the failure (DS3 §6.2) */}
       {(error || sendError) && (
-        <Alert
-          severity="error"
-          sx={{ mb: 2 }}
-          onClose={() => setSendError(null)}
-        >
-          {error || sendError}
-        </Alert>
+        <Box sx={{ mb: 2 }}>
+          <NoticeBox
+            tone="danger"
+            icon={<AlertTriangle size={18} color="var(--tm-danger)" />}
+          >
+            {error || sendError}
+          </NoticeBox>
+        </Box>
       )}
 
-      {/* Empty state */}
       {cartCount === 0 ? (
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            textAlign: 'center',
-            borderRadius: 3,
-            border: '1px solid',
-            borderColor: separatorColor,
+        <EmptyState
+          icon={Package}
+          title={t.cart.emptyTitle}
+          action={{
+            label: t.cart.emptyCta,
+            onClick: () => navigate('/treasure'),
           }}
-        >
-          <Package
-            size={64}
-            color={
-              isLight ? surfacesLight.text.tertiary : surfacesDark.text.tertiary
-            }
-            style={{ marginBottom: 16, opacity: 0.5 }}
-          />
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: fontWeights.semibold, mb: 1 }}
-          >
-            Tu selección está vacía
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Explora nuestra colección y agrega productos que te interesen
-          </Typography>
-          <Button
-            variant="contained"
-            onClick={() => navigate('/treasure')}
-            sx={{
-              background: buttonGradients.primary,
-              color: '#FFFFFF',
-            }}
-          >
-            {t.cart.exploreCollection}
-          </Button>
-        </Paper>
+        />
       ) : (
         <>
-          {/* Cart items */}
-          <Paper
-            elevation={0}
+          {/* Una tarjeta por pieza: el borde punteado ámbar marca la que no
+              se puede cobrar, sin necesidad de leer la cifra. */}
+          <Box
             sx={{
-              borderRadius: 3,
-              border: '1px solid',
-              borderColor: separatorColor,
-              overflow: 'hidden',
-              mb: 3,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1.5,
+              mb: haySinPrecio && canSeePrices ? 2 : 3,
             }}
           >
-            {cartItems.map((item, index) => (
-              <Box key={item.itemId}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    p: 2,
-                  }}
+            {cartItems.map((item) => {
+              const sinPrecio = hayPiezaSinPrecio([item]);
+              const peso =
+                typeof item.peso === 'number'
+                  ? `${item.peso.toFixed(2)} ct`
+                  : null;
+              const meta = [
+                t.cart.itemNumber.replace('{n}', String(item.item)),
+                peso,
+              ]
+                .filter(Boolean)
+                .join(' · ');
+
+              return (
+                <Card
+                  key={item.itemId}
+                  variant="outlined"
+                  sx={
+                    sinPrecio
+                      ? { border: '1px dashed var(--tm-warning)' }
+                      : undefined
+                  }
                 >
-                  <Avatar
-                    src={item.thumbnailUrl}
-                    alt={item.nombre}
-                    variant="rounded"
+                  <Box
                     sx={{
-                      width: 60,
-                      height: 60,
-                      bgcolor: alpha(emeraldCore.primary, 0.1),
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                      p: 1.5,
                     }}
                   >
-                    <ShoppingCart size={24} color={emeraldCore.primary} />
-                  </Avatar>
-
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography
-                      variant="subtitle2"
+                    {/* El pozo: la pieza descansa sobre el piso de la vitrina.
+                        Geometría fija para que la imagen no empuje nada al
+                        llegar (CLS≈0, DS3 §4 regla 6). */}
+                    <Box
                       sx={{
-                        fontWeight: 600,
+                        width: 68,
+                        height: 68,
+                        flexShrink: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
+                        borderRadius: 'var(--tm-radius-well)',
+                        backgroundColor: 'var(--tm-well)',
+                        border: '1px solid var(--tm-border)',
+                        color: 'var(--tm-subtle)',
                       }}
                     >
-                      {item.nombre}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Item #{item.item}
-                    </Typography>
-                    {canSeePrices && (
+                      {item.thumbnailUrl ? (
+                        <Box
+                          component="img"
+                          src={item.thumbnailUrl}
+                          alt={item.nombre}
+                          sx={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
+                      ) : (
+                        <Gem size={24} aria-hidden />
+                      )}
+                    </Box>
+
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography
-                        variant="body2"
                         sx={{
-                          fontWeight: 600,
-                          color: emeraldCore.dark,
+                          fontFamily: 'var(--tm-font-serif)',
+                          fontSize: '1.0625rem',
+                          fontWeight: 500,
+                          lineHeight: 1.2,
+                          color: 'var(--tm-text)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {item.nombre}
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          flexWrap: 'wrap',
+                          gap: 1,
                           mt: 0.5,
                         }}
                       >
-                        {formatCurrency(item.precioCOP)}
-                      </Typography>
-                    )}
-                  </Box>
+                        <Typography component="span" sx={metaSx}>
+                          {meta}
+                        </Typography>
+                        {item.certificateUrl && (
+                          <Badge tone="accent" label={t.cart.certified} />
+                        )}
+                      </Box>
+                    </Box>
 
-                  <IconButton
-                    size="small"
-                    onClick={() => removeFromCart(item.itemId)}
+                    {/* La columna de precio sólo existe para quien ya venía
+                        viendo cifras: a un invitado `no_prices` nunca se le
+                        mostró una, ni siquiera para decir que falta. */}
+                    {canSeePrices && (
+                      <Box
+                        sx={{
+                          flexShrink: 0,
+                          textAlign: 'right',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'flex-end',
+                          gap: 0.5,
+                        }}
+                      >
+                        {sinPrecio ? (
+                          <>
+                            <Badge tone="warn" label={t.cart.unpricedLabel} />
+                            <Typography
+                              sx={{
+                                fontFamily: 'var(--tm-font-ui)',
+                                fontSize: '0.8125rem',
+                                fontWeight: 600,
+                                color: 'var(--tm-warning)',
+                              }}
+                            >
+                              {t.cart.unpricedAction}
+                            </Typography>
+                          </>
+                        ) : (
+                          <Typography
+                            sx={{
+                              ...dataSx,
+                              fontSize: '0.9375rem',
+                              color: 'var(--tm-accent)',
+                            }}
+                          >
+                            {formatCurrency(item.precioCOP)}
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
+
+                    <IconButton
+                      size="small"
+                      aria-label={t.cart.remove}
+                      onClick={() => removeFromCart(item.itemId)}
+                      sx={{
+                        flexShrink: 0,
+                        color: 'var(--tm-subtle)',
+                        '&:hover': {
+                          color: 'var(--tm-danger)',
+                          backgroundColor: 'var(--tm-well)',
+                        },
+                      }}
+                    >
+                      <X size={18} />
+                    </IconButton>
+                  </Box>
+                </Card>
+              );
+            })}
+          </Box>
+
+          {/* El aviso ámbar: por qué el total no cuadra con la lista. */}
+          {haySinPrecio && canSeePrices && (
+            <Box sx={{ mb: 3 }}>
+              <NoticeBox
+                tone="warn"
+                icon={<AlertTriangle size={18} color="var(--tm-warning)" />}
+              >
+                {t.cart.unpricedNotice}
+              </NoticeBox>
+            </Box>
+          )}
+
+          {/* Resumen — sólo para quien ve precios (igual que antes). */}
+          {canSeePrices && (
+            <Card variant="outlined" sx={{ mb: 3 }} data-testid="cart-resumen">
+              <Box sx={{ p: 2 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'baseline',
+                    gap: 2,
+                  }}
+                >
+                  <Typography
                     sx={{
-                      color: 'error.main',
-                      '&:hover': {
-                        bgcolor: alpha('#ef4444', 0.1),
-                      },
+                      fontFamily: 'var(--tm-font-ui)',
+                      fontSize: '0.8125rem',
+                      color: 'var(--tm-muted)',
                     }}
                   >
-                    <X size={18} />
-                  </IconButton>
+                    {conteoPiezas}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      ...metaSx,
+                      letterSpacing: '0.02em',
+                    }}
+                  >
+                    {t.cart.withPrice.replace('{n}', String(piezasConPrecio))}
+                  </Typography>
                 </Box>
 
-                {index < cartItems.length - 1 && <Divider sx={{ mx: 2 }} />}
-              </Box>
-            ))}
-          </Paper>
+                <Box
+                  sx={{
+                    height: '1px',
+                    backgroundColor: 'var(--tm-hairline)',
+                    my: 2,
+                  }}
+                />
 
-          {/* Totals - Only show if guest can see prices */}
-          {canSeePrices && (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                borderRadius: 3,
-                border: '1px solid',
-                borderColor: separatorColor,
-                mb: 3,
-              }}
-            >
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <Typography variant="body2" color="text.secondary">
-                  Total
-                </Typography>
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                <Typography sx={overlineSx}>{t.cart.totalToCharge}</Typography>
+                <Typography
+                  sx={{
+                    fontFamily: 'var(--tm-font-serif)',
+                    fontVariantNumeric: 'tabular-nums',
+                    fontSize: '2rem',
+                    fontWeight: 500,
+                    lineHeight: 1.1,
+                    color: 'var(--tm-accent)',
+                    mt: 0.5,
+                  }}
+                >
                   {formatCurrency(totals.cop)}
                 </Typography>
+                {multiplicadorMostrado !== 1 && (
+                  <Typography sx={{ ...metaSx, mt: 0.5 }}>
+                    {t.cart.multiplierLabel.replace(
+                      '{m}',
+                      String(multiplicadorMostrado),
+                    )}
+                  </Typography>
+                )}
               </Box>
-            </Paper>
+            </Card>
           )}
 
-          {/* Guest info banner */}
+          {isCliente && (
+            <Box sx={{ mb: 3 }}>
+              <NoticeBox
+                tone="info"
+                icon={<MessageCircle size={18} color="var(--tm-accent)" />}
+              >
+                {t.cliente.cartBanner}
+              </NoticeBox>
+            </Box>
+          )}
+
           {isGuest && inviterName && (
-            <Alert
-              severity="info"
-              sx={{ mb: 3 }}
-              icon={<MessageCircle size={20} />}
-            >
-              Tu consulta sera enviada a <strong>{inviterName}</strong> por
-              WhatsApp
-            </Alert>
+            <Box sx={{ mb: 3 }}>
+              <NoticeBox
+                tone="info"
+                icon={<MessageCircle size={18} color="var(--tm-accent)" />}
+              >
+                {t.cart.inquiryTo.replace('{name}', inviterName)}
+              </NoticeBox>
+            </Box>
           )}
 
-          {/* Send button */}
+          {/* La UNA acción primaria de la pantalla (DS3 §6.3). */}
           <Button
-            variant="contained"
+            variant="primary"
+            size="lg"
             fullWidth
-            size="large"
             disabled={isLoading || cartCount === 0}
             onClick={handleSendInquiry}
             startIcon={<MessageCircle size={20} />}
-            sx={{
-              background: buttonGradients.primary,
-              color: '#FFFFFF',
-              py: 1.5,
-              fontWeight: 600,
-              fontSize: '1rem',
-              borderRadius: 2,
-              '&:hover': {
-                background: emeraldCore.dark,
-              },
-            }}
           >
             {isLoading ? t.cart.sending : t.cart.sendWhatsApp}
           </Button>
-
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ display: 'block', textAlign: 'center', mt: 2 }}
-          >
-            Se abrira WhatsApp con tu lista de productos
-          </Typography>
+          <Typography sx={{ ...hintSx, mt: 1.5 }}>{t.cart.sendHint}</Typography>
 
           {/* Pagar — only for a guest with an invitation on record (see
               `canPagar` above); staff and unresolvable guests keep WhatsApp
               only. */}
           {canPagar && (
-            <Button
-              variant="outlined"
-              fullWidth
-              size="large"
-              onClick={() => setCheckoutOpen(true)}
-              startIcon={<CreditCard size={20} />}
-              sx={{
-                mt: 2,
-                py: 1.5,
-                fontWeight: 600,
-                fontSize: '1rem',
-                borderRadius: 2,
-                borderColor: emeraldCore.primary,
-                color: emeraldCore.primary,
-                '&:hover': {
-                  borderColor: emeraldCore.dark,
-                  bgcolor: alpha(emeraldCore.primary, 0.06),
-                },
-              }}
-            >
-              Pagar
-            </Button>
+            <>
+              <Box sx={{ mt: 2 }}>
+                <Button
+                  variant="outlined"
+                  size="lg"
+                  fullWidth
+                  onClick={() => setCheckoutOpen(true)}
+                  startIcon={<CreditCard size={20} />}
+                >
+                  {t.cart.pay}
+                </Button>
+              </Box>
+              <Typography sx={{ ...hintSx, mt: 1 }}>
+                {t.cart.payHint}
+              </Typography>
+            </>
           )}
 
-          {/* Staff + special guests: generate a public client link (Vitrina) */}
+          {/* Staff + special guests: generate a public client link (Vitrina).
+              El panel de multiplicador ya vive en `VitrinaShareDialog` — acá
+              sólo se abre. */}
           {canShareVitrina && (
             <>
-              <Divider sx={{ my: 3 }}>
-                <Typography variant="caption" color="text.secondary">
-                  o comparte con un cliente
-                </Typography>
-              </Divider>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  my: 3,
+                }}
+              >
+                <Box
+                  sx={{
+                    flex: 1,
+                    height: '1px',
+                    backgroundColor: 'var(--tm-hairline)',
+                  }}
+                />
+                <Typography sx={metaSx}>{t.cart.shareDivider}</Typography>
+                <Box
+                  sx={{
+                    flex: 1,
+                    height: '1px',
+                    backgroundColor: 'var(--tm-hairline)',
+                  }}
+                />
+              </Box>
               <Button
                 variant="outlined"
+                size="lg"
                 fullWidth
-                size="large"
                 disabled={cartCount === 0}
                 onClick={() => setShareDialogOpen(true)}
                 startIcon={<Link2 size={20} />}
-                sx={{
-                  py: 1.5,
-                  fontWeight: 600,
-                  fontSize: '1rem',
-                  borderRadius: 2,
-                  borderColor: emeraldCore.primary,
-                  color: emeraldCore.primary,
-                  '&:hover': {
-                    borderColor: emeraldCore.dark,
-                    bgcolor: alpha(emeraldCore.primary, 0.06),
-                  },
-                }}
               >
-                Compartir con cliente (sin app)
+                {t.cart.shareTitle}
               </Button>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: 'block', textAlign: 'center', mt: 1 }}
-              >
-                El cliente verá solo estas piezas, sin necesidad de iniciar
-                sesión.
+              <Typography sx={{ ...hintSx, mt: 1 }}>
+                {t.cart.shareHint}
               </Typography>
             </>
           )}
@@ -512,6 +689,7 @@ export default function CartPage() {
         piezas={piezas}
         multiplicador={multiplicadorMostrado}
         origen={origen}
+        lang={language}
         onClose={() => setCheckoutOpen(false)}
       />
     </Box>

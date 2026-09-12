@@ -24,7 +24,11 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { withApiHandler, sendError, sendSuccess } from './_lib/index.js';
 import { convexClient, isConvexEnabled } from './_lib/convex-client.js';
 import { validateWompiChecksum } from './_lib/wompi-signature.js';
-import { fetchTransaction, WOMPI_APPROVED } from './_lib/wompi.js';
+import {
+  fetchTransaction,
+  saleIdFromReference,
+  WOMPI_APPROVED,
+} from './_lib/wompi.js';
 import {
   upsertContact,
   addTags,
@@ -86,7 +90,11 @@ export default withApiHandler(
         status: transaction.status,
       });
     }
-    const saleId = transaction.reference;
+    // `reference` = `${saleId}_${intento}` desde el 2026-09-09 (o el saleId a
+    // secas en links emitidos antes) — ver `saleIdFromReference`.
+    const saleId = transaction.reference
+      ? saleIdFromReference(transaction.reference)
+      : '';
     if (!saleId) {
       return sendSuccess(res, { ignored: true, reason: 'no-reference' });
     }

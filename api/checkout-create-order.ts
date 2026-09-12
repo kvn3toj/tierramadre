@@ -33,6 +33,7 @@ import {
   resolveProvider,
   buildPaymentLink,
   WOMPI_NOT_CONFIGURED,
+  WOMPI_ENV_MISMATCH,
   MP_NOT_CONFIGURED,
 } from './_lib/checkoutLink.js';
 import { parseCheckoutBody } from './_lib/checkoutBody.js';
@@ -96,6 +97,7 @@ export default withApiHandler(
       totalCOP: number;
       reused: boolean;
       reservedAt: number;
+      attempt?: number;
     };
     try {
       order = await convexClient.mutation(api.ghl.createOrder, {
@@ -220,6 +222,7 @@ export default withApiHandler(
           email: body.contact.email,
         },
         now: order.reservedAt,
+        attempt: order.attempt,
       },
       provider,
     );
@@ -249,8 +252,14 @@ export default withApiHandler(
       // configuradas (build-and-mock) es un estado distinto de que el
       // proveedor haya fallado a media llamada.
       const notConfigured =
-        link.error === WOMPI_NOT_CONFIGURED || link.error === MP_NOT_CONFIGURED;
-      if (!notConfigured) {
+        link.error === WOMPI_NOT_CONFIGURED ||
+        link.error === WOMPI_ENV_MISMATCH ||
+        link.error === MP_NOT_CONFIGURED;
+      if (link.error === WOMPI_ENV_MISMATCH) {
+        // Configuración rota, no un fallo del proveedor: que quede en el log
+        // aunque al cliente se le responda «pendiente».
+        console.error('[CheckoutCreateOrder] Wompi env mismatch — ver checkoutLink');
+      } else if (!notConfigured) {
         console.error(
           `[CheckoutCreateOrder] ${provider} checkout link failed:`,
           link.error,

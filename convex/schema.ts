@@ -1227,6 +1227,13 @@ export default defineSchema({
     providerTxId: v.optional(v.string()),
     providerStatus: v.optional(v.string()),
     /**
+     * Cuántos links de pago se han emitido para esta venta. Cada uno lleva
+     * `reference = ${saleId}_${n}` porque Wompi rechaza una referencia
+     * repetida (422); sin esto un cliente con un intento DECLINED no podía
+     * reintentar su propio pedido. Convex-only.
+     */
+    paymentAttempts: v.optional(v.number()),
+    /**
      * Desglose del precio de una venta online. `totalCOP` es lo COBRADO; estos
      * dos dicen de dónde salió. Sin ellos no se puede auditar después si una
      * venta salió a x1 o a x2,6, y reconstruirlo es imposible porque el
